@@ -1,0 +1,8 @@
+{
+  "name": "ascua-ipc",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ascua-ipc/src",
+  "projectType": "library",
+  "tags": ["type:shared", "scope:ipc"],
+  "targets": {}
+}

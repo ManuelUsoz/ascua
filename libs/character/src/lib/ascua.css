@@ -1,0 +1,13 @@
+/* State palette: colour is information. */
+/* Themes set the resting colour (--i*). A theme may also move a signal colour (--x* alert, --w* warn, --q* ask, --h* cheer) so it never blends into the body. */
+/* Default "neon": dark violet wisp with a subtle neon rim. Alert moves to rose so it never reads as resting. */
+:root, [data-theme] { --i1: #f5ebff; --i2: #c026d3; --i3: #22104a; --ig: #e7a2ff; --x1: #ffe4e6; --x2: #f43f5e; --x3: #881337; --xg: #fda4af; --w1: #ffedd5; --w2: #fb923c; --w3: #9a3412; --wg: #fdba74; --q1: #cffafe; --q2: #22d3ee; --q3: #155e75; --qg: #67e8f9; --h1: #dcfce7; --h2: #4ade80; --h3: #15803d; --hg: #86efac; }
+[data-tone] { --c1: var(--i1); --c2: var(--i2); --c3: var(--i3); --glow: var(--ig); }
+[data-tone="sleep"] { --c1: #c7d2fe; --c2: #6366f1; --c3: #1e1b4b; --glow: #818cf8; }
+[data-tone="alert"] { --c1: var(--x1); --c2: var(--x2); --c3: var(--x3); --glow: var(--xg); }
+[data-tone="happy"] { --c1: var(--h1); --c2: var(--h2); --c3: var(--h3); --glow: var(--hg); }
+[data-tone="warn"] { --c1: var(--w1); --c2: var(--w2); --c3: var(--w3); --glow: var(--wg); }
+[data-tone="ask"] { --c1: var(--q1); --c2: var(--q2); --c3: var(--q3); --glow: var(--qg); }
+
+.ascua { width: 100%; height: 100%; }
+.ascua .flip { width: 100%; height: 100%; transition: transform 0.25s; }

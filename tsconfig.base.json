@@ -2,6 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "rootDir": ".",
+    "baseUrl": ".",
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
@@ -13,7 +14,10 @@
     "lib": ["es2020", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "paths": {}
+    "paths": {
+      "@ascua/character": ["libs/character/src/index.ts"],
+      "@ascua/ipc": ["libs/ascua-ipc/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

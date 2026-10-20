@@ -1,0 +1,8 @@
+{
+  "name": "ascua-character",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/character/src",
+  "projectType": "library",
+  "tags": ["type:shared", "scope:character"],
+  "targets": {}
+}

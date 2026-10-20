@@ -5,9 +5,10 @@
   "prefix": "app",
   "sourceRoot": "apps/renderer/src",
   "tags": [],
+  "implicitDependencies": ["ascua-character", "ascua-ipc"],
   "targets": {
     "build": {
-      "executor": "@angular-devkit/build-angular:browser",
+      "executor": "@angular-devkit/build-angular:browser-esbuild",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/renderer",
@@ -60,7 +61,10 @@
           "buildTarget": "renderer:build:development"
         }
       },
-      "defaultConfiguration": "development"
+      "defaultConfiguration": "development",
+      "options": {
+        "proxyConfig": "apps/renderer/proxy.conf.json"
+      }
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
