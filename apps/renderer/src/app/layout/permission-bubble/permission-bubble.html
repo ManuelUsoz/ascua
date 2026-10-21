@@ -1,0 +1,18 @@
+<section id="bubble" [hidden]="!queue.current()">
+  <header>
+    <span
+      id="bubble-face"
+      appCharacter="face"
+      [characterAct]="queue.currentAct()"
+      [characterPaused]="!queue.current()"
+    ></span>
+    <span id="tool">{{ queue.current()?.tool }}</span>
+    <span id="queued">{{ queue.queuedText() }}</span>
+  </header>
+  <pre id="summary">{{ queue.current()?.summary }}</pre>
+  <footer>
+    <button type="button" class="allow" (click)="queue.decide('allow')">Approve</button>
+    <button type="button" class="deny" (click)="queue.decide('deny')">Reject</button>
+    <button type="button" class="quiet" (click)="queue.decide('terminal')">In terminal</button>
+  </footer>
+</section>

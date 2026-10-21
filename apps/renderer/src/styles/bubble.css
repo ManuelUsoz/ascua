@@ -1,0 +1,150 @@
+/* ---------- permission bubble ---------- */
+#bubble {
+  position: fixed;
+  z-index: 2;
+  right: 32px;
+  bottom: 126px;
+  width: 360px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: var(--bubble);
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  cursor: default;
+  animation: bubble-in calc(260ms * var(--spd)) var(--ease) both;
+}
+
+#bubble[hidden],
+body.is-open #bubble,
+body.is-closing #bubble {
+  display: none;
+}
+
+#bubble::after {
+  content: '';
+  position: absolute;
+  right: 28px;
+  bottom: -8px;
+  border: 8px solid transparent;
+  border-bottom: 0;
+  border-top-color: var(--bubble);
+}
+
+body[data-x='left'] #bubble {
+  left: 32px;
+  right: auto;
+}
+
+body[data-x='left'] #bubble::after {
+  left: 28px;
+  right: auto;
+}
+
+body[data-y='top'] #bubble {
+  top: 126px;
+  bottom: auto;
+}
+
+body[data-y='top'] #bubble::after {
+  top: -8px;
+  bottom: auto;
+  border-top: 0;
+  border-bottom: 8px solid var(--bubble);
+}
+
+#bubble header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+#bubble-face {
+  display: inline-block;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 60%, #2a1a4a, #120a24);
+}
+
+#tool {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#queued {
+  margin-left: auto;
+  font-weight: 400;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+#summary {
+  margin: 8px 0 12px;
+  max-height: 3.6em;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font: 12px/1.5 ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  opacity: 0.9;
+}
+
+#bubble footer {
+  display: flex;
+  gap: 8px;
+}
+
+#bubble button {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+#bubble button:hover {
+  filter: brightness(1.12);
+}
+
+#bubble button:active {
+  transform: scale(0.95);
+}
+
+#bubble button:focus-visible {
+  outline: 2px solid #b9b6f0;
+  outline-offset: 2px;
+}
+
+#bubble button.allow {
+  background: var(--allow);
+}
+
+#bubble button.deny {
+  background: var(--deny);
+}
+
+#bubble button.quiet {
+  margin-left: auto;
+  background: transparent;
+  color: var(--text);
+  opacity: 0.6;
+  font-weight: 400;
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

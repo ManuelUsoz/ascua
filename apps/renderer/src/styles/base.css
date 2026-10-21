@@ -1,0 +1,31 @@
+:root {
+  --panel: #40346a;
+  --bubble: rgba(52, 40, 92, 0.96);
+  --text: #f5f2fb;
+  --allow: #3fae6a;
+  --deny: #d6554d;
+  --spd: 1;
+  --ease: cubic-bezier(0.34, 1.45, 0.55, 1);
+  --soft: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Avatar bloom origin, relative to the fullscreen window. */
+  --ox: 0px;
+  --oy: 0px;
+  --os: 120px;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font: 13px/1.4 'Inter Variable', Inter, 'Segoe UI', system-ui, sans-serif;
+  color: var(--text);
+  user-select: none;
+}
+
+app-root {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
