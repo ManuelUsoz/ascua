@@ -36,7 +36,7 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   Inter). `apps/renderer/src/app/app.css` is intentionally just a comment.
 - `libs/character` (Nx project `ascua-character`, import `@ascua/character`) -
   framework-agnostic SVG character and life loop. Art is all-rights-reserved;
-  see `libs/character/NOTICE`.
+  see `NOTICE`.
 - `libs/ascua-ipc` (Nx project `ascua-ipc`, import `@ascua/ipc`) - IPC channel
   names and shared types. Keep it dependency-free; it is imported by main,
   preload, and renderer.

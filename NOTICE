@@ -6,7 +6,7 @@ except for the following, which are NOT licensed under Apache-2.0 and remain
 All rights reserved:
 
 - The "Ascua" name and character (its design, look and likeness).
-- The character art: everything under src/character/.
-- The application icons: everything under src-tauri/icons/.
+- The character art: libs/character/src/lib/wisp.ts and libs/character/src/lib/wisp.css.
+- The application icons and any other artwork depicting the character.
 
 Apache-2.0 section 6 grants no rights to use the "Ascua" name or character as a trademark.

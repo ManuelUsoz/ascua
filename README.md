@@ -60,7 +60,7 @@ The compact position is remembered in
 - `libs/ascua-ipc` — IPC channel names and shared types (`Layout`,
   `BloomOrigin`, `FullscreenState`, `AscuaApi`).
 
-The character art is all-rights-reserved; see `libs/character/NOTICE`.
+The character art is all-rights-reserved; see `NOTICE`.
 
 ## Fonts
 
