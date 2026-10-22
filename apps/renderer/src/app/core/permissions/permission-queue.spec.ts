@@ -5,14 +5,31 @@ import { Companion } from '../companion/companion';
 import { RoomState } from '../room/room-state';
 import { PermissionQueue } from './permission-queue';
 
-const edit: PermissionRequest = { id: 1, tool: 'Edit', summary: 'src/app.ts', input: {} };
-const wipe: PermissionRequest = { id: 2, tool: 'Bash', summary: 'rm -rf dist', input: {} };
+const edit: PermissionRequest = {
+  id: 1,
+  tool: 'Edit',
+  summary: 'src/app.ts',
+  input: {},
+};
+const wipe: PermissionRequest = {
+  id: 2,
+  tool: 'Bash',
+  summary: 'rm -rf dist',
+  input: {},
+};
 
 describe('PermissionQueue', () => {
   let push: (request: PermissionRequest) => void;
   let hangUp: (id: number) => void;
-  let api: Pick<AscuaApi, 'onPermissionRequest' | 'onPermissionDismissed' | 'resolvePermission'>;
-  let companion: { need: ReturnType<typeof vi.fn>; celebrate: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn> };
+  let api: Pick<
+    AscuaApi,
+    'onPermissionRequest' | 'onPermissionDismissed' | 'resolvePermission'
+  >;
+  let companion: {
+    need: ReturnType<typeof vi.fn>;
+    celebrate: ReturnType<typeof vi.fn>;
+    release: ReturnType<typeof vi.fn>;
+  };
   let room: { collapse: ReturnType<typeof vi.fn> };
   let queue: PermissionQueue;
 

@@ -3,7 +3,13 @@ import type { AscuaApi, BloomOrigin, FullscreenState } from '@ascua/ipc';
 import { ASCUA_API } from '../bridge/ascua-api';
 import { RoomState } from './room-state';
 
-const origin: BloomOrigin = { x: 10, y: 20, size: 120, width: 800, height: 600 };
+const origin: BloomOrigin = {
+  x: 10,
+  y: 20,
+  size: 120,
+  width: 800,
+  height: 600,
+};
 const has = (name: string) => document.body.classList.contains(name);
 const ox = () => document.documentElement.style.getPropertyValue('--ox');
 

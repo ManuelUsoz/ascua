@@ -11,8 +11,14 @@
   </header>
   <pre id="summary">{{ queue.current()?.summary }}</pre>
   <footer>
-    <button type="button" class="allow" (click)="queue.decide('allow')">Approve</button>
-    <button type="button" class="deny" (click)="queue.decide('deny')">Reject</button>
-    <button type="button" class="quiet" (click)="queue.decide('terminal')">In terminal</button>
+    <button type="button" class="allow" (click)="queue.decide('allow')">
+      Approve
+    </button>
+    <button type="button" class="deny" (click)="queue.decide('deny')">
+      Reject
+    </button>
+    <button type="button" class="quiet" (click)="queue.decide('terminal')">
+      In terminal
+    </button>
   </footer>
 </section>

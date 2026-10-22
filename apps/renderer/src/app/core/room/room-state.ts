@@ -1,4 +1,10 @@
-import { DestroyRef, DOCUMENT, Injectable, inject, signal } from '@angular/core';
+import {
+  DestroyRef,
+  DOCUMENT,
+  Injectable,
+  inject,
+  signal,
+} from '@angular/core';
 import type { BloomOrigin, Layout } from '@ascua/ipc';
 import { ASCUA_API } from '../bridge/ascua-api';
 import { duration } from '../motion/motion';

@@ -1,4 +1,10 @@
-import { computed, DestroyRef, Injectable, inject, signal } from '@angular/core';
+import {
+  computed,
+  DestroyRef,
+  Injectable,
+  inject,
+  signal,
+} from '@angular/core';
 import type { PermissionDecision, PermissionRequest } from '@ascua/ipc';
 import { ASCUA_API } from '../bridge/ascua-api';
 import { Companion } from '../companion/companion';

@@ -33,9 +33,12 @@ export class Avatar {
   protected readonly room = inject(RoomState);
   private readonly companion = inject(Companion);
   private readonly api = inject(ASCUA_API);
-  private readonly host = viewChild.required<string, ElementRef<HTMLElement>>('host', {
-    read: ElementRef,
-  });
+  private readonly host = viewChild.required<string, ElementRef<HTMLElement>>(
+    'host',
+    {
+      read: ElementRef,
+    },
+  );
 
   private press?: { x: number; y: number; dragging: boolean };
   private dragged = false;
