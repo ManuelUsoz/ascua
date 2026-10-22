@@ -1,0 +1,59 @@
+<span id="room-ring" aria-hidden="true"></span>
+
+<!-- prettier-ignore -->
+<span id="room-embers" aria-hidden="true">
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span>
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span>
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span>
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span>
+</span>
+
+<section id="room" [attr.aria-hidden]="!room.open()">
+  <header id="room-bar">
+    <span>Ascua</span>
+    <span class="room-buttons">
+      <button
+        class="wbtn"
+        type="button"
+        aria-label="Minimize"
+        (click)="room.collapse()"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M2 11h10" />
+        </svg>
+      </button>
+      <button
+        class="wbtn"
+        type="button"
+        aria-label="Close"
+        (click)="room.close()"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M2.5 2.5l9 9M11.5 2.5l-9 9" />
+        </svg>
+      </button>
+    </span>
+  </header>
+
+  <main>
+    <router-outlet />
+  </main>
+</section>

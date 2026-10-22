@@ -30,10 +30,22 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
 - `apps/desktop/src/app/hook-server.ts` - permission pipe/socket server;
   `tools/ascua-hook.mjs` - the Claude Code hook (one-line JSON, fails open).
 - `apps/desktop/src/app/api/main.preload.ts` - the `window.ascua` bridge.
-- `apps/renderer/src/app/app.ts` - room/character orchestration and permission
-  queue; `app.html` - markup.
-- `apps/renderer/src/styles.css` - all renderer styling (avatar, bubble, room,
-  Inter). `apps/renderer/src/app/app.css` is intentionally just a comment.
+- `apps/renderer/src/app` - the Angular renderer. `app.ts` only composes
+  `layout/` and binds Escape/resize.
+  - `core/` - root services with signals: `room/room-state.ts` (bloom,
+    collapse, corner layout), `permissions/` (queue and the Claude Code
+    alert/warn/ask rules), `companion/` (the avatar's life loop),
+    `bridge/ascua-api.ts` (`ASCUA_API`, the injectable `window.ascua`).
+  - `layout/` - always-present chrome: `avatar`, `permission-bubble`, `room`
+    (bar, ring, embers and the `<router-outlet>`).
+  - `features/<name>/` - screens shown inside the room. Each default-exports
+    `<name>.routes.ts` and is registered with `loadChildren` in
+    `app.routes.ts`. Only `home` exists today.
+  - `shared/character/` - the `[appCharacter]` directive that mounts
+    `@ascua/character` into its host element.
+- `apps/renderer/src/styles.css` - imports `styles/*.css` (base, avatar,
+  bubble, room, bloom, motion) in cascade order. All renderer styling stays
+  global there; components have no `styleUrl`.
 - `libs/character` (Nx project `ascua-character`, import `@ascua/character`) -
   framework-agnostic SVG character and life loop. Art is all-rights-reserved;
   see `NOTICE`.
@@ -60,9 +72,18 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   announced only after the bounds match the display; the bloom origin is DIP
   relative to the display's top-left. Preserve this when touching fullscreen.
 - `COMPACT` (420x320) and `AVATAR` (120) are duplicated between `window.ts` and
-  the renderer CSS (`#ascua-host`, bubble offset). Change both together.
+  the renderer CSS (`styles/avatar.css`, bubble offset in `styles/bubble.css`).
+  Change both together.
 - The avatar can sit in any corner; main sends `Layout` and the renderer applies
   `body[data-x]`/`body[data-y]`. Keep bloom-origin and hit-test math in sync.
+- `RoomState` writes the `body` classes (`is-open`, `is-closing`, `is-waking`,
+  `is-settled`, `has-origin`) and `--ox/--oy/--os` synchronously, not through
+  bindings or effects: the bloom is timed against native resizes and animation
+  frames, and one change-detection tick late shows as a blink.
+- The renderer is zoneless: state read by templates must be signals, and IPC
+  callbacks need no `NgZone.run`.
+- Routing uses `withHashLocation()` because the packaged renderer is loaded
+  from `file://`.
 - Keep `html`/`body` transparent. The window is frameless/transparent; a body
   background breaks the desktop companion effect.
 - Position is stored in `%APPDATA%\ascua\position.json` packaged and

@@ -1,0 +1,9 @@
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --spd: 0.15;
+  }
+  #room-ring,
+  #room-embers {
+    display: none;
+  }
+}

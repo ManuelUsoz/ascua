@@ -1,0 +1,16 @@
+<!-- Pointer-only by design: the compact window is not focusable (focusable:
+     false in apps/desktop/src/app/window.ts), so there is no keyboard to serve. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<div
+  #host
+  id="ascua-host"
+  appCharacter="stage"
+  [characterPaused]="room.open()"
+  (characterMount)="mounted($event)"
+  (pointerdown)="pointerDown($event)"
+  (pointermove)="pointerMove($event)"
+  (pointerup)="pointerUp($event)"
+  (pointercancel)="pointerUp()"
+  (click)="click($event)"
+  (dblclick)="doubleClick($event)"
+></div>

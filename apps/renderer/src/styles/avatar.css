@@ -1,0 +1,85 @@
+/* ---------- avatar ---------- */
+#ascua-host {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 120px;
+  height: 120px;
+  z-index: 2;
+  cursor: grab;
+  transform-origin: 50% 90%;
+  transition:
+    opacity calc(220ms * var(--spd)) calc(380ms * var(--spd)) linear,
+    transform calc(520ms * var(--spd)) calc(380ms * var(--spd)) var(--ease);
+}
+
+#ascua-host:active {
+  cursor: grabbing;
+}
+
+body[data-x='left'] #ascua-host {
+  left: 0;
+  right: auto;
+}
+
+body[data-y='top'] #ascua-host {
+  top: 0;
+  bottom: auto;
+}
+
+/* While the room blooms, the avatar sits on the bloom origin that RoomState
+   writes as --ox/--oy. Keep this after the corner rules above. */
+body.has-origin #ascua-host {
+  left: var(--ox);
+  top: var(--oy);
+  right: auto;
+  bottom: auto;
+}
+
+body.is-open #ascua-host {
+  opacity: 0;
+  transform: scale(0.3);
+  visibility: hidden;
+  transition:
+    opacity calc(200ms * var(--spd)) calc(40ms * var(--spd)) linear,
+    transform calc(320ms * var(--spd)) var(--soft),
+    visibility 0s calc(260ms * var(--spd));
+}
+
+/* While the shell shrinks, the avatar grows back into its square in step, so
+   the window's resize into compact lands on an identical frame: no blink. */
+body.is-closing #ascua-host {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity calc(200ms * var(--spd)) linear,
+    transform calc(520ms * var(--spd)) calc(120ms * var(--spd)) var(--ease);
+}
+
+/* Landing without an animation (OS minimize): the final frame must be crisp,
+   so drop the base fade-in delay for one frame. */
+body.is-settled #ascua-host {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: none;
+}
+
+#ascua-host .ascua {
+  transform-origin: 50% 100%;
+  transition: transform 260ms var(--ease);
+}
+
+body:not(.is-open):not(.is-closing) #ascua-host:hover .ascua {
+  transform: rotate(-6deg) translateY(-4px) scale(1.04);
+}
+
+body.is-waking #ascua-host .ascua {
+  animation: room-anticipate calc(260ms * var(--spd)) var(--soft) forwards;
+}
+
+@keyframes room-anticipate {
+  0% { transform: scale(1, 1); }
+  45% { transform: scale(1.16, 0.8) translateY(8px); }
+  100% { transform: scale(0.92, 1.2) translateY(-12px); }
+}
