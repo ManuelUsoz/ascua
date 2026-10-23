@@ -51,6 +51,7 @@ describe('Room', () => {
     button(element, 'Minimize').click();
     expect(room.collapse).toHaveBeenCalledTimes(1);
     button(element, 'Close').click();
+    await Promise.resolve();
     expect(room.close).toHaveBeenCalledTimes(1);
   });
 

@@ -1,0 +1,26 @@
+<div class="projects-empty">
+  @if (store.projects().length === 0) {
+    <h1>Todavía no tenés proyectos</h1>
+    <p>Creá uno para levantar sus terminales desde acá.</p>
+    @if (available) {
+      <a class="as-btn as-btn--primary" routerLink="/proyectos/nuevo">
+        <app-icon name="plus" />Nuevo proyecto
+      </a>
+    } @else {
+      <button type="button" class="as-btn as-btn--primary" disabled>
+        <app-icon name="plus" />Nuevo proyecto
+      </button>
+    }
+  } @else {
+    <p>Elegí un proyecto de la lista o creá uno nuevo.</p>
+    @if (available) {
+      <a class="as-btn as-btn--quiet" routerLink="/proyectos/nuevo">
+        <app-icon name="plus" />Nuevo proyecto
+      </a>
+    } @else {
+      <button type="button" class="as-btn as-btn--quiet" disabled>
+        <app-icon name="plus" />Nuevo proyecto
+      </button>
+    }
+  }
+</div>

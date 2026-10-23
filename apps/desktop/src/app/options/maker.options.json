@@ -1,3 +1,12 @@
 {
-  "$schema": "../../../../../node_modules/nx-electron/src/validation/maker.schema.json"
+  "$schema": "../../../../../node_modules/nx-electron/src/validation/maker.schema.json",
+  "npmRebuild": false,
+  "asarUnpack": ["node_modules/node-pty/**"],
+  "linux": {
+    "target": ["AppImage"],
+    "executableName": "ascua",
+    "category": "Development",
+    "executableArgs": ["--ozone-platform=x11"]
+  },
+  "files": [{ "from": "desktop", "to": "desktop", "filter": ["pty-host.js"] }]
 }

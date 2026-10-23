@@ -1,0 +1,79 @@
+@if (project(); as p) {
+  <div class="v9-head">
+    <h1>{{ p.name }}</h1>
+    <span class="as-chip">
+      <span class="as-dot" [attr.data-tone]="counts().running > 0 ? 'ok' : null"></span>
+      {{ counts().running }} de {{ counts().total }} corriendo
+    </span>
+    <div class="v9-tools">
+      <button type="button" class="as-btn as-btn--quiet as-btn--s" (click)="editor.create()">
+        <app-icon name="plus" />Pista
+      </button>
+      <button type="button" class="as-btn as-btn--quiet as-btn--s" (click)="openShell()">
+        <app-icon name="plus" />Terminal
+      </button>
+      <button
+        type="button"
+        class="as-btn as-btn--danger as-btn--s"
+        [disabled]="counts().running === 0"
+        (click)="sessions.stopAll(p)"
+      >
+        <app-icon name="stop" />Detener todo
+      </button>
+      <a
+        class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+        routerLink="editar"
+        aria-label="Editar proyecto"
+      >
+        <app-icon name="edit" />
+      </a>
+    </div>
+    @if (sessions.shellError(); as err) {
+      <p class="project-form__error" role="alert" style="flex-basis: 100%">{{ err }}</p>
+    }
+    @for (draft of editor.open(); track draft) {
+      <app-pista-form [projectId]="p.id" [spec]="draft === 'new' ? undefined : draft" />
+    }
+  </div>
+
+  <nav class="as-tabs" role="tablist" aria-label="Secciones del proyecto">
+    <a
+      id="tab-terminales"
+      class="as-tab"
+      role="tab"
+      aria-controls="tabpanel-project"
+      routerLink="terminales"
+      routerLinkActive
+      #rla="routerLinkActive"
+      [attr.aria-selected]="rla.isActive"
+    >
+      <app-icon name="terminal" />Terminales
+    </a>
+    <a
+      id="tab-archivos"
+      class="as-tab"
+      role="tab"
+      aria-controls="tabpanel-project"
+      routerLink="archivos"
+      routerLinkActive
+      #rlaFiles="routerLinkActive"
+      [attr.aria-selected]="rlaFiles.isActive"
+    >
+      <app-icon name="file" />Archivos
+    </a>
+  </nav>
+
+  <div
+    id="tabpanel-project"
+    class="project-tabpanel"
+    role="tabpanel"
+    [attr.aria-labelledby]="rlaFiles.isActive ? 'tab-archivos' : 'tab-terminales'"
+  >
+    <router-outlet />
+  </div>
+} @else if (store.loaded()) {
+  <div class="projects-empty">
+    <h1>No encontré ese proyecto</h1>
+    <a class="as-btn as-btn--quiet" routerLink="/proyectos">Volver a proyectos</a>
+  </div>
+}

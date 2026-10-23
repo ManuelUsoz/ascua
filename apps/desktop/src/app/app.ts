@@ -1,5 +1,16 @@
 import { BrowserWindow } from 'electron';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { environment } from '../environments/environment';
+import { registerFileIpc } from './files/files-ipc';
+import { ProjectFiles } from './files/project-files';
+import { JsonProjectRepository } from './projects/json-project-repository';
+import { registerProjectIpc } from './projects/project-ipc';
+import { PtyHostClient } from './terminals/pty-host-client';
+import { guardQuit } from './terminals/quit-guard';
+import { resolveShell } from './terminals/shell';
+import { registerTerminalIpc } from './terminals/terminal-ipc';
+import { TerminalManager } from './terminals/terminal-manager';
 import { WindowController } from './window';
 
 export default class App {
@@ -52,6 +63,28 @@ export default class App {
     App.application.whenReady().then(() => {
       App.controller.create();
       App.controller.register();
+      const repository = new JsonProjectRepository(
+        join(App.application.getPath('userData'), 'projects.json'),
+      );
+      const backend = new PtyHostClient();
+      const manager = new TerminalManager(
+        repository,
+        backend,
+        (channel, payload) => App.controller.send(channel, payload),
+        resolveShell(process.platform, process.env, existsSync),
+      );
+      registerProjectIpc(repository, {
+        window: () => App.controller.window,
+        listener: manager,
+      });
+      registerTerminalIpc(manager);
+      registerFileIpc(new ProjectFiles(repository));
+      guardQuit({
+        manager,
+        backend,
+        window: () => App.controller.window,
+        recreate: () => void App.controller.create(),
+      });
     });
   }
 }

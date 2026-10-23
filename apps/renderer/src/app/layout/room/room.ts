@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { RoomState } from '../../core/room/room-state';
+import { ProjectSide } from './project-side/project-side';
+import { Rail } from './rail/rail';
+import { RoomBar } from './room-bar/room-bar';
 
 /**
  * The room that blooms out of the avatar: the fullscreen state of the same
@@ -8,7 +11,7 @@ import { RoomState } from '../../core/room/room-state';
  */
 @Component({
   selector: 'app-room',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RoomBar, Rail, ProjectSide],
   templateUrl: './room.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

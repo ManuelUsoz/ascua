@@ -3,6 +3,7 @@ import {
   BrowserWindow,
   ipcMain,
   screen,
+  type Display,
   type Rectangle,
 } from 'electron';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -25,6 +26,9 @@ const MARGIN = 16;
 const POLL_MS = 40;
 const SAVE_DELAY_MS = 600;
 const DRAG_INTERVAL_MS = 16;
+/** Linux covers the display with plain bounds instead of native fullscreen
+ * (see the Linux fullscreen note in AGENTS.md). */
+const PSEUDO_FULLSCREEN = process.platform === 'linux';
 
 interface SavedPosition {
   x: number;
@@ -108,6 +112,13 @@ export class WindowController {
         this.send(IPC.permissionRequest, request);
       }
     });
+    // A full renderer load (Ctrl+R, dev-server reload) boots the compact UI
+    // while main still thinks the room is open, leaving a stuck fullscreen
+    // window. Hash routing only fires did-navigate-in-page, so tab switches
+    // never land here. `expanded` is false on the initial load.
+    this.win.webContents.on('did-navigate', () => {
+      if (this.expanded) this.exitFullscreen();
+    });
     this.win.webContents.on('did-start-loading', () => {
       this.rendererReady = false;
     });
@@ -179,7 +190,9 @@ export class WindowController {
   register(): void {
     ipcMain.handle(IPC.toggleFullscreen, () => this.toggleFullscreen());
     ipcMain.handle(IPC.exitFullscreen, () => this.exitFullscreen());
-    ipcMain.handle(IPC.isFullscreen, () => this.win?.isFullScreen() ?? false);
+    ipcMain.handle(IPC.isFullscreen, () =>
+      PSEUDO_FULLSCREEN ? this.expanded : (this.win?.isFullScreen() ?? false),
+    );
     ipcMain.handle(IPC.quit, () => app.quit());
     ipcMain.handle(IPC.getLayout, () => this.layout);
     ipcMain.handle(IPC.dragStart, () => this.startDrag());
@@ -216,7 +229,7 @@ export class WindowController {
 
   private load(): void {
     if (!this.win) return;
-    if (!app.isPackaged) {
+    if (!app.isPackaged && process.env['ASCUA_RENDERER'] !== 'dist') {
       this.win.loadURL(`http://localhost:${rendererAppPort}`);
     } else {
       this.win.loadFile(join(__dirname, '..', rendererAppName, 'index.html'));
@@ -233,13 +246,36 @@ export class WindowController {
     this.expanded = true;
     this.win.setFocusable(true);
     this.win.setMinimizable(true);
-    this.win.setAlwaysOnTop(false);
-    this.win.setResizable(false);
-    this.win.setFullScreen(true);
+    if (PSEUDO_FULLSCREEN) {
+      this.enterPseudoFullscreen(screen.getDisplayMatching(this.compactBounds));
+    } else {
+      this.win.setAlwaysOnTop(false);
+      this.win.setResizable(false);
+      this.win.setFullScreen(true);
+    }
     this.win.focus();
     this.announceFullscreen(origin);
 
     return origin;
+  }
+
+  /**
+   * Linux only (see the AGENTS.md note on Linux fullscreen). X11 WMs often
+   * ignore or undo fullscreen for a window created non-focusable, and Electron
+   * then drops setBounds while it believes it is fullscreen. Cover the display
+   * with plain bounds instead. A non-resizable X11 window has fixed size
+   * hints, so allow resizing while expanded.
+   */
+  private enterPseudoFullscreen(display: Display): void {
+    if (!this.win) return;
+    this.win.setResizable(true);
+    this.win.setAlwaysOnTop(true, 'screen-saver');
+    this.win.setBounds(display.bounds);
+  }
+
+  /** Linux only: locks the window size again after the pseudo fullscreen. */
+  private leavePseudoFullscreen(): void {
+    this.win?.setResizable(false);
   }
 
   private exitFullscreen(): void {
@@ -296,6 +332,7 @@ export class WindowController {
     });
     this.win.setFocusable(false);
     this.win.setMinimizable(false);
+    if (PSEUDO_FULLSCREEN) this.leavePseudoFullscreen();
     this.win.setAlwaysOnTop(true, 'floating');
   }
 
@@ -457,7 +494,11 @@ export class WindowController {
     this.send(IPC.layoutChanged, this.layout);
   }
 
-  private send(channel: string, payload: unknown): void {
+  get window(): BrowserWindow | null {
+    return this.win;
+  }
+
+  send(channel: string, payload: unknown): void {
     if (!this.win || this.win.isDestroyed()) return;
     this.win.webContents.send(channel, payload);
   }

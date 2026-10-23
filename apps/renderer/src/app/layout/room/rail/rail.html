@@ -1,0 +1,13 @@
+<nav class="as-rail" aria-label="Espacios">
+  <div class="as-rail__ascua" aria-hidden="true">
+    <div appCharacter="rail" [characterPaused]="!room.open()"></div>
+  </div>
+  <a
+    class="as-rail__item"
+    routerLink="/proyectos"
+    routerLinkActive
+    ariaCurrentWhenActive="page"
+  >
+    <app-icon name="folder" [large]="true" />Proyectos
+  </a>
+</nav>

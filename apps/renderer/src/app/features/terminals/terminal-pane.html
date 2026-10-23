@@ -1,0 +1,58 @@
+<section class="as-term" [attr.data-kind]="spec() ? 'pista' : 'shell'">
+  <div class="as-term__bar">
+    <app-icon [name]="spec() ? 'server' : 'terminal'" />
+    <b>{{ name() }}</b>
+    <span class="as-state" [attr.data-tone]="state().tone">
+      <span class="as-dot"></span>{{ state().label }}
+    </span>
+    @if (spec(); as spec) {
+      @if (spec.port) {
+        <span>:{{ spec.port }}</span>
+      }
+      <span class="as-term__cmd">{{ spec.command }}</span>
+      <button
+        type="button"
+        class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+        [attr.aria-label]="(running() ? 'Detener ' : 'Iniciar ') + name()"
+        (click)="toggle()"
+      >
+        <app-icon [name]="running() ? 'stop' : 'play'" />
+      </button>
+      <button
+        type="button"
+        class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+        [attr.aria-label]="'Editar ' + name()"
+        (click)="editor.edit(spec)"
+      >
+        <app-icon name="edit" />
+      </button>
+    } @else {
+      <span class="as-term__cmd"></span>
+      @if (!running()) {
+        <button
+          type="button"
+          class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+          [attr.aria-label]="'Reabrir ' + name()"
+          (click)="toggle()"
+        >
+          <app-icon name="play" />
+        </button>
+      }
+      <button
+        type="button"
+        class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+        [attr.aria-label]="'Cerrar ' + name()"
+        (click)="close()"
+      >
+        <app-icon name="close" />
+      </button>
+    }
+  </div>
+  <div class="as-term__body">
+    @if (session()) {
+      <app-terminal-view [sessionId]="key()" />
+    } @else {
+      <p class="as-term__empty">Detenida — iniciá para ver la salida</p>
+    }
+  </div>
+</section>

@@ -26,6 +26,14 @@ export default class Main {
   }
 }
 
+// Linux: force X11/XWayland; native Wayland blocks cursor polling, setBounds and always-on-top
+if (
+  process.platform === 'linux' &&
+  !app.commandLine.hasSwitch('ozone-platform')
+) {
+  app.commandLine.appendSwitch('ozone-platform', 'x11');
+}
+
 // handle setup events as quickly as possible
 Main.initialize();
 

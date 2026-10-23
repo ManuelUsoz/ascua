@@ -6,6 +6,10 @@ import { Route } from '@angular/router';
  * `loadChildren` so it stays out of the initial bundle.
  */
 export const appRoutes: Route[] = [
-  { path: '', loadChildren: () => import('./features/home/home.routes') },
-  { path: '**', redirectTo: '' },
+  { path: '', pathMatch: 'full', redirectTo: 'proyectos' },
+  {
+    path: 'proyectos',
+    loadChildren: () => import('./features/projects/projects.routes'),
+  },
+  { path: '**', redirectTo: 'proyectos' },
 ];

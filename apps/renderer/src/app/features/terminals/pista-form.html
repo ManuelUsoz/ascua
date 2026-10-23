@@ -1,0 +1,46 @@
+<form
+  class="v9-panel pista-pop"
+  [formGroup]="form"
+  (ngSubmit)="save()"
+  (keydown.escape)="cancel($event)"
+  [attr.aria-label]="spec() ? 'Editar pista' : 'Nueva pista'"
+>
+  <div class="pista-pop__row">
+    <div class="project-form__field">
+      <label class="v9-label" for="pista-name">Nombre</label>
+      <input
+        id="pista-name"
+        class="v9-input"
+        type="text"
+        formControlName="name"
+        autocomplete="off"
+      />
+    </div>
+    <div class="project-form__field pista-pop__port">
+      <label class="v9-label" for="pista-port">Puerto</label>
+      <input id="pista-port" class="v9-input" type="number" formControlName="port" min="1" max="65535" />
+    </div>
+  </div>
+  <div class="project-form__field">
+    <label class="v9-label" for="pista-cmd">Comando</label>
+    <input id="pista-cmd" class="v9-input" type="text" formControlName="command" autocomplete="off" />
+  </div>
+  <div class="project-form__field">
+    <span class="v9-label">Carpeta</span>
+    <button type="button" class="as-btn as-btn--quiet pista-pop__folder" (click)="pickFolder()">
+      <app-icon name="folder" />{{ folderText() }}
+    </button>
+  </div>
+  @if (error(); as message) {
+    <p class="project-form__error" role="alert">{{ message }}</p>
+  }
+  <div class="project-form__actions">
+    <button type="submit" class="as-btn as-btn--primary" [disabled]="saving()">Guardar</button>
+    <button type="button" class="as-btn as-btn--ghost" (click)="cancel()">Cancelar</button>
+    @if (spec()) {
+      <button type="button" class="as-btn as-btn--danger project-form__delete" (click)="remove()">
+        {{ confirmingRemove() ? '¿Seguro? Quitar' : 'Quitar pista' }}
+      </button>
+    }
+  </div>
+</form>

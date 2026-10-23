@@ -3,7 +3,12 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideRouter, withHashLocation } from '@angular/router';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withHashLocation,
+  withRouterConfig,
+} from '@angular/router';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -12,6 +17,11 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     // The packaged renderer loads index.html from file://, where path URLs
     // cannot be reloaded.
-    provideRouter(appRoutes, withHashLocation()),
+    provideRouter(
+      appRoutes,
+      withHashLocation(),
+      withComponentInputBinding(),
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+    ),
   ],
 };

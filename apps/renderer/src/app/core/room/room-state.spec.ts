@@ -31,6 +31,18 @@ function desktopApi() {
     onPermissionRequest: () => () => undefined,
     onPermissionDismissed: () => () => undefined,
     resolvePermission: vi.fn(async () => undefined),
+    listProjects: vi.fn(async () => []),
+    saveProject: vi.fn(),
+    deleteProject: vi.fn(async () => undefined),
+    pickProjectFolder: vi.fn(async () => undefined),
+    listTerminals: vi.fn(async () => []),
+    startTerminal: vi.fn(),
+    stopTerminal: vi.fn(async () => undefined),
+    replayTerminal: vi.fn(async () => ({ data: '', seq: 0 })),
+    writeTerminal: vi.fn(),
+    resizeTerminal: vi.fn(),
+    onTerminalOutput: () => () => undefined,
+    onTerminalChanged: () => () => undefined,
   };
   return { api, announce: (state: FullscreenState) => fullscreen?.(state) };
 }

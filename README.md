@@ -14,6 +14,15 @@ npx nx build desktop   # renderer + Electron main
 npx nx package desktop # Windows app in dist/packages/win-unpacked/ascua.exe
 ```
 
+Linux: `nx make desktop` on Linux produces an AppImage under
+`dist/executables/`. From Windows, `npm run linux:check` builds and tests it in
+Docker (Xvfb) and leaves the AppImage and screenshots in `dist/linux/`. The AppImage was only verified with `--no-sandbox` in Docker; on
+a real distro run it once without it. On distros that restrict unprivileged user
+namespaces for AppImages (e.g. Ubuntu 24.04+ AppArmor,
+`kernel.apparmor_restrict_unprivileged_userns`) Chromium's sandbox fails to
+start; run with `--no-sandbox` (less secure) or install an AppArmor profile for
+the AppImage path.
+
 `desktop:serve` waits for the renderer dev server, and `desktop:build` depends
 on `renderer:build`, so one command is enough in both cases.
 
@@ -30,6 +39,21 @@ There is exactly **one** `BrowserWindow`.
   the bloom origin and grows the room out of it.
 - **Back to compact:** the room's close/minimize button or `Escape` collapses the
   bloom, restores the compact bounds, and returns the window to always-on-top.
+
+The fullscreen room is the Workbench shell: a rail (Proyectos), a projects side
+panel, and a bar with breadcrumb and window controls. Projects are stored in
+`userData/projects.json`. Each project's Terminales tab runs real `node-pty`
+terminals in an Electron `utilityProcess` pty host (Git Bash on Windows,
+PowerShell as fallback), with start/stop, Levantar todo/Detener todo, and a
+confirmation when quitting with terminals running. `npx nx test desktop` runs
+the main-process unit specs.
+
+The Archivos tab edits project text files in place with CodeMirror (Ctrl+S
+saves). A save is refused with a conflict banner (Sobrescribir / Recargar) if
+the file changed on disk, and unsaved changes show a marker and prompt before
+leaving the tab or pressing Close. Files that are not UTF-8 open read-only.
+"Abrir en editor" appears only for safe document types; other files (binaries,
+executables, scripts) offer "Mostrar en carpeta" instead.
 
 The compact position is remembered in
 `%APPDATA%\ascua\position.json` (dev builds use the Electron user-data folder).
@@ -66,6 +90,8 @@ The character art is all-rights-reserved; see `NOTICE`.
 
 Inter is self-hosted through `@fontsource-variable/inter` and bundled into the
 renderer, so the packaged app does not depend on a system font or the network.
+JetBrains Mono (`@fontsource-variable/jetbrains-mono`) is bundled the same way
+for the terminals.
 
 ## Permission bubble
 

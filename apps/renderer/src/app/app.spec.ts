@@ -13,14 +13,17 @@ describe('App', () => {
     }).compileComponents();
   });
 
-  it('renders the home screen inside the room', async () => {
+  it('renders the workbench shell and the empty state inside the room', async () => {
     const fixture = TestBed.createComponent(App);
     await TestBed.inject(Router).navigateByUrl('/');
     fixture.detectChanges();
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('#room main h1')?.textContent).toContain(
-      'Hello',
+    expect(compiled.querySelector('#room .as-rail')?.textContent).toContain(
+      'Proyectos',
+    );
+    expect(compiled.querySelector('#room main')?.textContent).toContain(
+      'Todavía no tenés proyectos',
     );
     fixture.destroy();
   });

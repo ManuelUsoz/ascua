@@ -1,0 +1,31 @@
+/* Archivos tab: read-only file tree and viewer. Each panel scrolls on its own. */
+.files { flex: 1 1 0; min-height: 0; display: flex; flex-wrap: nowrap; gap: 12px; padding: 12px 20px 20px; }
+.files__tree { flex: 1 1 240px; max-width: 280px; min-height: 0; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.files__viewer { flex: 999 1 420px; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+@container (max-width: 760px) {
+  .files { flex-direction: column; }
+  .files__tree { flex: 0 0 40%; max-width: none; }
+  .files__viewer { flex: 1 1 0; }
+}
+.files__filter { flex: none; cursor: text; }
+.files__filter .as-ico { flex: none; color: var(--ink-faint); }
+.files__filter input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: none; color: inherit; font: inherit; }
+.files__filter input::placeholder { color: var(--ink-muted); }
+.files__filter:focus-within { border-color: var(--violeta); }
+.files__scroll { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 1px; }
+.files__scroll .as-tree__row { font-size: 12.5px; }
+.files__scroll .as-tree__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.files__note { margin: 0; padding: 6px 8px; color: var(--ink-muted); font-size: 12px; }
+.files__head { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; flex: none; border-bottom: 1px solid var(--line); font: 500 12px/1 var(--font-mono); }
+.files__head .as-ico { flex: none; }
+.files__path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.files__head .as-btn { flex: none; }
+.files__err { color: var(--alert); font: 400 11.5px/1 var(--font-sans); white-space: nowrap; }
+.files__body { flex: 1; min-height: 0; display: flex; overflow: hidden; background: var(--surface-sunken); }
+.files__editor { flex: 1; min-width: 0; height: 100%; }
+.files__editor .cm-editor { height: 100%; outline: none; }
+.files__dirty { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--oro); }
+.files__banner { display: flex; align-items: center; gap: 8px; flex: none; padding: 7px 12px; border-bottom: 1px solid var(--line); background: var(--violeta-wash); color: var(--ink); font: 400 12px/1.3 var(--font-sans); }
+.files__banner > span { flex: 1; min-width: 0; }
+.files__empty { margin: 0; flex: 1; display: grid; place-items: center; color: var(--ink-muted); font-size: 13px; background: var(--surface-sunken); }
+

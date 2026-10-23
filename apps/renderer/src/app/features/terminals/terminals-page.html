@@ -1,0 +1,33 @@
+@if (project(); as project) {
+  @if (count() === 0) {
+    <div class="as-term-empty">
+      <p>Todavía no hay terminales en este proyecto.</p>
+      <div class="as-term-empty__actions">
+        <button type="button" class="as-btn as-btn--quiet as-btn--s" (click)="editor.create()">
+          <app-icon name="plus" />Pista
+        </button>
+        <button type="button" class="as-btn as-btn--quiet as-btn--s" (click)="sessions.openShell(project.id)">
+          <app-icon name="plus" />Terminal
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="as-term-grid" [attr.data-count]="count()">
+      @for (spec of project.terminals; track spec.id) {
+        <app-terminal-pane
+          [projectId]="project.id"
+          [terminalId]="spec.id"
+          [name]="spec.name"
+          [spec]="spec"
+        />
+      }
+      @for (shell of shells(); track shell.id) {
+        <app-terminal-pane
+          [projectId]="project.id"
+          [terminalId]="shell.terminalId"
+          [name]="shell.name ?? 'shell'"
+        />
+      }
+    </div>
+  }
+}
