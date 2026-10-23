@@ -1,0 +1,68 @@
+<aside class="as-side">
+  <div class="as-side__head">
+    {{ 'side.heading' | transloco }}
+    <a
+      class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+      routerLink="/proyectos/nuevo"
+      [attr.aria-label]="'side.newProject' | transloco"
+    >
+      <app-icon name="plus" />
+    </a>
+  </div>
+  @for (p of store.projects(); track p.id) {
+    @let counts = sessions.counts(p);
+    <a
+      class="as-tree__row as-tree__row--project"
+      [routerLink]="['/proyectos', p.id, 'terminales']"
+    >
+      <app-icon
+        [name]="p.id === crumbs().projectId ? 'chevron-down' : 'chevron-right'"
+      />
+      @if (p.color) {
+        <span class="as-tree__swatch" [style.background]="p.color"></span>
+      }
+      <span class="as-tree__name">{{ p.name }}</span>
+      <span class="as-tree__meta">{{ counts.running }}/{{ counts.total }}</span>
+      <span
+        class="as-dot"
+        [attr.data-tone]="counts.running > 0 ? 'ok' : null"
+      ></span>
+    </a>
+    @if (p.id === crumbs().projectId) {
+      @for (t of p.terminals; track t.id) {
+        <a
+          class="as-tree__row as-tree__row--pista"
+          [routerLink]="['/proyectos', p.id, 'terminales']"
+        >
+          <app-icon name="server" />
+          <span class="as-tree__name">{{ t.name }}</span>
+          @if (t.port) {
+            <span class="as-tree__meta">:{{ t.port }}</span>
+          }
+          <span class="as-dot" [attr.data-tone]="tone(p.id, t.id)"></span>
+        </a>
+      }
+      @for (s of sessions.shells(p.id); track s.id) {
+        <a
+          class="as-tree__row as-tree__row--pista"
+          [routerLink]="['/proyectos', p.id, 'terminales']"
+        >
+          <app-icon name="terminal" />
+          <span class="as-tree__name">{{ s.name ?? 'shell' }}</span>
+          <span
+            class="as-dot"
+            [attr.data-tone]="tone(p.id, s.terminalId)"
+          ></span>
+        </a>
+      }
+      <button
+        type="button"
+        class="as-btn as-btn--primary as-btn--block as-side__start"
+        [disabled]="p.terminals.length === 0"
+        (click)="sessions.startAll(p)"
+      >
+        <app-icon name="play" />{{ 'side.startAll' | transloco }}
+      </button>
+    }
+  }
+</aside>

@@ -1,0 +1,113 @@
+@if (project(); as p) {
+  <div class="as-page-head">
+    <h1>{{ p.name }}</h1>
+    <span class="as-chip">
+      <span
+        class="as-dot"
+        [attr.data-tone]="counts().running > 0 ? 'ok' : null"
+      ></span>
+      {{
+        'projects.page.running'
+          | transloco: { running: counts().running, total: counts().total }
+      }}
+    </span>
+    <div class="as-page-head__tools">
+      <button
+        type="button"
+        class="as-btn as-btn--quiet as-btn--s"
+        (click)="editor.create()"
+      >
+        <app-icon name="plus" />{{ 'projects.page.addPista' | transloco }}
+      </button>
+      <button
+        type="button"
+        class="as-btn as-btn--quiet as-btn--s"
+        (click)="openShell()"
+      >
+        <app-icon name="plus" />{{ 'projects.page.addTerminal' | transloco }}
+      </button>
+      <button
+        type="button"
+        class="as-btn as-btn--danger as-btn--s"
+        [disabled]="counts().running === 0"
+        (click)="sessions.stopAll(p)"
+      >
+        <app-icon name="stop" />{{ 'projects.page.stopAll' | transloco }}
+      </button>
+      <a
+        class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+        routerLink="editar"
+        [attr.aria-label]="'projects.page.edit' | transloco"
+      >
+        <app-icon name="edit" />
+      </a>
+    </div>
+    @if (sessions.shellError(p.id); as err) {
+      <p class="as-form__error as-page-head__error" role="alert">
+        @if (shellDetail(err); as detail) {
+          {{
+            'errors.terminal.openFailedWith'
+              | transloco: { detail: (detail.key | transloco: detail.params) }
+          }}
+        } @else {
+          {{ 'errors.terminal.openFailed' | transloco }}
+        }
+      </p>
+    }
+    @for (draft of editor.open(); track draft) {
+      <app-pista-form
+        [projectId]="p.id"
+        [spec]="draft === 'new' ? undefined : draft"
+      />
+    }
+  </div>
+
+  <nav
+    class="as-tabs"
+    role="tablist"
+    [attr.aria-label]="'projects.page.sections' | transloco"
+  >
+    <a
+      id="tab-terminales"
+      class="as-tab"
+      role="tab"
+      aria-controls="tabpanel-project"
+      routerLink="terminales"
+      routerLinkActive
+      #rla="routerLinkActive"
+      [attr.aria-selected]="rla.isActive"
+    >
+      <app-icon name="terminal" />{{ 'nav.terminals' | transloco }}
+    </a>
+    <a
+      id="tab-archivos"
+      class="as-tab"
+      role="tab"
+      aria-controls="tabpanel-project"
+      routerLink="archivos"
+      routerLinkActive
+      #rlaFiles="routerLinkActive"
+      [attr.aria-selected]="rlaFiles.isActive"
+    >
+      <app-icon name="file" />{{ 'nav.files' | transloco }}
+    </a>
+  </nav>
+
+  <div
+    id="tabpanel-project"
+    class="as-tabpanel"
+    role="tabpanel"
+    [attr.aria-labelledby]="
+      rlaFiles.isActive ? 'tab-archivos' : 'tab-terminales'
+    "
+  >
+    <router-outlet />
+  </div>
+} @else if (store.loaded()) {
+  <div class="as-empty">
+    <h1>{{ 'projects.notFound.title' | transloco }}</h1>
+    <a class="as-btn as-btn--quiet" routerLink="/proyectos">{{
+      'projects.notFound.back' | transloco
+    }}</a>
+  </div>
+}

@@ -8,6 +8,7 @@ import {
 import type { PermissionDecision, PermissionRequest } from '@ascua/ipc';
 import { ASCUA_API } from '../bridge/ascua-api';
 import { Companion } from '../companion/companion';
+import { text, type Text } from '../i18n/text';
 import { RoomState } from '../room/room-state';
 import { actFor } from './permission-act';
 
@@ -30,8 +31,10 @@ export class PermissionQueue {
     const current = this.current();
     return current ? actFor(current) : undefined;
   });
-  readonly queuedText = computed(() =>
-    this.requests().length > 1 ? `+${this.requests().length - 1} waiting` : '',
+  readonly queuedText = computed<Text | undefined>(() =>
+    this.requests().length > 1
+      ? text('bubble.queued', { count: this.requests().length - 1 })
+      : undefined,
   );
 
   constructor() {

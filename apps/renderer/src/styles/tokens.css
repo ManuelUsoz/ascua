@@ -1,0 +1,58 @@
+/* Ascua design-system tokens. Deliberately no `color-scheme` and no `body`
+   rule here: html/body must stay transparent. `#room` sets color-scheme. */
+:root {
+  --desk: #07050d;
+  --ground: #0d0a18;
+  --surface: #130f22;
+  --surface-raised: #1c1730;
+  --surface-sunken: #09070f;
+  --line: #262040;
+  --line-mid: #3e3463;
+  --line-strong: #75679f;
+  --ink: #f4f0fd;
+  --ink-muted: #aca2c9;
+  --ink-faint: #8d83ae;
+  --violeta: #c48bff;
+  --violeta-wash: #b46eff29;
+  --violeta-glow: #b46eff33;
+  --oro: #ffc94d;
+  --oro-deep: #f5a524;
+  --oro-wash: #ffc94d1f;
+  --oro-glow: #ffbe3c40;
+  --on-oro: #1b1305;
+  --ok: #4ade9a;
+  --ask: #5cd9f2;
+  --warn: #ff9f43;
+  --alert: #ff5d8f;
+  --idle: #6f6690;
+  --ok-wash: #4ade9a1c;
+  --alert-wash: #ff5d8f1f;
+  --ask-wash: #5cd9f21a;
+  --focus: var(--oro);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-8: 32px;
+  --radius-xs: 4px;
+  --radius-s: 7px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+  --shadow-pop: 0 20px 40px rgba(0, 0, 0, 0.5);
+  --shadow-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-oro:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(255, 190, 60, 0.25);
+  --shadow-ask: 0 0 0 3px rgba(92, 217, 242, 0.1);
+  --rail-w: 64px;
+  --side-w: 220px;
+  --bar-h: 44px;
+  --row-h: 30px;
+  --tab-h: 34px;
+  --font-sans: 'Inter Variable', Inter, 'Segoe UI', system-ui, sans-serif;
+  --font-mono:
+    'JetBrains Mono Variable', 'JetBrains Mono', 'Cascadia Mono', Consolas,
+    ui-monospace, monospace;
+}

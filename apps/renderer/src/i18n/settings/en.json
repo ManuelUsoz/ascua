@@ -1,0 +1,13 @@
+{
+  "title": "Settings",
+  "language": {
+    "title": "Language",
+    "label": "Application language",
+    "hint": "Applies immediately and is remembered the next time you open Ascua.",
+    "error": "The language could not be changed."
+  },
+  "languages": {
+    "es": "Español",
+    "en": "English"
+  }
+}

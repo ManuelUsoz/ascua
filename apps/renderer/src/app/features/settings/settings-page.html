@@ -1,0 +1,39 @@
+<div class="as-page-head">
+  <h1>{{ 'settings.title' | transloco }}</h1>
+</div>
+<div class="as-settings">
+  <section
+    class="as-panel as-settings__panel"
+    aria-labelledby="settings-language-title"
+  >
+    <header class="as-settings__head">
+      <h2 id="settings-language-title" class="as-settings__title">
+        {{ 'settings.language.title' | transloco }}
+      </h2>
+      <p class="as-settings__hint">
+        {{ 'settings.language.hint' | transloco }}
+      </p>
+    </header>
+    <div class="as-form__field">
+      <label class="as-label" for="settings-language">{{
+        'settings.language.label' | transloco
+      }}</label>
+      <select
+        id="settings-language"
+        class="as-input as-select"
+        (change)="choose($event)"
+      >
+        @for (l of languages; track l) {
+          <option [value]="l" [selected]="l === settings.language()">
+            {{ 'settings.languages.' + l | transloco }}
+          </option>
+        }
+      </select>
+    </div>
+    @if (failed()) {
+      <p class="as-form__error" role="alert">
+        {{ 'settings.language.error' | transloco }}
+      </p>
+    }
+  </section>
+</div>

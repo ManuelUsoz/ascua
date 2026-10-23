@@ -14,7 +14,8 @@
 }
 
 body.is-open #room-ring {
-  animation: room-ring calc(900ms * var(--spd)) cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  animation: room-ring calc(900ms * var(--spd)) cubic-bezier(0.2, 0.7, 0.3, 1)
+    both;
 }
 
 #room-embers {
@@ -60,42 +61,115 @@ body.is-open #room-ring {
   background: #6f6bb8;
 }
 
-.ember:nth-child(1) { --dx: -120px; --dy: -160px; --d: 80ms; }
-.ember:nth-child(2) { --dx: -60px; --dy: -210px; --d: 140ms; }
-.ember:nth-child(3) { --dx: -200px; --dy: -90px; --d: 100ms; }
-.ember:nth-child(4) { --dx: -30px; --dy: -120px; --d: 200ms; }
-.ember:nth-child(5) { --dx: 40px; --dy: -170px; --d: 60ms; }
-.ember:nth-child(6) { --dx: -150px; --dy: -200px; --d: 180ms; }
-.ember:nth-child(7) { --dx: -260px; --dy: -170px; --d: 120ms; }
-.ember:nth-child(8) { --dx: -90px; --dy: -60px; --d: 240ms; }
-.ember:nth-child(9) { --dx: 20px; --dy: -90px; --d: 160ms; }
-.ember:nth-child(10) { --dx: -180px; --dy: -30px; --d: 220ms; }
-.ember:nth-child(11) { --dx: -230px; --dy: -240px; --d: 260ms; }
-.ember:nth-child(12) { --dx: -110px; --dy: -130px; --d: 40ms; }
+.ember:nth-child(1) {
+  --dx: -120px;
+  --dy: -160px;
+  --d: 80ms;
+}
+.ember:nth-child(2) {
+  --dx: -60px;
+  --dy: -210px;
+  --d: 140ms;
+}
+.ember:nth-child(3) {
+  --dx: -200px;
+  --dy: -90px;
+  --d: 100ms;
+}
+.ember:nth-child(4) {
+  --dx: -30px;
+  --dy: -120px;
+  --d: 200ms;
+}
+.ember:nth-child(5) {
+  --dx: 40px;
+  --dy: -170px;
+  --d: 60ms;
+}
+.ember:nth-child(6) {
+  --dx: -150px;
+  --dy: -200px;
+  --d: 180ms;
+}
+.ember:nth-child(7) {
+  --dx: -260px;
+  --dy: -170px;
+  --d: 120ms;
+}
+.ember:nth-child(8) {
+  --dx: -90px;
+  --dy: -60px;
+  --d: 240ms;
+}
+.ember:nth-child(9) {
+  --dx: 20px;
+  --dy: -90px;
+  --d: 160ms;
+}
+.ember:nth-child(10) {
+  --dx: -180px;
+  --dy: -30px;
+  --d: 220ms;
+}
+.ember:nth-child(11) {
+  --dx: -230px;
+  --dy: -240px;
+  --d: 260ms;
+}
+.ember:nth-child(12) {
+  --dx: -110px;
+  --dy: -130px;
+  --d: 40ms;
+}
 
 body.is-open .ember {
-  animation: room-emberOut calc(1000ms * var(--spd)) cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  animation: room-emberOut calc(1000ms * var(--spd))
+    cubic-bezier(0.2, 0.7, 0.3, 1) both;
   animation-delay: calc(var(--d) * var(--spd));
 }
 
 body.is-closing .ember {
-  animation: room-emberIn calc(620ms * var(--spd)) cubic-bezier(0.5, 0, 0.8, 0.4) both;
+  animation: room-emberIn calc(620ms * var(--spd))
+    cubic-bezier(0.5, 0, 0.8, 0.4) both;
   animation-delay: calc(var(--d) * 0.5 * var(--spd));
 }
 
 @keyframes room-ring {
-  0% { transform: scale(0.5); opacity: 0.8; }
-  100% { transform: scale(4.2); opacity: 0; }
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(4.2);
+    opacity: 0;
+  }
 }
 
 @keyframes room-emberOut {
-  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  15% { opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+  0% {
+    transform: translate(0, 0) scale(0.3);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.2);
+    opacity: 0;
+  }
 }
 
 @keyframes room-emberIn {
-  0% { transform: translate(calc(var(--dx) * 0.7), calc(var(--dy) * 0.7)) scale(0.8); opacity: 0; }
-  30% { opacity: 1; }
-  100% { transform: translate(0, 0) scale(0.2); opacity: 0; }
+  0% {
+    transform: translate(calc(var(--dx) * 0.7), calc(var(--dy) * 0.7))
+      scale(0.8);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) scale(0.2);
+    opacity: 0;
+  }
 }

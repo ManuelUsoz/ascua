@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RoomState } from '../../core/room/room-state';
+import { i18nTesting } from '../../testing/i18n';
 import { Room } from './room';
 
 describe('Room', () => {
@@ -16,6 +17,7 @@ describe('Room', () => {
     room.collapse.mockClear();
     room.close.mockClear();
     TestBed.configureTestingModule({
+      imports: [i18nTesting()],
       providers: [provideRouter([]), { provide: RoomState, useValue: room }],
     });
   });
@@ -48,9 +50,10 @@ describe('Room', () => {
 
   it('minimizes back to the avatar and closes Ascua', async () => {
     const { element } = await render();
-    button(element, 'Minimize').click();
+    button(element, 'Minimizar').click();
     expect(room.collapse).toHaveBeenCalledTimes(1);
-    button(element, 'Close').click();
+    button(element, 'Cerrar').click();
+    await Promise.resolve();
     expect(room.close).toHaveBeenCalledTimes(1);
   });
 

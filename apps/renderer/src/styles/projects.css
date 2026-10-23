@@ -1,0 +1,80 @@
+/* Proyectos screens: empty state, project form, pista popover. */
+.as-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  text-align: center;
+}
+.as-empty h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+}
+.as-empty p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.as-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) 20px 20px;
+  max-width: 880px;
+}
+.as-form__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+.as-form__row .as-input {
+  flex: 1;
+  min-width: 0;
+}
+.as-form__color {
+  width: 44px;
+  height: 34px;
+  padding: 2px;
+  border-radius: var(--radius-s);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line-strong);
+  cursor: pointer;
+}
+.as-form__delete {
+  margin-left: auto;
+}
+
+.as-pista-form {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 20px;
+  z-index: 5;
+  width: min(420px, calc(100% - 40px));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  box-shadow:
+    var(--shadow-highlight),
+    0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.as-pista-form__row {
+  display: flex;
+  gap: 10px;
+}
+.as-pista-form__row .as-form__field:first-child {
+  flex: 1;
+}
+.as-pista-form__port {
+  width: 96px;
+}
+.as-pista-form__folder {
+  justify-content: flex-start;
+}

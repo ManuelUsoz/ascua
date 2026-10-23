@@ -1,0 +1,222 @@
+<div class="as-files">
+  <section
+    class="as-panel as-files__tree"
+    [attr.aria-label]="'files.treeLabel' | transloco"
+  >
+    <label class="as-input as-input--quiet as-files__filter">
+      <app-icon name="search" />
+      <input
+        type="text"
+        id="files-filter"
+        [placeholder]="'files.filterPlaceholder' | transloco"
+        autocomplete="off"
+        spellcheck="false"
+        [value]="browser.query()"
+        (focus)="browser.ensureIndex()"
+        (input)="onQuery($event)"
+        (keydown.escape)="clearQuery($event)"
+      />
+    </label>
+
+    <div class="as-files__scroll">
+      @if (browser.query().trim()) {
+        @if (browser.indexError(); as err) {
+          @let reason = errorText(err);
+          <p class="as-files__note" role="alert">
+            {{
+              'files.indexError'
+                | transloco: { reason: (reason.key | transloco: reason.params) }
+            }}
+          </p>
+        } @else if (!browser.index()) {
+          <p class="as-files__note">{{ 'files.searching' | transloco }}</p>
+        } @else {
+          @for (path of browser.results(); track path) {
+            <button
+              type="button"
+              class="as-tree__row as-files__result"
+              [attr.aria-current]="browser.selected() === path ? 'true' : null"
+              [title]="path"
+              (click)="browser.open(path)"
+            >
+              <app-icon name="file" />
+              <span class="as-tree__name">{{ path }}</span>
+            </button>
+          } @empty {
+            <p class="as-files__note">{{ 'files.noResults' | transloco }}</p>
+          }
+          @if (browser.index()?.truncated) {
+            <p class="as-files__note">{{ 'files.truncated' | transloco }}</p>
+          }
+        }
+      } @else {
+        @let root = browser.root();
+        @if (root === 'loading') {
+          <p class="as-files__note">{{ 'files.loading' | transloco }}</p>
+        } @else if (dirState(root); as err) {
+          @let rootError = errorText(err);
+          <p class="as-files__note" role="alert">
+            {{ rootError.key | transloco: rootError.params }}
+          </p>
+        }
+        @for (row of browser.rows(); track row.entry.path) {
+          <button
+            type="button"
+            class="as-tree__row"
+            [style.padding-left.px]="8 + row.depth * 14"
+            [attr.aria-current]="
+              browser.selected() === row.entry.path ? 'true' : null
+            "
+            [attr.aria-expanded]="
+              row.entry.dir ? browser.expanded().has(row.entry.path) : null
+            "
+            (click)="
+              row.entry.dir
+                ? browser.toggle(row.entry.path)
+                : browser.open(row.entry.path)
+            "
+          >
+            @if (row.entry.dir) {
+              <app-icon
+                [name]="
+                  browser.expanded().has(row.entry.path)
+                    ? 'chevron-down'
+                    : 'chevron-right'
+                "
+              />
+            } @else {
+              <app-icon name="file" />
+            }
+            <span class="as-tree__name">{{ row.entry.name }}</span>
+          </button>
+        }
+      }
+    </div>
+  </section>
+
+  <section
+    class="as-panel as-files__viewer"
+    [attr.aria-label]="'files.viewerLabel' | transloco"
+  >
+    @if (browser.selected(); as path) {
+      <div class="as-files__head">
+        <app-icon name="file" />
+        <span class="as-files__path" id="file-path">{{ path }}</span>
+        @if (browser.dirty()) {
+          <span
+            class="as-files__dirty"
+            role="img"
+            [attr.aria-label]="'files.dirty' | transloco"
+          ></span>
+        }
+        @if (browser.openError(); as err) {
+          @let openError = errorText(err);
+          <span class="as-files__err" role="alert">{{
+            openError.key | transloco: openError.params
+          }}</span>
+        }
+        @if (browser.baseline(); as b) {
+          @if (!b.editable) {
+            <span class="as-files__err" id="file-readonly">{{
+              'files.readOnly' | transloco
+            }}</span>
+          }
+        }
+        @if (browser.baseline()?.editable) {
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            id="file-save"
+            [disabled]="!browser.dirty() || browser.saving()"
+            (click)="browser.save(editorText())"
+          >
+            {{ 'files.save' | transloco }}
+          </button>
+        }
+        @if (openable()) {
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            (click)="browser.openInEditor()"
+          >
+            {{ 'files.openInEditor' | transloco }}<app-icon name="external" />
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            (click)="browser.reveal()"
+          >
+            {{ 'files.reveal' | transloco }}<app-icon name="external" />
+          </button>
+        }
+      </div>
+      @if (browser.conflict()) {
+        <div class="as-files__banner" role="alert">
+          <span>{{ 'files.conflict' | transloco }}</span>
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            (click)="browser.save(editorText(), true)"
+          >
+            {{ 'files.overwrite' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            (click)="browser.reload()"
+          >
+            {{ 'files.reload' | transloco }}
+          </button>
+        </div>
+      }
+      @if (unsaved.prompt() !== undefined) {
+        <div class="as-files__banner" role="alert">
+          <span>{{ 'files.unsaved' | transloco }}</span>
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            (click)="unsaved.answer(true)"
+          >
+            {{ 'files.discard' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            (click)="unsaved.answer(false)"
+          >
+            {{ 'files.keepEditing' | transloco }}
+          </button>
+        </div>
+      }
+      @if (browser.saveError(); as err) {
+        @let saveError = errorText(err);
+        <div class="as-files__banner" role="alert">
+          {{ saveError.key | transloco: saveError.params }}
+        </div>
+      }
+      @if (browser.baseline(); as base) {
+        <div class="as-files__body">
+          <app-code-editor
+            id="file-code"
+            class="as-files__editor"
+            [doc]="base"
+            (dirtyChange)="browser.setDirty($event)"
+            (save)="browser.save($event)"
+          />
+        </div>
+      } @else if (status(); as s) {
+        <p class="as-files__empty">{{ s.key | transloco: s.params }}</p>
+      } @else if (error(); as err) {
+        @let viewError = errorText(err);
+        <p class="as-files__empty" role="alert">
+          {{ viewError.key | transloco: viewError.params }}
+        </p>
+      } @else {
+        <p class="as-files__empty">{{ 'files.loading' | transloco }}</p>
+      }
+    } @else {
+      <p class="as-files__empty">{{ 'files.pick' | transloco }}</p>
+    }
+  </section>
+</div>

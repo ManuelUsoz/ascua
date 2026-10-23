@@ -31,6 +31,18 @@ function desktopApi() {
     onPermissionRequest: () => () => undefined,
     onPermissionDismissed: () => () => undefined,
     resolvePermission: vi.fn(async () => undefined),
+    listProjects: vi.fn(async () => []),
+    saveProject: vi.fn(),
+    deleteProject: vi.fn(async () => undefined),
+    pickProjectFolder: vi.fn(async () => undefined),
+    listTerminals: vi.fn(async () => []),
+    startTerminal: vi.fn(),
+    stopTerminal: vi.fn(async () => undefined),
+    replayTerminal: vi.fn(async () => ({ data: '', seq: 0 })),
+    writeTerminal: vi.fn(),
+    resizeTerminal: vi.fn(),
+    onTerminalOutput: () => () => undefined,
+    onTerminalChanged: () => () => undefined,
   };
   return { api, announce: (state: FullscreenState) => fullscreen?.(state) };
 }
@@ -79,6 +91,18 @@ describe('RoomState in the desktop shell', () => {
     TestBed.inject(RoomState);
     await vi.waitFor(() => expect(document.body.dataset['x']).toBe('left'));
     expect(document.body.dataset['y']).toBe('bottom');
+  });
+
+  it('forwards the window drag to main', () => {
+    const { api } = desktopApi();
+    TestBed.configureTestingModule({
+      providers: [{ provide: ASCUA_API, useValue: api }],
+    });
+    const room = TestBed.inject(RoomState);
+    room.dragStart();
+    room.dragEnd();
+    expect(api.dragStart).toHaveBeenCalledTimes(1);
+    expect(api.dragEnd).toHaveBeenCalledTimes(1);
   });
 
   it('blooms from the origin main announces and collapses on exit', async () => {

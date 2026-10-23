@@ -2,12 +2,21 @@
    ported character CSS and the room morph depend on each other's selectors.
    Order matters; add new partials after the ones they build on. */
 @import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@xterm/xterm/css/xterm.css';
 @import '../../../libs/character/src/lib/ascua.css';
 @import '../../../libs/character/src/lib/wisp.css';
 
 @import './styles/base.css';
+@import './styles/tokens.css';
 @import './styles/avatar.css';
 @import './styles/bubble.css';
 @import './styles/room.css';
+@import './styles/controls.css';
+@import './styles/workbench.css';
+@import './styles/projects.css';
+@import './styles/terminals.css';
+@import './styles/files.css';
+@import './styles/settings.css';
 @import './styles/bloom.css';
 @import './styles/motion.css';

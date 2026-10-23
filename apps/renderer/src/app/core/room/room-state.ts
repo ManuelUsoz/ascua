@@ -103,6 +103,15 @@ export class RoomState {
     if (!api) this.collapse(); // Browser preview: no shell to quit.
   }
 
+  /** Starts the OS-level window drag (compact mode, custom drag). */
+  dragStart(): void {
+    this.api?.dragStart();
+  }
+
+  dragEnd(): void {
+    this.api?.dragEnd();
+  }
+
   /**
    * The shell resizes to compact while the collapse animation is still up;
    * snap to the final compact frame before that size paints.

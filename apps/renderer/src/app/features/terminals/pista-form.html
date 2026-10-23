@@ -1,0 +1,89 @@
+<form
+  class="as-panel as-pista-form"
+  [formGroup]="form"
+  (ngSubmit)="save()"
+  (keydown.escape)="cancel($event)"
+  [attr.aria-label]="
+    (spec() ? 'terminals.pista.titleEdit' : 'terminals.pista.titleNew')
+      | transloco
+  "
+>
+  <div class="as-pista-form__row">
+    <div class="as-form__field">
+      <label class="as-label" for="pista-name">{{
+        'terminals.pista.name' | transloco
+      }}</label>
+      <input
+        id="pista-name"
+        class="as-input"
+        type="text"
+        formControlName="name"
+        autocomplete="off"
+      />
+    </div>
+    <div class="as-form__field as-pista-form__port">
+      <label class="as-label" for="pista-port">{{
+        'terminals.pista.port' | transloco
+      }}</label>
+      <input
+        id="pista-port"
+        class="as-input"
+        type="number"
+        formControlName="port"
+        min="1"
+        max="65535"
+      />
+    </div>
+  </div>
+  <div class="as-form__field">
+    <label class="as-label" for="pista-cmd">{{
+      'terminals.pista.command' | transloco
+    }}</label>
+    <input
+      id="pista-cmd"
+      class="as-input"
+      type="text"
+      formControlName="command"
+      autocomplete="off"
+    />
+  </div>
+  <div class="as-form__field">
+    <span class="as-label">{{ 'terminals.pista.folder' | transloco }}</span>
+    <button
+      type="button"
+      class="as-btn as-btn--quiet as-pista-form__folder"
+      (click)="pickFolder()"
+    >
+      <app-icon name="folder" />{{
+        folderText().key | transloco: folderText().params
+      }}
+    </button>
+  </div>
+  @if (error(); as message) {
+    <p class="as-form__error" role="alert">
+      {{ message.key | transloco: message.params }}
+    </p>
+  }
+  <div class="as-form__actions">
+    <button type="submit" class="as-btn as-btn--primary" [disabled]="saving()">
+      {{ 'terminals.pista.save' | transloco }}
+    </button>
+    <button type="button" class="as-btn as-btn--ghost" (click)="cancel()">
+      {{ 'terminals.pista.cancel' | transloco }}
+    </button>
+    @if (spec()) {
+      <button
+        type="button"
+        class="as-btn as-btn--danger as-form__delete"
+        (click)="remove()"
+      >
+        {{
+          (confirmingRemove()
+            ? 'terminals.pista.confirmRemove'
+            : 'terminals.pista.remove'
+          ) | transloco
+        }}
+      </button>
+    }
+  </div>
+</form>

@@ -1,0 +1,26 @@
+<div class="as-empty">
+  @if (store.projects().length === 0) {
+    <h1>{{ 'projects.index.emptyTitle' | transloco }}</h1>
+    <p>{{ 'projects.index.emptyHint' | transloco }}</p>
+    @if (available) {
+      <a class="as-btn as-btn--primary" routerLink="/proyectos/nuevo">
+        <app-icon name="plus" />{{ 'projects.index.newProject' | transloco }}
+      </a>
+    } @else {
+      <button type="button" class="as-btn as-btn--primary" disabled>
+        <app-icon name="plus" />{{ 'projects.index.newProject' | transloco }}
+      </button>
+    }
+  } @else {
+    <p>{{ 'projects.index.selectHint' | transloco }}</p>
+    @if (available) {
+      <a class="as-btn as-btn--quiet" routerLink="/proyectos/nuevo">
+        <app-icon name="plus" />{{ 'projects.index.newProject' | transloco }}
+      </a>
+    } @else {
+      <button type="button" class="as-btn as-btn--quiet" disabled>
+        <app-icon name="plus" />{{ 'projects.index.newProject' | transloco }}
+      </button>
+    }
+  }
+</div>

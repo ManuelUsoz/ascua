@@ -1,0 +1,13 @@
+{
+  "title": "Ajustes",
+  "language": {
+    "title": "Idioma",
+    "label": "Idioma de la aplicación",
+    "hint": "Se aplica al instante y se recuerda la próxima vez que abras Ascua.",
+    "error": "No se pudo cambiar el idioma."
+  },
+  "languages": {
+    "es": "Español",
+    "en": "English"
+  }
+}

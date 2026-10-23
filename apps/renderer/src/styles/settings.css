@@ -1,0 +1,37 @@
+/* Ajustes: one panel per setting, same column as the project form. */
+.as-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) 20px 20px;
+  max-width: 640px;
+}
+.as-settings__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+.as-settings__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.as-settings__title {
+  margin: 0;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 650;
+  color: var(--ink);
+}
+.as-settings__hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-muted);
+}
+.as-settings .as-select {
+  width: min(260px, 100%);
+}

@@ -1,0 +1,33 @@
+{
+  "index": {
+    "emptyTitle": "You have no projects yet",
+    "emptyHint": "Create one to start its terminals from here.",
+    "selectHint": "Pick a project from the list or create a new one.",
+    "newProject": "New project"
+  },
+  "notFound": {
+    "title": "I could not find that project",
+    "back": "Back to projects"
+  },
+  "form": {
+    "titleEdit": "Edit project",
+    "titleNew": "New project",
+    "name": "Name",
+    "folder": "Folder",
+    "pickFolder": "Choose folder",
+    "color": "Color",
+    "noColor": "No color",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirmDelete": "Sure? Delete",
+    "delete": "Delete project"
+  },
+  "page": {
+    "running": "{{running}} of {{total}} running",
+    "addPista": "Track",
+    "addTerminal": "Terminal",
+    "stopAll": "Stop all",
+    "edit": "Edit project",
+    "sections": "Project sections"
+  }
+}

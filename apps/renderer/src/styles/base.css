@@ -19,7 +19,12 @@ body {
   height: 100%;
   background: transparent;
   overflow: hidden;
-  font: 13px/1.4 'Inter Variable', Inter, 'Segoe UI', system-ui, sans-serif;
+  font:
+    13px/1.4 'Inter Variable',
+    Inter,
+    'Segoe UI',
+    system-ui,
+    sans-serif;
   color: var(--text);
   user-select: none;
 }

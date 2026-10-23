@@ -4,23 +4,27 @@ import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
 import { appRoutes } from './app.routes';
 import { RoomState } from './core/room/room-state';
+import { i18nTesting } from './testing/i18n';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App],
+      imports: [App, i18nTesting()],
       providers: [provideRouter(appRoutes)],
     }).compileComponents();
   });
 
-  it('renders the home screen inside the room', async () => {
+  it('renders the workbench shell and the empty state inside the room', async () => {
     const fixture = TestBed.createComponent(App);
     await TestBed.inject(Router).navigateByUrl('/');
     fixture.detectChanges();
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('#room main h1')?.textContent).toContain(
-      'Hello',
+    expect(compiled.querySelector('#room .as-rail')?.textContent).toContain(
+      'Proyectos',
+    );
+    expect(compiled.querySelector('#room main')?.textContent).toContain(
+      'Todavía no tenés proyectos',
     );
     fixture.destroy();
   });
@@ -54,7 +58,7 @@ describe('App window bindings', () => {
     room.collapse.mockClear();
     room.resized.mockClear();
     await TestBed.configureTestingModule({
-      imports: [App],
+      imports: [App, i18nTesting()],
       providers: [
         provideRouter(appRoutes),
         { provide: RoomState, useValue: room },

@@ -1,0 +1,21 @@
+<nav class="as-rail" [attr.aria-label]="'nav.spaces' | transloco">
+  <div class="as-rail__ascua" aria-hidden="true">
+    <div appCharacter="rail" [characterPaused]="!room.open()"></div>
+  </div>
+  <a
+    class="as-rail__item"
+    routerLink="/proyectos"
+    routerLinkActive
+    ariaCurrentWhenActive="page"
+  >
+    <app-icon name="folder" [large]="true" />{{ 'nav.projects' | transloco }}
+  </a>
+  <a
+    class="as-rail__item"
+    routerLink="/ajustes"
+    routerLinkActive
+    ariaCurrentWhenActive="page"
+  >
+    <app-icon name="settings" [large]="true" />{{ 'nav.settings' | transloco }}
+  </a>
+</nav>

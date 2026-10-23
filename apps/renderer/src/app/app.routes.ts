@@ -3,9 +3,20 @@ import { Route } from '@angular/router';
 /**
  * Screens shown inside the room. Each feature lives in `features/<name>/` and
  * default-exports its routes from `<name>.routes.ts`; register it here with
- * `loadChildren` so it stays out of the initial bundle.
+ * `loadChildren` so it stays out of the initial bundle. `data.area` is the
+ * `nav.*` key of the rail item the breadcrumb shows when no project is open.
  */
 export const appRoutes: Route[] = [
-  { path: '', loadChildren: () => import('./features/home/home.routes') },
-  { path: '**', redirectTo: '' },
+  { path: '', pathMatch: 'full', redirectTo: 'proyectos' },
+  {
+    path: 'proyectos',
+    loadChildren: () => import('./features/projects/projects.routes'),
+    data: { area: 'nav.projects' },
+  },
+  {
+    path: 'ajustes',
+    loadChildren: () => import('./features/settings/settings.routes'),
+    data: { area: 'nav.settings' },
+  },
+  { path: '**', redirectTo: 'proyectos' },
 ];

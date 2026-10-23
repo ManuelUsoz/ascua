@@ -1,0 +1,31 @@
+<header id="room-bar" class="as-bar">
+  <div class="as-bar__crumbs">
+    @if (project(); as p) {
+      <b>{{ p.name }}</b>
+    } @else {
+      <b>{{ area() | transloco }}</b>
+    }
+    @if (section(); as s) {
+      <span>/</span>
+      <span>{{ s | transloco }}</span>
+    }
+  </div>
+  <span class="room-buttons">
+    <button
+      class="wbtn"
+      type="button"
+      [attr.aria-label]="'room.minimize' | transloco"
+      (click)="room.collapse()"
+    >
+      <app-icon name="minimize" />
+    </button>
+    <button
+      class="wbtn"
+      type="button"
+      [attr.aria-label]="'room.close' | transloco"
+      (click)="close()"
+    >
+      <app-icon name="close" />
+    </button>
+  </span>
+</header>
