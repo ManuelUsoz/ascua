@@ -16,7 +16,10 @@ describe('visibleRows', () => {
   ]);
 
   it('shows only the root when nothing is expanded', () => {
-    expect(visibleRows(children, new Set()).map((r) => r.entry.path)).toEqual(['web', 'README.md']);
+    expect(visibleRows(children, new Set()).map((r) => r.entry.path)).toEqual([
+      'web',
+      'README.md',
+    ]);
   });
 
   it('nests expanded directories with their depth', () => {
@@ -36,7 +39,12 @@ describe('visibleRows', () => {
 });
 
 describe('filterIndex', () => {
-  const files = ['docs/index.md', 'src/index.ts', 'index-notes/readme.md', 'README.md'];
+  const files = [
+    'docs/index.md',
+    'src/index.ts',
+    'index-notes/readme.md',
+    'README.md',
+  ];
 
   it('is case-insensitive and puts basename matches first', () => {
     expect(filterIndex(files, 'INDEX')).toEqual([

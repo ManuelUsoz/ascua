@@ -62,7 +62,10 @@ describe('PermissionQueue', () => {
     push(wipe);
     expect(queue.current()).toBe(edit);
     expect(queue.currentAct()).toBe('alert');
-    expect(queue.queuedText()).toBe('+1 waiting');
+    expect(queue.queuedText()).toEqual({
+      key: 'bubble.queued',
+      params: { count: 1 },
+    });
     expect(companion.need).toHaveBeenCalledTimes(1);
     expect(companion.need).toHaveBeenCalledWith('alert');
     expect(room.collapse).toHaveBeenCalledTimes(2);

@@ -1,0 +1,263 @@
+/* Workbench controls: the ds components the room uses, from ascua-ds.css. */
+.as-ico {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.as-ico--l {
+  width: 20px;
+  height: 20px;
+}
+
+:where(.as-btn, .as-tab, .as-rail__item, .as-tree__row):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+a.as-rail__item,
+a.as-tab,
+a.as-tree__row,
+a.as-btn {
+  text-decoration: none;
+}
+
+/* Button */
+.as-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-m);
+  border: 1px solid transparent;
+  font: 600 13px/1 var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    filter 0.15s,
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.as-btn--primary {
+  background: linear-gradient(180deg, var(--oro), var(--oro-deep));
+  color: var(--on-oro);
+  box-shadow: var(--shadow-oro);
+}
+.as-btn--primary:hover {
+  filter: brightness(1.06);
+}
+.as-btn--quiet {
+  background: var(--surface-sunken);
+  color: var(--ink);
+  border-color: var(--line-mid);
+}
+.as-btn--quiet:hover {
+  border-color: var(--line-strong);
+}
+.as-btn--ghost {
+  background: transparent;
+  color: var(--ink-muted);
+}
+.as-btn--ghost:hover {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+.as-btn--danger {
+  background: transparent;
+  color: var(--alert);
+  border-color: var(--alert);
+}
+.as-btn--s {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-s);
+  font-size: 12px;
+}
+.as-btn--icon {
+  width: 32px;
+  padding: 0;
+}
+.as-btn--block {
+  width: 100%;
+}
+.as-btn:disabled,
+.as-btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Chips and counts */
+.as-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--radius-s);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  color: var(--ink-muted);
+  font: 500 11.5px/1 var(--font-mono);
+  white-space: nowrap;
+}
+.as-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  background: var(--oro);
+  color: var(--on-oro);
+  font: 700 10px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.as-count--quiet {
+  background: var(--surface-raised);
+  color: var(--ink-muted);
+  border-radius: var(--radius-xs);
+}
+
+/* State: a dot plus a word */
+.as-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 10.5px/12px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.as-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--idle);
+  flex: none;
+}
+[data-tone='ok'] {
+  --tone: var(--ok);
+}
+[data-tone='ask'] {
+  --tone: var(--ask);
+}
+[data-tone='warn'] {
+  --tone: var(--warn);
+}
+[data-tone='alert'] {
+  --tone: var(--alert);
+}
+[data-tone='live'] {
+  --tone: var(--oro);
+}
+.as-state[data-tone] {
+  color: var(--tone);
+}
+[data-tone] > .as-dot,
+.as-dot[data-tone] {
+  background: var(--tone);
+}
+[data-tone='ask'] > .as-dot,
+.as-dot[data-tone='ask'],
+[data-tone='alert'] > .as-dot,
+.as-dot[data-tone='alert'] {
+  box-shadow: 0 0 8px var(--tone);
+}
+[data-tone='live'] > .as-dot,
+.as-dot[data-tone='live'] {
+  animation: as-pulse 1.6s ease-in-out infinite;
+}
+@keyframes as-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .as-dot {
+    animation: none !important;
+  }
+}
+
+/* Form fields */
+.as-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.as-form__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.as-form__error {
+  margin: 0;
+  color: var(--alert);
+  font-size: 13px;
+}
+.as-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.as-label {
+  font: 600 10.5px/12px var(--font-mono);
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+.as-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-highlight);
+}
+.as-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--radius-s);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  font: 400 13px/1 var(--font-sans);
+  box-sizing: border-box;
+  user-select: text;
+}
+/* Native select dressed as .as-input, with a drawn chevron. */
+.as-select {
+  appearance: none;
+  padding-right: 30px;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-faint) 50%),
+    linear-gradient(135deg, var(--ink-faint) 50%, transparent 50%);
+  background-position:
+    calc(100% - 15px) 50%,
+    calc(100% - 10px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+.as-select:hover {
+  border-color: var(--violeta);
+}
+.as-select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.as-select option {
+  background: var(--surface-raised);
+  color: var(--ink);
+}

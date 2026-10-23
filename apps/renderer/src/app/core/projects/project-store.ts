@@ -8,6 +8,11 @@ import type {
 } from '@ascua/ipc';
 import { ASCUA_API } from '../bridge/ascua-api';
 
+const NO_DESKTOP: SaveProjectResult = {
+  ok: false,
+  error: { code: 'noDesktop' },
+};
+
 /** The save payload of a stored project, optionally with other terminals. */
 export function projectInput(
   project: Project,
@@ -30,6 +35,8 @@ export class ProjectStore {
   private readonly list = signal<Project[]>([]);
   private readonly ready = signal(false);
 
+  /** The desktop bridge is present (false in the browser preview). */
+  readonly available = this.api !== undefined;
   readonly projects = this.list.asReadonly();
   readonly loaded = this.ready.asReadonly();
   private readonly index = computed(
@@ -60,45 +67,41 @@ export class ProjectStore {
 
   async save(input: ProjectInput): Promise<SaveProjectResult> {
     const api = this.api;
-    if (!api) return { ok: false, error: 'Sin conexión con Ascua' };
+    if (!api) return NO_DESKTOP;
     const result = await api.saveProject(input);
-    if (result.ok) {
-      const saved = result.project;
-      this.list.update((projects) =>
-        projects.some((project) => project.id === saved.id)
-          ? projects.map((project) => (project.id === saved.id ? saved : project))
-          : [...projects, saved],
-      );
-    }
+    if (result.ok) this.upsert(result.project);
     return result;
   }
 
-  /** Add a pista to a project, or replace the one with the same id. */
+  private upsert(saved: Project): void {
+    this.list.update((projects) =>
+      projects.some((project) => project.id === saved.id)
+        ? projects.map((project) => (project.id === saved.id ? saved : project))
+        : [...projects, saved],
+    );
+  }
+
+  /** Add a pista to a project, or replace the one with the same id. Main edits the stored project atomically. */
   async savePista(
     projectId: string,
     spec: TerminalSpecInput,
   ): Promise<SaveProjectResult> {
-    const project = this.byId(projectId);
-    if (!project) return { ok: false, error: 'No existe el proyecto.' };
-    const terminals: TerminalSpecInput[] =
-      spec.id && project.terminals.some((t) => t.id === spec.id)
-        ? project.terminals.map((t) => (t.id === spec.id ? spec : t))
-        : [...project.terminals, spec];
-    return this.save(projectInput(project, terminals));
+    const api = this.api;
+    if (!api) return NO_DESKTOP;
+    const result = await api.savePista(projectId, spec);
+    if (result.ok) this.upsert(result.project);
+    return result;
   }
 
   async removePista(
     projectId: string,
     terminalId: string,
   ): Promise<SaveProjectResult> {
-    const project = this.byId(projectId);
-    if (!project) return { ok: false, error: 'No existe el proyecto.' };
-    return this.save(
-      projectInput(
-        project,
-        project.terminals.filter((t) => t.id !== terminalId),
-      ),
-    );
+    const api = this.api;
+    if (!api) return NO_DESKTOP;
+    const result = await api.removePista(projectId, terminalId);
+    if (result.ok) this.upsert(result.project);
+    return result;
   }
 
   async pickPistaFolder(

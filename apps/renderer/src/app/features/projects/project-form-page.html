@@ -1,49 +1,114 @@
 @if (missing()) {
-  <div class="projects-empty">
-    <h1>No encontré ese proyecto</h1>
-    <a class="as-btn as-btn--quiet" routerLink="/proyectos">Volver a proyectos</a>
+  <div class="as-empty">
+    <h1>{{ 'projects.notFound.title' | transloco }}</h1>
+    <a class="as-btn as-btn--quiet" routerLink="/proyectos">{{
+      'projects.notFound.back' | transloco
+    }}</a>
   </div>
 } @else {
-  <div class="v9-head">
-    <h1>{{ projectId() ? 'Editar proyecto' : 'Nuevo proyecto' }}</h1>
+  <div class="as-page-head">
+    <h1>
+      {{
+        (projectId() ? 'projects.form.titleEdit' : 'projects.form.titleNew')
+          | transloco
+      }}
+    </h1>
   </div>
 
-  <form class="project-form" [formGroup]="form" (ngSubmit)="save()">
-    <section class="v9-panel project-form__panel">
-      <div class="project-form__field">
-        <label class="v9-label" for="pf-name">Nombre</label>
-        <input id="pf-name" class="v9-input" type="text" formControlName="name" autocomplete="off" />
+  <form class="as-form" [formGroup]="form" (ngSubmit)="save()">
+    <section class="as-panel as-form__panel">
+      <div class="as-form__field">
+        <label class="as-label" for="pf-name">{{
+          'projects.form.name' | transloco
+        }}</label>
+        <input
+          id="pf-name"
+          class="as-input"
+          type="text"
+          formControlName="name"
+          autocomplete="off"
+        />
       </div>
 
-      <div class="project-form__field">
-        <label class="v9-label" for="pf-path">Carpeta</label>
-        <div class="project-form__row">
-          <input id="pf-path" class="v9-input" type="text" formControlName="path" readonly />
-          <button type="button" class="as-btn as-btn--quiet" (click)="pickFolder()">
-            <app-icon name="folder" />Elegir carpeta
+      <div class="as-form__field">
+        <label class="as-label" for="pf-path">{{
+          'projects.form.folder' | transloco
+        }}</label>
+        <div class="as-form__row">
+          <input
+            id="pf-path"
+            class="as-input"
+            type="text"
+            formControlName="path"
+            readonly
+          />
+          <button
+            type="button"
+            class="as-btn as-btn--quiet"
+            (click)="pickFolder()"
+          >
+            <app-icon name="folder" />{{
+              'projects.form.pickFolder' | transloco
+            }}
           </button>
         </div>
       </div>
 
-      <div class="project-form__field">
-        <label class="v9-label" for="pf-color">Color</label>
-        <div class="project-form__row">
-          <input id="pf-color" class="project-form__color" type="color" formControlName="color" />
-          <button type="button" class="as-btn as-btn--ghost" (click)="clearColor()">Sin color</button>
+      <div class="as-form__field">
+        <label class="as-label" for="pf-color">{{
+          'projects.form.color' | transloco
+        }}</label>
+        <div class="as-form__row">
+          <input
+            id="pf-color"
+            class="as-form__color"
+            type="color"
+            formControlName="color"
+          />
+          <button
+            type="button"
+            class="as-btn as-btn--ghost"
+            (click)="clearColor()"
+          >
+            {{ 'projects.form.noColor' | transloco }}
+          </button>
         </div>
       </div>
     </section>
 
     @if (error(); as message) {
-      <p class="project-form__error" role="alert">{{ message }}</p>
+      <p class="as-form__error" role="alert">
+        {{ message.key | transloco: message.params }}
+      </p>
     }
 
-    <div class="project-form__actions">
-      <button type="submit" class="as-btn as-btn--primary" [disabled]="saving()">Guardar</button>
-      <a class="as-btn as-btn--ghost" [routerLink]="projectId() ? ['/proyectos', projectId(), 'terminales'] : '/proyectos'">Cancelar</a>
+    <div class="as-form__actions">
+      <button
+        type="submit"
+        class="as-btn as-btn--primary"
+        [disabled]="saving()"
+      >
+        {{ 'projects.form.save' | transloco }}
+      </button>
+      <a
+        class="as-btn as-btn--ghost"
+        [routerLink]="
+          projectId() ? ['/proyectos', projectId(), 'terminales'] : '/proyectos'
+        "
+        >{{ 'projects.form.cancel' | transloco }}</a
+      >
       @if (projectId()) {
-        <button type="button" class="as-btn as-btn--danger project-form__delete" (click)="remove()">
-          {{ confirmingDelete() ? '¿Seguro? Eliminar' : 'Eliminar proyecto' }}
+        <button
+          type="button"
+          class="as-btn as-btn--danger as-form__delete"
+          (click)="remove()"
+        >
+          {{
+            (confirmingDelete()
+              ? 'projects.form.confirmDelete'
+              : 'projects.form.delete'
+            ) | transloco
+          }}
         </button>
       }
     </div>

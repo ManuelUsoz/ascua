@@ -6,7 +6,13 @@ const linux = { ...info, platform: 'linux' as const };
 
 describe('isOpenable', () => {
   it('allows allowlisted documents, case-insensitively', () => {
-    for (const name of ['README.md', 'web/src/app.ts', 'a\\b.JSON', 'x.yml', 'main.rs']) {
+    for (const name of [
+      'README.md',
+      'web/src/app.ts',
+      'a\\b.JSON',
+      'x.yml',
+      'main.rs',
+    ]) {
       expect(isOpenable(name, info)).toBe(true);
       expect(isOpenable(name, linux)).toBe(true);
     }
@@ -17,7 +23,17 @@ describe('isOpenable', () => {
   });
 
   it('refuses anything not allowlisted', () => {
-    for (const name of ['x.sh', 'x.py', 'x.js', 'x.mjs', 'run.cmd', 'x.ps1', 'Setup.EXE', 'x.Bat', 'x.rb']) {
+    for (const name of [
+      'x.sh',
+      'x.py',
+      'x.js',
+      'x.mjs',
+      'run.cmd',
+      'x.ps1',
+      'Setup.EXE',
+      'x.Bat',
+      'x.rb',
+    ]) {
       expect(isOpenable(name, info)).toBe(false);
     }
   });

@@ -1,4 +1,10 @@
-export type EditorLanguage = 'typescript' | 'javascript' | 'json' | 'html' | 'css' | 'markdown';
+export type EditorLanguage =
+  | 'typescript'
+  | 'javascript'
+  | 'json'
+  | 'html'
+  | 'css'
+  | 'markdown';
 
 const BY_EXT: Readonly<Record<string, EditorLanguage>> = {
   ts: 'typescript',

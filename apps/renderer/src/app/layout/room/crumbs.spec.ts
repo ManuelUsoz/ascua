@@ -6,7 +6,11 @@ function node(
   data: Record<string, unknown>,
   child: ActivatedRouteSnapshot | null = null,
 ): ActivatedRouteSnapshot {
-  return { params, data, firstChild: child } as unknown as ActivatedRouteSnapshot;
+  return {
+    params,
+    data,
+    firstChild: child,
+  } as unknown as ActivatedRouteSnapshot;
 }
 
 describe('crumbsFrom', () => {
@@ -20,16 +24,27 @@ describe('crumbsFrom', () => {
       {},
       node(
         { projectId: 'p1' },
-        { section: 'Proyecto' },
-        node({ projectId: 'p1' }, { section: 'Terminales' }),
+        { section: 'nav.edit' },
+        node({ projectId: 'p1' }, { section: 'nav.terminals' }),
       ),
     );
-    expect(crumbsFrom(tree)).toEqual({ projectId: 'p1', section: 'Terminales' });
+    expect(crumbsFrom(tree)).toEqual({
+      projectId: 'p1',
+      section: 'nav.terminals',
+    });
+  });
+
+  it('reads the area of ajustes', () => {
+    expect(
+      crumbsFrom(
+        node({}, {}, node({}, { area: 'nav.settings' }, node({}, {}))),
+      ),
+    ).toEqual({ area: 'nav.settings' });
   });
 
   it('keeps a section without a project', () => {
-    expect(crumbsFrom(node({}, { section: 'Nuevo proyecto' }))).toEqual({
-      section: 'Nuevo proyecto',
+    expect(crumbsFrom(node({}, { section: 'nav.newProject' }))).toEqual({
+      section: 'nav.newProject',
     });
   });
 });

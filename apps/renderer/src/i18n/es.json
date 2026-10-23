@@ -1,0 +1,79 @@
+{
+  "nav": {
+    "projects": "Proyectos",
+    "terminals": "Terminales",
+    "files": "Archivos",
+    "newProject": "Nuevo proyecto",
+    "edit": "Editar",
+    "settings": "Ajustes",
+    "spaces": "Espacios"
+  },
+  "room": {
+    "minimize": "Minimizar",
+    "close": "Cerrar"
+  },
+  "bubble": {
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "inTerminal": "En la terminal",
+    "queued": "+{{count}} en espera"
+  },
+  "side": {
+    "heading": "PROYECTOS",
+    "newProject": "Nuevo proyecto",
+    "startAll": "Levantar todo"
+  },
+  "state": {
+    "running": "Corriendo",
+    "stopped": "Detenida",
+    "failed": "Falló",
+    "failedCode": "Falló (código {{code}})"
+  },
+  "errors": {
+    "unknown": "Error inesperado: {{detail}}",
+    "noDesktop": "Solo disponible en la app de escritorio.",
+    "project": {
+      "notFound": "No existe el proyecto.",
+      "invalid": "Datos de proyecto inválidos.",
+      "nameRequired": "El proyecto necesita un nombre.",
+      "folderRequired": "El proyecto necesita una carpeta.",
+      "folderNotAbsolute": "La carpeta del proyecto debe ser absoluta.",
+      "invalidColor": "El color debe tener el formato #rrggbb.",
+      "terminalInvalid": "Datos de terminal inválidos.",
+      "terminalNameRequired": "Cada terminal necesita un nombre.",
+      "terminalCommandRequired": "\"{{name}}\" necesita un comando.",
+      "terminalCwdAbsolute": "La carpeta de \"{{name}}\" debe ser relativa al proyecto.",
+      "terminalCwdOutside": "La carpeta de \"{{name}}\" no puede salir del proyecto.",
+      "terminalPortInvalid": "El puerto de \"{{name}}\" debe ser un entero entre 1 y 65535.",
+      "idMissing": "Falta un id",
+      "folderOutside": "La carpeta tiene que estar dentro del proyecto.",
+      "saveFailed": "No se pudo guardar el proyecto",
+      "deleteFailed": "No se pudo eliminar el proyecto"
+    },
+    "pista": {
+      "saveFailed": "No se pudo guardar la pista",
+      "removeFailed": "No se pudo quitar la pista"
+    },
+    "terminal": {
+      "notFound": "No existe la terminal.",
+      "folderMissing": "No existe la carpeta {{path}}",
+      "spawnFailed": "{{detail}}",
+      "openFailed": "No se pudo abrir la terminal",
+      "openFailedWith": "No se pudo abrir la terminal: {{detail}}"
+    },
+    "file": {
+      "gone": "El archivo ya no existe.",
+      "readDenied": "Sin permiso para leer el archivo.",
+      "writeDenied": "Sin permiso para escribir el archivo.",
+      "readFailed": "No se pudo leer el archivo.",
+      "writeFailed": "No se pudo guardar el archivo.",
+      "outside": "Ese archivo está fuera del proyecto.",
+      "invalidText": "Texto inválido.",
+      "notAFile": "Ese no es un archivo.",
+      "tooLargeToSave": "El archivo es demasiado grande para guardar.",
+      "notUtf8": "Ese archivo no está en UTF-8; no se puede guardar desde Ascua.",
+      "notOpenable": "Ese archivo no se abre desde Ascua; usá Mostrar en carpeta.",
+      "openFailed": "{{detail}}"
+    }
+  }
+}

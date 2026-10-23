@@ -1,5 +1,6 @@
 import { FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import type { TerminalSpec, TerminalSpecInput } from '@ascua/ipc';
+import { text, type Text } from '../../core/i18n/text';
 
 export type PistaForm = FormGroup<{
   name: FormControl<string>;
@@ -40,10 +41,13 @@ export function toTerminalInput(
   const cwd = value.cwd.trim();
   if (cwd) spec.cwd = cwd;
   // type=number inputs yield a number (or null when empty), never a string.
-  if (value.port !== null && value.port !== undefined) spec.port = Number(value.port);
+  if (value.port !== null && value.port !== undefined)
+    spec.port = Number(value.port);
   return spec;
 }
 
-export function folderLabel(cwd: string): string {
-  return cwd ? `${cwd}/` : 'raíz del proyecto';
+export function folderLabel(cwd: string): Text {
+  return cwd
+    ? text('terminals.pista.folderPath', { path: `${cwd}/` })
+    : text('terminals.pista.root');
 }

@@ -15,8 +15,10 @@ export function registerTerminalIpc(manager: TerminalManager): void {
     (_event, projectId: string, terminalId: string) =>
       manager.stop(projectId, terminalId),
   );
-  ipcMain.handle(IPC.openShell, (_event, projectId: string, size?: TerminalSize) =>
-    manager.openShell(projectId, size),
+  ipcMain.handle(
+    IPC.openShell,
+    (_event, projectId: string, size?: TerminalSize) =>
+      manager.openShell(projectId, size),
   );
   ipcMain.handle(
     IPC.closeShell,

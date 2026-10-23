@@ -22,6 +22,9 @@ export function injectCrumbs(): Signal<Crumbs> {
 
 export interface Crumbs {
   projectId?: string;
+  /** A `nav.*` catalog key: the rail area the route belongs to. */
+  area?: string;
+  /** A `nav.*` catalog key. */
   section?: string;
 }
 
@@ -32,6 +35,8 @@ export function crumbsFrom(root: ActivatedRouteSnapshot): Crumbs {
   while (route) {
     const projectId = route.params['projectId'];
     if (typeof projectId === 'string') crumbs.projectId = projectId;
+    const area = route.data['area'];
+    if (typeof area === 'string') crumbs.area = area;
     const section = route.data['section'];
     if (typeof section === 'string') crumbs.section = section;
     route = route.firstChild;

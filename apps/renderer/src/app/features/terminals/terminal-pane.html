@@ -3,7 +3,8 @@
     <app-icon [name]="spec() ? 'server' : 'terminal'" />
     <b>{{ name() }}</b>
     <span class="as-state" [attr.data-tone]="state().tone">
-      <span class="as-dot"></span>{{ state().label }}
+      <span class="as-dot"></span
+      >{{ state().label.key | transloco: state().label.params }}
     </span>
     @if (spec(); as spec) {
       @if (spec.port) {
@@ -13,7 +14,10 @@
       <button
         type="button"
         class="as-btn as-btn--ghost as-btn--s as-btn--icon"
-        [attr.aria-label]="(running() ? 'Detener ' : 'Iniciar ') + name()"
+        [attr.aria-label]="
+          (running() ? 'terminals.pane.stop' : 'terminals.pane.start')
+            | transloco: { name: name() }
+        "
         (click)="toggle()"
       >
         <app-icon [name]="running() ? 'stop' : 'play'" />
@@ -21,7 +25,7 @@
       <button
         type="button"
         class="as-btn as-btn--ghost as-btn--s as-btn--icon"
-        [attr.aria-label]="'Editar ' + name()"
+        [attr.aria-label]="'terminals.pane.edit' | transloco: { name: name() }"
         (click)="editor.edit(spec)"
       >
         <app-icon name="edit" />
@@ -32,7 +36,9 @@
         <button
           type="button"
           class="as-btn as-btn--ghost as-btn--s as-btn--icon"
-          [attr.aria-label]="'Reabrir ' + name()"
+          [attr.aria-label]="
+            'terminals.pane.reopen' | transloco: { name: name() }
+          "
           (click)="toggle()"
         >
           <app-icon name="play" />
@@ -41,7 +47,7 @@
       <button
         type="button"
         class="as-btn as-btn--ghost as-btn--s as-btn--icon"
-        [attr.aria-label]="'Cerrar ' + name()"
+        [attr.aria-label]="'terminals.pane.close' | transloco: { name: name() }"
         (click)="close()"
       >
         <app-icon name="close" />
@@ -52,7 +58,7 @@
     @if (session()) {
       <app-terminal-view [sessionId]="key()" />
     } @else {
-      <p class="as-term__empty">Detenida — iniciá para ver la salida</p>
+      <p class="as-term__empty">{{ 'terminals.pane.idle' | transloco }}</p>
     }
   </div>
 </section>

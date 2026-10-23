@@ -10,12 +10,18 @@ describe('pista form model', () => {
 
   it('keeps id, cwd and a numeric port', () => {
     expect(
-      toTerminalInput({ name: 'a', command: 'ls', cwd: 'web', port: 8080 }, 't1'),
+      toTerminalInput(
+        { name: 'a', command: 'ls', cwd: 'web', port: 8080 },
+        't1',
+      ),
     ).toEqual({ id: 't1', name: 'a', command: 'ls', cwd: 'web', port: 8080 });
   });
 
   it('labels the folder', () => {
-    expect(folderLabel('')).toBe('raíz del proyecto');
-    expect(folderLabel('web')).toBe('web/');
+    expect(folderLabel('')).toEqual({ key: 'terminals.pista.root' });
+    expect(folderLabel('web')).toEqual({
+      key: 'terminals.pista.folderPath',
+      params: { path: 'web/' },
+    });
   });
 });

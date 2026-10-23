@@ -1,13 +1,14 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { terminalKey } from '@ascua/ipc';
 import type {
+  AscuaError,
   Project,
   TerminalOutput,
   TerminalSession,
   TerminalSize,
 } from '@ascua/ipc';
 import { ASCUA_API } from '../bridge/ascua-api';
-import { errorMessage } from '../bridge/error-message';
+import { toAscuaError } from '../i18n/app-error';
 
 export type TerminalSink = (data: string) => void;
 
@@ -31,7 +32,7 @@ export class TerminalSessions {
 
   readonly sessions = this.all.asReadonly();
   /** Why the last "+ Terminal" failed; cleared on the next attempt. */
-  readonly shellError = signal<string | undefined>(undefined);
+  private readonly shellErrors = signal<Record<string, AscuaError>>({});
 
   constructor() {
     const api = this.api;
@@ -64,8 +65,13 @@ export class TerminalSessions {
 
   running(projectId: string): TerminalSession[] {
     return Object.values(this.all()).filter(
-      (session) => session.projectId === projectId && session.status === 'running',
+      (session) =>
+        session.projectId === projectId && session.status === 'running',
     );
+  }
+
+  shellError(projectId: string): AscuaError | undefined {
+    return this.shellErrors()[projectId];
   }
 
   /** Open ad-hoc shells of a project, in the order they were opened. */
@@ -90,18 +96,33 @@ export class TerminalSessions {
     size?: TerminalSize,
   ): Promise<TerminalSession | undefined> {
     if (!this.api) return undefined;
-    this.shellError.set(undefined);
+    this.setShellError(projectId, undefined);
     try {
       const session = await this.api.openShell(projectId, size);
       this.upsert(session);
       if (session.status === 'failed') {
-        this.shellError.set(`No se pudo abrir la terminal: ${session.error ?? 'error desconocido'}`);
+        this.setShellError(
+          projectId,
+          session.error ?? { code: 'terminal.openFailed' },
+        );
       }
       return session;
     } catch (e) {
-      this.shellError.set(`No se pudo abrir la terminal: ${errorMessage(e)}`);
+      this.setShellError(projectId, toAscuaError(e));
       return undefined;
     }
+  }
+
+  private setShellError(
+    projectId: string,
+    error: AscuaError | undefined,
+  ): void {
+    this.shellErrors.update((current) => {
+      const next = { ...current };
+      if (error === undefined) delete next[projectId];
+      else next[projectId] = error;
+      return next;
+    });
   }
 
   async close(projectId: string, terminalId: string): Promise<void> {

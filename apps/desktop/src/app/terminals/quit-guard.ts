@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog } from 'electron';
+import type { MainText } from '../i18n/main-messages';
 import type { PtyBackend } from './pty-backend';
 import type { TerminalManager } from './terminal-manager';
 
@@ -8,6 +9,7 @@ export interface QuitGuardOptions {
   window: () => BrowserWindow | null;
   /** Re-creates the window when a quit triggered by closing it is cancelled. */
   recreate: () => void;
+  text: MainText;
 }
 
 export function guardQuit({
@@ -15,6 +17,7 @@ export function guardQuit({
   backend,
   window,
   recreate,
+  text,
 }: QuitGuardOptions): void {
   let confirmed = false;
   let asking = false;
@@ -28,13 +31,13 @@ export function guardQuit({
     if (asking) return;
     asking = true;
 
-    const noun = running === 1 ? 'terminal corriendo' : 'terminales corriendo';
+    const { message, buttons } = text.quit(running);
     const options = {
       type: 'warning' as const,
-      buttons: ['Cerrar igual', 'Cancelar'],
+      buttons,
       defaultId: 1,
       cancelId: 1,
-      message: `Tenés ${running} ${noun}, ¿cerrar igual?`,
+      message,
     };
     const parent = window();
     const answer = parent

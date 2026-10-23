@@ -89,7 +89,11 @@ body[data-y='top'] #bubble::after {
   overflow: hidden;
   white-space: pre-wrap;
   word-break: break-all;
-  font: 12px/1.5 ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font:
+    12px/1.5 ui-monospace,
+    'Cascadia Mono',
+    Consolas,
+    monospace;
   opacity: 0.9;
 }
 
@@ -106,7 +110,9 @@ body[data-y='top'] #bubble::after {
   font-weight: 600;
   color: #fff;
   cursor: pointer;
-  transition: filter 0.15s ease, transform 0.15s ease;
+  transition:
+    filter 0.15s ease,
+    transform 0.15s ease;
 }
 
 #bubble button:hover {

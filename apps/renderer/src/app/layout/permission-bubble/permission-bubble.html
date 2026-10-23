@@ -7,18 +7,22 @@
       [characterPaused]="!queue.current()"
     ></span>
     <span id="tool">{{ queue.current()?.tool }}</span>
-    <span id="queued">{{ queue.queuedText() }}</span>
+    <span id="queued">
+      @if (queue.queuedText(); as queued) {
+        {{ queued.key | transloco: queued.params }}
+      }
+    </span>
   </header>
   <pre id="summary">{{ queue.current()?.summary }}</pre>
   <footer>
     <button type="button" class="allow" (click)="queue.decide('allow')">
-      Approve
+      {{ 'bubble.approve' | transloco }}
     </button>
     <button type="button" class="deny" (click)="queue.decide('deny')">
-      Reject
+      {{ 'bubble.reject' | transloco }}
     </button>
     <button type="button" class="quiet" (click)="queue.decide('terminal')">
-      In terminal
+      {{ 'bubble.inTerminal' | transloco }}
     </button>
   </footer>
 </section>

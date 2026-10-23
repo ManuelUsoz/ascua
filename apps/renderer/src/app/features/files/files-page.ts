@@ -1,4 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  viewChild,
+} from '@angular/core';
+import type { AscuaError } from '@ascua/ipc';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { errorText } from '../../core/i18n/app-error';
+import { text } from '../../core/i18n/text';
 import { UnsavedChanges } from '../../core/unsaved/unsaved-changes';
 import { Icon } from '../../shared/icon/icon';
 import { CodeEditor } from './code-editor';
@@ -7,7 +19,7 @@ import { FileBrowser } from './file-browser';
 /** Archivos tab: tree, "Ir a archivo…" filter and an in-place CodeMirror editor. */
 @Component({
   selector: 'app-files-page',
-  imports: [Icon, CodeEditor],
+  imports: [Icon, CodeEditor, TranslocoPipe],
   templateUrl: './files-page.html',
   providers: [FileBrowser],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,8 +37,9 @@ export class FilesPage {
   protected readonly status = computed(() => {
     const c = this.browser.content();
     if (!c || 'error' in c) return undefined;
-    if (c.kind === 'binary') return 'Archivo binario';
-    if (c.kind === 'too-large') return `Archivo muy grande (${Math.ceil(c.size / 1024)} KB)`;
+    if (c.kind === 'binary') return text('files.binary');
+    if (c.kind === 'too-large')
+      return text('files.tooLarge', { kb: Math.ceil(c.size / 1024) });
     return undefined;
   });
   protected readonly error = computed(() => {
@@ -53,9 +66,12 @@ export class FilesPage {
     (event.target as HTMLInputElement).value = '';
   }
 
-  protected dirState(state: unknown): string | undefined {
+  /** The catalog entry of a failure, for `key | transloco: params`. */
+  protected readonly errorText = errorText;
+
+  protected dirState(state: unknown): AscuaError | undefined {
     return typeof state === 'object' && state !== null && 'error' in state
-      ? String((state as { error: string }).error)
+      ? (state as { error: AscuaError }).error
       : undefined;
   }
 }

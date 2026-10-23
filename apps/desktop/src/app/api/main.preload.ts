@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import {
   IPC,
   type AscuaApi,
+  type AscuaError,
   type BloomOrigin,
   type FileContent,
   type SaveFileResult,
@@ -13,6 +14,7 @@ import {
   type PickTerminalFolderResult,
   type Project,
   type SaveProjectResult,
+  type Settings,
   type TerminalOutput,
   type TerminalReplay,
   type TerminalSession,
@@ -29,24 +31,40 @@ const api: AscuaApi = {
   toggleFullscreen: () =>
     ipcRenderer.invoke(IPC.toggleFullscreen) as Promise<BloomOrigin>,
   exitFullscreen: () => ipcRenderer.invoke(IPC.exitFullscreen) as Promise<void>,
-  isFullscreen: () =>
-    ipcRenderer.invoke(IPC.isFullscreen) as Promise<boolean>,
+  isFullscreen: () => ipcRenderer.invoke(IPC.isFullscreen) as Promise<boolean>,
   quit: () => ipcRenderer.invoke(IPC.quit) as Promise<void>,
   dragStart: () => ipcRenderer.invoke(IPC.dragStart) as Promise<void>,
   dragEnd: () => ipcRenderer.invoke(IPC.dragEnd) as Promise<void>,
   getLayout: () => ipcRenderer.invoke(IPC.getLayout) as Promise<Layout>,
+  getSettings: () => ipcRenderer.invoke(IPC.getSettings) as Promise<Settings>,
+  updateSettings: (patch) =>
+    ipcRenderer.invoke(IPC.updateSettings, patch) as Promise<Settings>,
+  onSettingsChanged: (callback) =>
+    listen<Settings>(IPC.settingsChanged, callback),
   onFullscreenChanged: (callback) =>
     listen<FullscreenState>(IPC.fullscreenChanged, callback),
   onLayoutChanged: (callback) => listen<Layout>(IPC.layoutChanged, callback),
-  onPermissionRequest: (callback) =>
-    listen(IPC.permissionRequest, callback),
+  onPermissionRequest: (callback) => listen(IPC.permissionRequest, callback),
   onPermissionDismissed: (callback) =>
     listen<number>(IPC.permissionDismissed, callback),
   resolvePermission: (id, decision: PermissionDecision) =>
     ipcRenderer.invoke(IPC.resolvePermission, id, decision) as Promise<void>,
-  listProjects: () => ipcRenderer.invoke(IPC.listProjects) as Promise<Project[]>,
+  listProjects: () =>
+    ipcRenderer.invoke(IPC.listProjects) as Promise<Project[]>,
   saveProject: (input) =>
     ipcRenderer.invoke(IPC.saveProject, input) as Promise<SaveProjectResult>,
+  savePista: (projectId, spec) =>
+    ipcRenderer.invoke(
+      IPC.savePista,
+      projectId,
+      spec,
+    ) as Promise<SaveProjectResult>,
+  removePista: (projectId, terminalId) =>
+    ipcRenderer.invoke(
+      IPC.removePista,
+      projectId,
+      terminalId,
+    ) as Promise<SaveProjectResult>,
   deleteProject: (id) =>
     ipcRenderer.invoke(IPC.deleteProject, id) as Promise<void>,
   pickProjectFolder: () =>
@@ -65,7 +83,11 @@ const api: AscuaApi = {
       size,
     ) as Promise<TerminalSession>,
   stopTerminal: (projectId, terminalId) =>
-    ipcRenderer.invoke(IPC.stopTerminal, projectId, terminalId) as Promise<void>,
+    ipcRenderer.invoke(
+      IPC.stopTerminal,
+      projectId,
+      terminalId,
+    ) as Promise<void>,
   openShell: (projectId, size) =>
     ipcRenderer.invoke(
       IPC.openShell,
@@ -92,7 +114,7 @@ const api: AscuaApi = {
     ipcRenderer.invoke(IPC.readFile, projectId, path) as Promise<FileContent>,
   openFile: (projectId, path) =>
     ipcRenderer.invoke(IPC.openFile, projectId, path) as Promise<
-      string | undefined
+      AscuaError | undefined
     >,
   writeFile: (projectId, path, text, version) =>
     ipcRenderer.invoke(
@@ -104,7 +126,7 @@ const api: AscuaApi = {
     ) as Promise<SaveFileResult>,
   revealFile: (projectId, path) =>
     ipcRenderer.invoke(IPC.revealFile, projectId, path) as Promise<
-      string | undefined
+      AscuaError | undefined
     >,
 };
 

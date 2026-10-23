@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { IPC, terminalKey } from '@ascua/ipc';
 import type {
+  AscuaError,
   Project,
   TerminalKind,
   TerminalReplay,
@@ -50,7 +51,7 @@ export class TerminalManager implements ProjectListener {
         id,
         projectId,
         terminalId,
-        'No existe el proyecto.',
+        { code: 'project.notFound' },
         current ? { kind: current.kind, name: current.name } : undefined,
       );
     }
@@ -62,7 +63,7 @@ export class TerminalManager implements ProjectListener {
           id,
           projectId,
           terminalId,
-          `No existe la carpeta ${project.path}`,
+          { code: 'terminal.folderMissing', params: { path: project.path } },
           { kind: 'shell', name: current.name },
         );
       }
@@ -81,15 +82,29 @@ export class TerminalManager implements ProjectListener {
     }
 
     const spec = project.terminals.find((t) => t.id === terminalId);
-    if (!spec) return this.fail(id, projectId, terminalId, 'No existe la terminal.');
+    if (!spec) {
+      return this.fail(id, projectId, terminalId, {
+        code: 'terminal.notFound',
+      });
+    }
 
     const cwd = resolve(project.path, spec.cwd ?? '.');
     if (!this.exists(cwd)) {
-      return this.fail(id, projectId, terminalId, `No existe la carpeta ${cwd}`);
+      return this.fail(id, projectId, terminalId, {
+        code: 'terminal.folderMissing',
+        params: { path: cwd },
+      });
     }
 
     return this.spawn(
-      { id, projectId, terminalId, kind: 'pista', status: 'running', stopping: false },
+      {
+        id,
+        projectId,
+        terminalId,
+        kind: 'pista',
+        status: 'running',
+        stopping: false,
+      },
       cwd,
       spec.command,
       size,
@@ -113,7 +128,7 @@ export class TerminalManager implements ProjectListener {
         kind: 'shell',
         name: 'shell',
         status: 'failed',
-        error: 'No existe el proyecto.',
+        error: { code: 'project.notFound' },
         stopping: false,
       });
     }
@@ -131,12 +146,20 @@ export class TerminalManager implements ProjectListener {
         id,
         projectId,
         terminalId,
-        `No existe la carpeta ${project.path}`,
+        { code: 'terminal.folderMissing', params: { path: project.path } },
         { kind: 'shell', name },
       );
     }
     return this.spawn(
-      { id, projectId, terminalId, kind: 'shell', name, status: 'running', stopping: false },
+      {
+        id,
+        projectId,
+        terminalId,
+        kind: 'shell',
+        name,
+        status: 'running',
+        stopping: false,
+      },
       project.path,
       undefined,
       size,
@@ -269,7 +292,7 @@ export class TerminalManager implements ProjectListener {
     id: string,
     projectId: string,
     terminalId: string,
-    error: string,
+    error: AscuaError,
     extra: { kind: TerminalKind; name?: string } = { kind: 'pista' },
   ): TerminalSession {
     const session: Session = {
@@ -302,7 +325,10 @@ export class TerminalManager implements ProjectListener {
     const ok = session.stopping || event.exitCode === 0;
     session.status = ok ? 'stopped' : 'failed';
     session.exitCode = event.exitCode;
-    session.error = ok ? undefined : event.error;
+    session.error =
+      ok || !event.error
+        ? undefined
+        : { code: 'terminal.spawnFailed', params: { detail: event.error } };
     session.stopping = false;
     this.notify(IPC.terminalChanged, this.view(session));
     for (const waiter of [...this.exitWaiters]) waiter();

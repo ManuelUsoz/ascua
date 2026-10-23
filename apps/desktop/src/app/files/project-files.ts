@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import type {
+  AscuaError,
+  ErrorCode,
   FileContent,
   FileEntry,
   FileIndex,
@@ -17,30 +19,29 @@ const hash = (data: Buffer): string =>
 const isUtf8 = (data: Buffer): boolean =>
   Buffer.from(data.toString('utf8'), 'utf8').equals(data);
 
-export class FileAccessError extends Error {}
-
-/** User-facing text for a failed file operation; never leaks raw fs messages. */
-export function friendlyFileError(
-  error: unknown,
-  action: 'read' | 'write' = 'read',
-): string {
-  if (error instanceof FileAccessError) return error.message;
-  const code = (error as NodeJS.ErrnoException | undefined)?.code;
-  if (code === 'ENOENT' || code === 'ENOTDIR') return 'El archivo ya no existe.';
-  if (code === 'EACCES' || code === 'EPERM') {
-    return action === 'write'
-      ? 'Sin permiso para escribir el archivo.'
-      : 'Sin permiso para leer el archivo.';
+/** A refused file operation; carries the code the renderer translates. */
+export class FileAccessError extends Error {
+  constructor(readonly code: ErrorCode) {
+    super(code);
   }
-  if (error instanceof Error && error.message === 'No existe el proyecto.') {
-    return error.message;
-  }
-  return action === 'write'
-    ? 'No se pudo guardar el archivo.'
-    : 'No se pudo leer el archivo.';
 }
 
-const OUTSIDE = 'Ese archivo está fuera del proyecto.';
+/** The code for a failed file operation; never leaks raw fs messages. */
+export function fileError(
+  error: unknown,
+  action: 'read' | 'write' = 'read',
+): AscuaError {
+  if (error instanceof FileAccessError) return { code: error.code };
+  const code = (error as NodeJS.ErrnoException | undefined)?.code;
+  if (code === 'ENOENT' || code === 'ENOTDIR') return { code: 'file.gone' };
+  if (code === 'EACCES' || code === 'EPERM') {
+    return {
+      code: action === 'write' ? 'file.writeDenied' : 'file.readDenied',
+    };
+  }
+  return { code: action === 'write' ? 'file.writeFailed' : 'file.readFailed' };
+}
+
 const SKIPPED_IN_INDEX = new Set(['.git', 'node_modules', 'dist']);
 
 export interface FileLimits {
@@ -69,15 +70,16 @@ export async function resolveInside(
   rel: unknown,
 ): Promise<string> {
   if (typeof rel !== 'string' || isAbsolute(rel)) {
-    throw new FileAccessError(OUTSIDE);
+    throw new FileAccessError('file.outside');
   }
   const target = resolve(root, rel);
-  if (!isInside(root, target)) throw new FileAccessError(OUTSIDE);
+  if (!isInside(root, target)) throw new FileAccessError('file.outside');
   const [realRoot, realTarget] = await Promise.all([
     fs.realpath(root),
     fs.realpath(target),
   ]);
-  if (!isInside(realRoot, realTarget)) throw new FileAccessError(OUTSIDE);
+  if (!isInside(realRoot, realTarget))
+    throw new FileAccessError('file.outside');
   return target;
 }
 
@@ -93,7 +95,7 @@ export class ProjectFiles {
 
   private async root(projectId: string): Promise<string> {
     const project = await this.repository.get(projectId);
-    if (!project) throw new Error('No existe el proyecto.');
+    if (!project) throw new FileAccessError('project.notFound');
     return project.path;
   }
 
@@ -179,18 +181,14 @@ export class ProjectFiles {
     version?: string,
   ): Promise<SaveFileResult> {
     const abs = await this.resolve(projectId, path);
-    if (typeof text !== 'string') throw new FileAccessError('Texto inválido.');
+    if (typeof text !== 'string') throw new FileAccessError('file.invalidText');
     const stat = await fs.stat(abs);
-    if (!stat.isFile()) throw new FileAccessError('Ese no es un archivo.');
+    if (!stat.isFile()) throw new FileAccessError('file.notAFile');
     if (Buffer.byteLength(text) > this.limits.readCap) {
-      throw new FileAccessError('El archivo es demasiado grande para guardar.');
+      throw new FileAccessError('file.tooLargeToSave');
     }
     const current = await fs.readFile(abs);
-    if (!isUtf8(current)) {
-      throw new FileAccessError(
-        'Ese archivo no está en UTF-8; no se puede guardar desde Ascua.',
-      );
-    }
+    if (!isUtf8(current)) throw new FileAccessError('file.notUtf8');
     if (version !== undefined && hash(current) !== version) {
       return { ok: false, conflict: true };
     }

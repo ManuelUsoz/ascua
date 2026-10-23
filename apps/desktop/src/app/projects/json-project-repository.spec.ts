@@ -1,4 +1,11 @@
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -27,6 +34,35 @@ function project(id: string, name = id): Project {
   };
 }
 
+describe('JsonProjectRepository.update', () => {
+  it('lands two concurrent updates and persists them', async () => {
+    const repo = new JsonProjectRepository(file);
+    await repo.save(project('a'));
+    const add =
+      (name: string) =>
+      (p: Project): Project => ({
+        ...p,
+        terminals: [...p.terminals, { id: name, name, command: 'x' }],
+      });
+    await Promise.all([
+      repo.update('a', add('one')),
+      repo.update('a', add('two')),
+    ]);
+
+    const again = new JsonProjectRepository(file);
+    expect((await again.get('a'))?.terminals.map((t) => t.id)).toEqual([
+      'a-t',
+      'one',
+      'two',
+    ]);
+  });
+
+  it('returns undefined for an unknown project', async () => {
+    const repo = new JsonProjectRepository(file);
+    expect(await repo.update('nope', (p) => p)).toBeUndefined();
+  });
+});
+
 describe('JsonProjectRepository', () => {
   it('starts empty and round-trips through a fresh instance', async () => {
     const repo = new JsonProjectRepository(file);
@@ -54,9 +90,17 @@ describe('JsonProjectRepository', () => {
 
   it('leaves no .tmp file behind, even with concurrent saves', async () => {
     const repo = new JsonProjectRepository(file);
-    await Promise.all([repo.save(project('a')), repo.save(project('b')), repo.remove('a')]);
-    expect(readdirSync(dir).filter((name) => name.endsWith('.tmp'))).toEqual([]);
-    expect((await new JsonProjectRepository(file).list()).map((p) => p.id)).toEqual(['b']);
+    await Promise.all([
+      repo.save(project('a')),
+      repo.save(project('b')),
+      repo.remove('a'),
+    ]);
+    expect(readdirSync(dir).filter((name) => name.endsWith('.tmp'))).toEqual(
+      [],
+    );
+    expect(
+      (await new JsonProjectRepository(file).list()).map((p) => p.id),
+    ).toEqual(['b']);
   });
 
   it('leaves the cache unchanged when persist fails', async () => {
@@ -81,7 +125,12 @@ describe('JsonProjectRepository', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const raw = JSON.stringify({
       version: 1,
-      projects: [project('a'), { id: 'bad', name: 5 }, null, { name: 'noid', path: dir }],
+      projects: [
+        project('a'),
+        { id: 'bad', name: 5 },
+        null,
+        { name: 'noid', path: dir },
+      ],
     });
     writeFileSync(file, raw);
     const repo = new JsonProjectRepository(file);
@@ -94,8 +143,14 @@ describe('JsonProjectRepository', () => {
     writeFileSync(file, '{ not json');
     const repo = new JsonProjectRepository(file);
     expect(await repo.list()).toEqual([]);
-    expect(readdirSync(dir).some((name) => name.startsWith('projects.json.corrupt-'))).toBe(true);
+    expect(
+      readdirSync(dir).some((name) =>
+        name.startsWith('projects.json.corrupt-'),
+      ),
+    ).toBe(true);
     await repo.save(project('a'));
-    expect((await new JsonProjectRepository(file).list()).map((p) => p.id)).toEqual(['a']);
+    expect(
+      (await new JsonProjectRepository(file).list()).map((p) => p.id),
+    ).toEqual(['a']);
   });
 });

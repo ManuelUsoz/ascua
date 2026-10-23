@@ -74,7 +74,11 @@ describe('TerminalManager', () => {
     const { manager, requests } = setup();
     const a = await manager.openShell('p1');
     const b = await manager.openShell('p1');
-    expect(a).toMatchObject({ kind: 'shell', name: 'shell', status: 'running' });
+    expect(a).toMatchObject({
+      kind: 'shell',
+      name: 'shell',
+      status: 'running',
+    });
     expect(b).toMatchObject({ kind: 'shell', name: 'shell 2' });
     expect(a.terminalId).not.toBe(b.terminalId);
     expect(requests[0]).toMatchObject({
@@ -133,7 +137,11 @@ describe('TerminalManager', () => {
     const shell = await manager.openShell('p1');
     emit({ type: 'exit', id: shell.id, exitCode: 0 });
     const again = await manager.start('p1', shell.terminalId);
-    expect(again).toMatchObject({ kind: 'shell', name: 'shell', status: 'running' });
+    expect(again).toMatchObject({
+      kind: 'shell',
+      name: 'shell',
+      status: 'running',
+    });
     expect(requests.filter((r) => r.type === 'spawn')).toHaveLength(2);
     expect(requests.at(-1)).toMatchObject({ cwd: project.path });
   });
@@ -181,7 +189,8 @@ describe('TerminalManager', () => {
     const { manager, requests } = setup(false);
     const session = await manager.start('p1', 't1');
     expect(session.status).toBe('failed');
-    expect(session.error).toContain('No existe la carpeta');
+    expect(session.error?.code).toBe('terminal.folderMissing');
+    expect(session.error?.params?.['path']).toBeDefined();
     expect(requests).toHaveLength(0);
   });
 

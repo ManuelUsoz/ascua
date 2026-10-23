@@ -17,6 +17,8 @@ export const IPC = {
   resolvePermission: 'ascua:permission:resolve',
   listProjects: 'ascua:projects:list',
   saveProject: 'ascua:projects:save',
+  savePista: 'ascua:projects:save-pista',
+  removePista: 'ascua:projects:remove-pista',
   deleteProject: 'ascua:projects:delete',
   pickProjectFolder: 'ascua:projects:pick-folder',
   pickTerminalFolder: 'ascua:projects:pick-terminal-folder',
@@ -37,7 +39,103 @@ export const IPC = {
   openFile: 'ascua:files:open',
   writeFile: 'ascua:files:write',
   revealFile: 'ascua:files:reveal',
+  getSettings: 'ascua:settings:get',
+  updateSettings: 'ascua:settings:update',
+  settingsChanged: 'ascua:settings:changed',
 } as const;
+
+export const LANGUAGES = ['es', 'en'] as const;
+export type Language = (typeof LANGUAGES)[number];
+
+export interface Settings {
+  language: Language;
+}
+
+export type SettingsPatch = Partial<Settings>;
+
+export const COMMON_ERROR_CODES = ['unknown', 'noDesktop'] as const;
+
+export const PROJECT_ERROR_CODES = [
+  'project.notFound',
+  'project.invalid',
+  'project.nameRequired',
+  'project.folderRequired',
+  'project.folderNotAbsolute',
+  'project.invalidColor',
+  'project.terminalInvalid',
+  'project.terminalNameRequired',
+  'project.terminalCommandRequired',
+  'project.terminalCwdAbsolute',
+  'project.terminalCwdOutside',
+  'project.terminalPortInvalid',
+  'project.idMissing',
+  'project.folderOutside',
+  'project.saveFailed',
+  'project.deleteFailed',
+  'pista.saveFailed',
+  'pista.removeFailed',
+] as const;
+
+export const TERMINAL_ERROR_CODES = [
+  'terminal.notFound',
+  'terminal.folderMissing',
+  'terminal.spawnFailed',
+  'terminal.openFailed',
+] as const;
+
+export const FILE_ERROR_CODES = [
+  'file.gone',
+  'file.readDenied',
+  'file.writeDenied',
+  'file.readFailed',
+  'file.writeFailed',
+  'file.outside',
+  'file.invalidText',
+  'file.notAFile',
+  'file.tooLargeToSave',
+  'file.notUtf8',
+  'file.notOpenable',
+  'file.openFailed',
+] as const;
+
+/** Every error code the renderer translates as `errors.<code>`. */
+export type ErrorCode =
+  | (typeof COMMON_ERROR_CODES)[number]
+  | (typeof PROJECT_ERROR_CODES)[number]
+  | (typeof TERMINAL_ERROR_CODES)[number]
+  | (typeof FILE_ERROR_CODES)[number];
+
+/** A failure main (or the renderer) reports as a code plus parameters. */
+export interface AscuaError {
+  code: ErrorCode;
+  params?: Record<string, string | number>;
+}
+
+const ERROR_PREFIX = 'ascua-error:';
+
+/** A rejected `invoke` only carries a message, so the error rides in it. */
+export function encodeError(error: AscuaError): string {
+  return ERROR_PREFIX + JSON.stringify(error);
+}
+
+/** Inverse of `encodeError`; undefined when the message is not an encoded error. */
+export function decodeError(message: string): AscuaError | undefined {
+  const at = message.indexOf(ERROR_PREFIX);
+  if (at < 0) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(message.slice(at + ERROR_PREFIX.length));
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      typeof (parsed as AscuaError).code === 'string'
+    ) {
+      return parsed as AscuaError;
+    }
+  } catch {
+    // Not JSON: fall through.
+  }
+  return undefined;
+}
 
 /** Which corner of the compact window the avatar hugs. */
 export interface Layout {
@@ -112,7 +210,7 @@ export type ProjectInput = Omit<Project, 'id' | 'terminals'> & {
 
 export type SaveProjectResult =
   | { ok: true; project: Project }
-  | { ok: false; error: string };
+  | { ok: false; error: AscuaError };
 
 export type TerminalStatus = 'running' | 'stopped' | 'failed';
 
@@ -129,7 +227,7 @@ export interface TerminalSession {
   name?: string;
   status: TerminalStatus;
   exitCode?: number;
-  error?: string;
+  error?: AscuaError;
 }
 
 export interface TerminalSize {
@@ -153,7 +251,7 @@ export interface TerminalReplay {
 /** `cwd` is relative to the project, '/'-separated; empty = project root. */
 export type PickTerminalFolderResult =
   | { ok: true; cwd: string }
-  | { ok: false; error: string };
+  | { ok: false; error: AscuaError };
 
 export interface FileEntry {
   name: string;
@@ -200,6 +298,9 @@ export interface AscuaApi {
   dragStart(): Promise<void>;
   dragEnd(): Promise<void>;
   getLayout(): Promise<Layout>;
+  getSettings(): Promise<Settings>;
+  updateSettings(patch: SettingsPatch): Promise<Settings>;
+  onSettingsChanged(callback: (settings: Settings) => void): () => void;
   onFullscreenChanged(callback: (state: FullscreenState) => void): () => void;
   onLayoutChanged(callback: (layout: Layout) => void): () => void;
   onPermissionRequest(
@@ -207,12 +308,18 @@ export interface AscuaApi {
   ): () => void;
   /** The hook disconnected before the user answered. */
   onPermissionDismissed(callback: (id: number) => void): () => void;
-  resolvePermission(
-    id: number,
-    decision: PermissionDecision,
-  ): Promise<void>;
+  resolvePermission(id: number, decision: PermissionDecision): Promise<void>;
   listProjects(): Promise<Project[]>;
   saveProject(input: ProjectInput): Promise<SaveProjectResult>;
+  /** Add a pista or replace the one with the same id, atomically in main. */
+  savePista(
+    projectId: string,
+    spec: TerminalSpecInput,
+  ): Promise<SaveProjectResult>;
+  removePista(
+    projectId: string,
+    terminalId: string,
+  ): Promise<SaveProjectResult>;
   deleteProject(id: string): Promise<void>;
   /** Native folder picker; `undefined` when cancelled. */
   pickProjectFolder(): Promise<string | undefined>;
@@ -245,10 +352,10 @@ export interface AscuaApi {
   fileIndex(projectId: string): Promise<FileIndex>;
   readFile(projectId: string, path: string): Promise<FileContent>;
   /**
-   * Open in the default app; resolves to an error message, or undefined.
+   * Open in the default app; resolves to an error, or undefined.
    * Refuses files that are not openable (binary, launchable, executable).
    */
-  openFile(projectId: string, path: string): Promise<string | undefined>;
+  openFile(projectId: string, path: string): Promise<AscuaError | undefined>;
   /** Save text in place. Without `version` it overwrites; with it, a file
    * changed on disk yields a conflict instead of a write. */
   writeFile(
@@ -257,6 +364,6 @@ export interface AscuaApi {
     text: string,
     version?: string,
   ): Promise<SaveFileResult>;
-  /** Show in the file manager; resolves to an error message, or undefined. */
-  revealFile(projectId: string, path: string): Promise<string | undefined>;
+  /** Show in the file manager; resolves to an error, or undefined. */
+  revealFile(projectId: string, path: string): Promise<AscuaError | undefined>;
 }

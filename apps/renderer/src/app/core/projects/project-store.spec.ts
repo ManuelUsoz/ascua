@@ -44,7 +44,11 @@ describe('ProjectStore', () => {
     const store = setup(api);
     await store.reload();
 
-    const created = await store.save({ name: 'Beta', path: '/b', terminals: [] });
+    const created = await store.save({
+      name: 'Beta',
+      path: '/b',
+      terminals: [],
+    });
     expect(created.ok).toBe(true);
     expect(store.projects().map((p) => p.id)).toEqual(['a', 'b']);
 
@@ -59,53 +63,51 @@ describe('ProjectStore', () => {
   });
 
   it('does not change the list when saving fails', async () => {
-    api.saveProject = vi.fn(async () => ({ ok: false as const, error: 'mal' }));
+    const error = { code: 'project.nameRequired' as const };
+    api.saveProject = vi.fn(async () => ({ ok: false as const, error }));
     const store = setup(api);
     await store.reload();
     const result = await store.save({ name: '', path: '', terminals: [] });
-    expect(result).toEqual({ ok: false, error: 'mal' });
+    expect(result).toEqual({ ok: false, error });
     expect(store.projects()).toEqual([alpha]);
   });
 
-  it('savePista appends, replaces by id and removePista drops', async () => {
-    const withPista: Project = {
+  it('pista edits go to the API as-is and the store keeps what main returns', async () => {
+    const first: Project = {
       ...alpha,
-      terminals: [{ id: 't1', name: 'api', command: 'run' }],
+      terminals: [{ id: 't1', name: 'web', command: 'serve' }],
     };
-    api.listProjects = vi.fn(async () => [withPista]);
-    api.saveProject = vi.fn(async (input) => ({
-      ok: true as const,
-      project: { ...input, id: input.id ?? 'a', terminals: input.terminals as Project['terminals'] },
-    }));
-    const store = setup(api);
+    const second: Project = {
+      ...alpha,
+      terminals: [
+        { id: 't1', name: 'web', command: 'serve' },
+        { id: 't2', name: 'api', command: 'run' },
+      ],
+    };
+    const pistaApi = {
+      ...api,
+      savePista: vi
+        .fn()
+        .mockResolvedValueOnce({ ok: true, project: first })
+        .mockResolvedValueOnce({ ok: true, project: second }),
+      removePista: vi.fn(async () => ({ ok: true, project: first })),
+    };
+    const store = setup(pistaApi);
     await store.reload();
 
-    await store.savePista('a', { name: 'web', command: 'serve' });
-    expect(api.saveProject).toHaveBeenLastCalledWith({
-      id: 'a',
-      name: 'Alpha',
-      path: '/a',
-      terminals: [
-        { id: 't1', name: 'api', command: 'run' },
-        { name: 'web', command: 'serve' },
-      ],
-    });
-
-    await store.savePista('a', { id: 't1', name: 'api2', command: 'run2' });
-    expect(store.byId('a')?.terminals).toEqual([
-      { id: 't1', name: 'api2', command: 'run2' },
-      { name: 'web', command: 'serve' },
+    const webSpec = { name: 'web', command: 'serve' };
+    const apiSpec = { name: 'api', command: 'run' };
+    await Promise.all([
+      store.savePista('a', webSpec),
+      store.savePista('a', apiSpec),
     ]);
+    expect(pistaApi.savePista).toHaveBeenNthCalledWith(1, 'a', webSpec);
+    expect(pistaApi.savePista).toHaveBeenNthCalledWith(2, 'a', apiSpec);
+    expect(store.byId('a')).toEqual(second);
 
-    await store.removePista('a', 't1');
-    expect(store.byId('a')?.terminals).toEqual([
-      { name: 'web', command: 'serve' },
-    ]);
-
-    expect(await store.savePista('zzz', { name: 'x', command: 'y' })).toEqual({
-      ok: false,
-      error: 'No existe el proyecto.',
-    });
+    await store.removePista('a', 't2');
+    expect(pistaApi.removePista).toHaveBeenCalledWith('a', 't2');
+    expect(store.byId('a')).toEqual(first);
   });
 
   it('picks a folder', async () => {

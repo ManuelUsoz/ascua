@@ -23,6 +23,12 @@ namespaces for AppImages (e.g. Ubuntu 24.04+ AppArmor,
 start; run with `--no-sandbox` (less secure) or install an AppArmor profile for
 the AppImage path.
 
+UI driver: `node tools/ui-drive.cjs dist/ui-drive` (after `nx build desktop`)
+runs the Playwright scenarios in `tools/ui-drive/` (room, projects, pistas,
+terminals, files, editor, viewports) against the real app and writes
+screenshots to the given folder. Run one area with
+`node tools/ui-drive.cjs dist/ui-drive --grep editor`.
+
 `desktop:serve` waits for the renderer dev server, and `desktop:build` depends
 on `renderer:build`, so one command is enough in both cases.
 

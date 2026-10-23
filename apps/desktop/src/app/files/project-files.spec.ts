@@ -26,8 +26,11 @@ describe('ProjectFiles', () => {
           : undefined,
     }) as unknown as ProjectRepository;
 
-  const make = (limits?: { indexCap: number; readCap: number; sniff: number }) =>
-    new ProjectFiles(repository(), limits);
+  const make = (limits?: {
+    indexCap: number;
+    readCap: number;
+    sniff: number;
+  }) => new ProjectFiles(repository(), limits);
 
   beforeEach(() => {
     base = mkdtempSync(join(tmpdir(), 'ascua-files-'));
@@ -69,15 +72,21 @@ describe('ProjectFiles', () => {
     await expect(files.list('p', '../outside')).rejects.toBeInstanceOf(
       FileAccessError,
     );
-    await expect(files.read('p', '../outside/secret.txt')).rejects.toThrow(
-      'fuera del proyecto',
-    );
-    await expect(files.read('p', join(outside, 'secret.txt'))).rejects.toThrow(
-      'fuera del proyecto',
-    );
-    await expect(files.resolve('p', 42 as unknown as string)).rejects.toThrow(
-      'fuera del proyecto',
-    );
+    await expect(
+      files.read('p', '../outside/secret.txt'),
+    ).rejects.toMatchObject({
+      code: 'file.outside',
+    });
+    await expect(
+      files.read('p', join(outside, 'secret.txt')),
+    ).rejects.toMatchObject({
+      code: 'file.outside',
+    });
+    await expect(
+      files.resolve('p', 42 as unknown as string),
+    ).rejects.toMatchObject({
+      code: 'file.outside',
+    });
   });
 
   it('rejects a junction that escapes the project', async () => {
@@ -92,7 +101,9 @@ describe('ProjectFiles', () => {
   });
 
   it('fails for an unknown project', async () => {
-    await expect(make().list('nope', '')).rejects.toThrow('No existe el proyecto.');
+    await expect(make().list('nope', '')).rejects.toMatchObject({
+      code: 'project.notFound',
+    });
   });
 
   it('indexes without .git, node_modules and dist', async () => {
@@ -106,7 +117,9 @@ describe('ProjectFiles', () => {
   });
 
   it('truncates the index at the cap', async () => {
-    const index = await make({ indexCap: 2, readCap: 1024, sniff: 100 }).index('p');
+    const index = await make({ indexCap: 2, readCap: 1024, sniff: 100 }).index(
+      'p',
+    );
     expect(index.files).toHaveLength(2);
     expect(index.truncated).toBe(true);
   });
@@ -122,9 +135,15 @@ describe('ProjectFiles', () => {
       size: 7,
       openable: true,
     });
-    expect(readme).toHaveProperty('version', expect.stringMatching(/^[0-9a-f]{64}$/));
+    expect(readme).toHaveProperty(
+      'version',
+      expect.stringMatching(/^[0-9a-f]{64}$/),
+    );
     expect(await files.read('p', 'README.md')).toEqual(readme);
-    expect(await files.read('p', 'logo.bin')).toEqual({ kind: 'binary', size: 3 });
+    expect(await files.read('p', 'logo.bin')).toEqual({
+      kind: 'binary',
+      size: 3,
+    });
     expect(await files.read('p', 'big.txt')).toEqual({
       kind: 'too-large',
       size: 50,
@@ -148,12 +167,15 @@ describe('ProjectFiles', () => {
   });
 
   it('opens non-UTF-8 files read-only and refuses to save them', async () => {
-    writeFileSync(join(root, 'latin.txt'), Buffer.from([0x63, 0x61, 0x66, 0xe9]));
+    writeFileSync(
+      join(root, 'latin.txt'),
+      Buffer.from([0x63, 0x61, 0x66, 0xe9]),
+    );
     const read = await make().read('p', 'latin.txt');
     expect(read).toMatchObject({ kind: 'text', editable: false });
-    await expect(make().write('p', 'latin.txt', 'cafe')).rejects.toThrow(
-      'no está en UTF-8',
-    );
+    await expect(make().write('p', 'latin.txt', 'cafe')).rejects.toMatchObject({
+      code: 'file.notUtf8',
+    });
   });
 
   it('keeps a UTF-8 BOM editable and preserved on save', async () => {
@@ -208,13 +230,13 @@ describe('ProjectFiles', () => {
 
     it('refuses paths outside the project', async () => {
       const files = make();
-      await expect(files.write('p', '../outside/secret.txt', 'x')).rejects.toBeInstanceOf(
-        FileAccessError,
-      );
+      await expect(
+        files.write('p', '../outside/secret.txt', 'x'),
+      ).rejects.toBeInstanceOf(FileAccessError);
       symlinkSync(outside, join(root, 'link'), 'junction');
-      await expect(files.write('p', 'link/secret.txt', 'x')).rejects.toBeInstanceOf(
-        FileAccessError,
-      );
+      await expect(
+        files.write('p', 'link/secret.txt', 'x'),
+      ).rejects.toBeInstanceOf(FileAccessError);
       expect(readFileSync(join(outside, 'secret.txt'), 'utf8')).toBe('secret');
     });
 

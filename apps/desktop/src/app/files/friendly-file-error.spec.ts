@@ -1,29 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { FileAccessError, friendlyFileError } from './project-files';
+import { FileAccessError, fileError } from './project-files';
 
-const errno = (code: string) => Object.assign(new Error(`${code}: raw 'C:\\x'`), { code });
+const errno = (code: string) =>
+  Object.assign(new Error(`${code}: raw 'C:\\x'`), { code });
 
-describe('friendlyFileError', () => {
-  it('keeps containment errors', () => {
-    expect(friendlyFileError(new FileAccessError('Ese archivo está fuera del proyecto.'))).toBe(
-      'Ese archivo está fuera del proyecto.',
-    );
+describe('fileError', () => {
+  it('keeps the code of access errors', () => {
+    expect(fileError(new FileAccessError('file.outside'))).toEqual({
+      code: 'file.outside',
+    });
+    expect(fileError(new FileAccessError('project.notFound'))).toEqual({
+      code: 'project.notFound',
+    });
   });
 
-  it('maps fs codes to short messages', () => {
-    expect(friendlyFileError(errno('ENOENT'))).toBe('El archivo ya no existe.');
-    expect(friendlyFileError(errno('EACCES'))).toBe('Sin permiso para leer el archivo.');
-    expect(friendlyFileError(errno('EPERM'))).toBe('Sin permiso para leer el archivo.');
-    expect(friendlyFileError(errno('EIO'))).toBe('No se pudo leer el archivo.');
+  it('maps fs codes to error codes', () => {
+    expect(fileError(errno('ENOENT'))).toEqual({ code: 'file.gone' });
+    expect(fileError(errno('EACCES'))).toEqual({ code: 'file.readDenied' });
+    expect(fileError(errno('EPERM'))).toEqual({ code: 'file.readDenied' });
+    expect(fileError(errno('EIO'))).toEqual({ code: 'file.readFailed' });
   });
 
-  it('uses write messages for writes', () => {
-    expect(friendlyFileError(errno('EACCES'), 'write')).toBe(
-      'Sin permiso para escribir el archivo.',
-    );
-    expect(friendlyFileError(errno('EIO'), 'write')).toBe(
-      'No se pudo guardar el archivo.',
-    );
-    expect(friendlyFileError(errno('ENOENT'), 'write')).toBe('El archivo ya no existe.');
+  it('uses write codes for writes', () => {
+    expect(fileError(errno('EACCES'), 'write')).toEqual({
+      code: 'file.writeDenied',
+    });
+    expect(fileError(errno('EIO'), 'write')).toEqual({
+      code: 'file.writeFailed',
+    });
+    expect(fileError(errno('ENOENT'), 'write')).toEqual({ code: 'file.gone' });
+  });
+
+  it('never leaks raw fs text', () => {
+    expect(JSON.stringify(fileError(errno('EIO')))).not.toContain('raw');
   });
 });

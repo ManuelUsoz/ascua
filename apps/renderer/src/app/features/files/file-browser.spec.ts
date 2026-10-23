@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import type { AscuaApi } from '@ascua/ipc';
+import { encodeError, type AscuaApi } from '@ascua/ipc';
 import { ASCUA_API } from '../../core/bridge/ascua-api';
 import { UnsavedChanges } from '../../core/unsaved/unsaved-changes';
 import { FileBrowser } from './file-browser';
@@ -9,10 +9,15 @@ describe('FileBrowser index', () => {
     const fileIndex = vi
       .fn()
       .mockRejectedValueOnce(
-        new Error("Error invoking remote method 'ascua:files:index': Error: Sin permiso para leer el archivo."),
+        new Error(
+          `Error invoking remote method 'ascua:files:index': Error: ${encodeError({ code: 'file.readDenied' })}`,
+        ),
       )
       .mockResolvedValueOnce({ files: ['a.ts'], truncated: false });
-    const api = { listDir: vi.fn().mockResolvedValue([]), fileIndex } as unknown as AscuaApi;
+    const api = {
+      listDir: vi.fn().mockResolvedValue([]),
+      fileIndex,
+    } as unknown as AscuaApi;
     TestBed.configureTestingModule({
       providers: [FileBrowser, { provide: ASCUA_API, useValue: api }],
     });
@@ -21,7 +26,7 @@ describe('FileBrowser index', () => {
 
     await browser.ensureIndex();
     expect(browser.index()).toBeUndefined();
-    expect(browser.indexError()).toBe('Sin permiso para leer el archivo.');
+    expect(browser.indexError()).toEqual({ code: 'file.readDenied' });
 
     await browser.ensureIndex();
     expect(browser.index()).toEqual({ files: ['a.ts'], truncated: false });
@@ -31,18 +36,32 @@ describe('FileBrowser index', () => {
 });
 
 describe('FileBrowser editing', () => {
-  const text = (t: string, version: string) => ({ kind: 'text', text: t, size: t.length, version, openable: true, editable: true });
+  const text = (t: string, version: string) => ({
+    kind: 'text',
+    text: t,
+    size: t.length,
+    version,
+    openable: true,
+    editable: true,
+  });
 
   function setup(extra: Record<string, unknown> = {}) {
     const api = {
       listDir: vi.fn().mockResolvedValue([]),
-      readFile: vi.fn(async (_p: string, path: string) => text(`body ${path}`, `v-${path}`)),
-      writeFile: vi.fn().mockResolvedValue({ ok: true, version: 'v2', size: 3 }),
+      readFile: vi.fn(async (_p: string, path: string) =>
+        text(`body ${path}`, `v-${path}`),
+      ),
+      writeFile: vi
+        .fn()
+        .mockResolvedValue({ ok: true, version: 'v2', size: 3 }),
       revealFile: vi.fn().mockResolvedValue(undefined),
       ...extra,
     };
     TestBed.configureTestingModule({
-      providers: [FileBrowser, { provide: ASCUA_API, useValue: api as unknown as AscuaApi }],
+      providers: [
+        FileBrowser,
+        { provide: ASCUA_API, useValue: api as unknown as AscuaApi },
+      ],
     });
     const browser = TestBed.inject(FileBrowser);
     browser.load('p');
@@ -56,7 +75,11 @@ describe('FileBrowser editing', () => {
     browser.setDirty(true);
     await browser.save('new');
     expect(api.writeFile).toHaveBeenCalledWith('p', 'a.ts', 'new', 'v-a.ts');
-    expect(browser.baseline()).toMatchObject({ text: 'new', version: 'v2', loadId: first?.loadId });
+    expect(browser.baseline()).toMatchObject({
+      text: 'new',
+      version: 'v2',
+      loadId: first?.loadId,
+    });
     expect(browser.dirty()).toBe(false);
   });
 
@@ -68,7 +91,12 @@ describe('FileBrowser editing', () => {
     await browser.save('new');
     expect(browser.conflict()).toBe(true);
     await browser.save('new', true);
-    expect(api.writeFile).toHaveBeenLastCalledWith('p', 'a.ts', 'new', undefined);
+    expect(api.writeFile).toHaveBeenLastCalledWith(
+      'p',
+      'a.ts',
+      'new',
+      undefined,
+    );
     expect(browser.conflict()).toBe(false);
   });
 
@@ -83,7 +111,10 @@ describe('FileBrowser editing', () => {
     await browser.open('b.ts', { force: true });
     release({ ok: true, version: 'v9', size: 1 });
     await saving;
-    expect(browser.baseline()).toMatchObject({ path: 'b.ts', version: 'v-b.ts' });
+    expect(browser.baseline()).toMatchObject({
+      path: 'b.ts',
+      version: 'v-b.ts',
+    });
   });
 
   it('waits for the prompt before leaving a dirty file', async () => {
@@ -111,14 +142,16 @@ describe('FileBrowser editing', () => {
     expect(unsaved.dirty()).toBe(false);
   });
 
-  it('clicking the selected file retries after an error',async () => {
+  it('clicking the selected file retries after an error', async () => {
     const readFile = vi
       .fn()
       .mockRejectedValueOnce(new Error('boom'))
       .mockResolvedValueOnce(text('ok', 'v1'));
     const { browser } = setup({ readFile });
     await browser.open('a.ts');
-    expect(browser.content()).toEqual({ error: 'boom' });
+    expect(browser.content()).toEqual({
+      error: { code: 'unknown', params: { detail: 'boom' } },
+    });
     await browser.open('a.ts');
     expect(readFile).toHaveBeenCalledTimes(2);
     expect(browser.baseline()).toMatchObject({ path: 'a.ts', text: 'ok' });

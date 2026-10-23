@@ -27,7 +27,11 @@ export class PtyHostClient implements PtyBackend {
     const requestId = this.nextRequestId++;
     return new Promise((resolve) => {
       this.pending.set(requestId, resolve);
-      child.postMessage({ type: 'snapshot', id, requestId } satisfies HostRequest);
+      child.postMessage({
+        type: 'snapshot',
+        id,
+        requestId,
+      } satisfies HostRequest);
     });
   }
 

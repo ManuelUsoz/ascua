@@ -4,6 +4,15 @@ import { join } from 'node:path';
 import { environment } from '../environments/environment';
 import { registerFileIpc } from './files/files-ipc';
 import { ProjectFiles } from './files/project-files';
+import { MainText } from './i18n/main-messages';
+import { initialLanguage } from './settings/initial-language';
+import { JsonSettingsRepository } from './settings/json-settings-repository';
+import { registerSettingsIpc } from './settings/settings-ipc';
+import { HookServer } from './permissions/hook-server';
+import {
+  PermissionBridge,
+  registerPermissionIpc,
+} from './permissions/permission-bridge';
 import { JsonProjectRepository } from './projects/json-project-repository';
 import { registerProjectIpc } from './projects/project-ipc';
 import { PtyHostClient } from './terminals/pty-host-client';
@@ -11,11 +20,12 @@ import { guardQuit } from './terminals/quit-guard';
 import { resolveShell } from './terminals/shell';
 import { registerTerminalIpc } from './terminals/terminal-ipc';
 import { TerminalManager } from './terminals/terminal-manager';
-import { WindowController } from './window';
+import { AscuaWindow } from './window/ascua-window';
+import { registerWindowIpc } from './window/window-ipc';
 
 export default class App {
   static application: Electron.App;
-  static controller = new WindowController();
+  static controller = new AscuaWindow();
 
   public static isDevelopmentMode() {
     const isEnvironmentSet: boolean = 'ELECTRON_IS_DEV' in process.env;
@@ -61,8 +71,16 @@ export default class App {
     App.application.on('activate', App.onActivate);
 
     App.application.whenReady().then(() => {
+      const permissions = new PermissionBridge({
+        hooks: new HookServer(),
+        send: (channel, payload) => App.controller.send(channel, payload),
+        rendererReady: () => App.controller.isRendererReady,
+        onActiveChange: () => App.controller.refreshInteraction(),
+      });
+      App.controller.bindPermissions(permissions);
       App.controller.create();
-      App.controller.register();
+      registerWindowIpc(App.controller);
+      registerPermissionIpc(permissions);
       const repository = new JsonProjectRepository(
         join(App.application.getPath('userData'), 'projects.json'),
       );
@@ -79,7 +97,22 @@ export default class App {
       });
       registerTerminalIpc(manager);
       registerFileIpc(new ProjectFiles(repository));
+      const settings = new JsonSettingsRepository(
+        join(App.application.getPath('userData'), 'settings.json'),
+        () =>
+          initialLanguage(
+            App.application.getPreferredSystemLanguages(),
+            App.application.getLocale(),
+          ),
+      );
+      const text = new MainText();
+      void settings.get().then((s) => text.set(s.language));
+      registerSettingsIpc(settings, {
+        send: (channel, payload) => App.controller.send(channel, payload),
+        onChange: (s) => text.set(s.language),
+      });
       guardQuit({
+        text,
         manager,
         backend,
         window: () => App.controller.window,

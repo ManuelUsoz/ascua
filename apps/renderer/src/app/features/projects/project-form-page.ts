@@ -9,6 +9,9 @@ import {
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { errorText } from '../../core/i18n/app-error';
+import { text, type Text } from '../../core/i18n/text';
 import { ProjectStore } from '../../core/projects/project-store';
 import { Icon } from '../../shared/icon/icon';
 import {
@@ -21,7 +24,7 @@ import {
 /** Create (`nuevo`) or edit (`:projectId/editar`) a project; pistas live in the terminals tab. */
 @Component({
   selector: 'app-project-form-page',
-  imports: [ReactiveFormsModule, RouterLink, Icon],
+  imports: [ReactiveFormsModule, RouterLink, TranslocoPipe, Icon],
   templateUrl: './project-form-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -33,7 +36,7 @@ export class ProjectFormPage {
   private readonly router = inject(Router);
 
   protected readonly form = createProjectForm(this.fb);
-  protected readonly error = signal<string | undefined>(undefined);
+  protected readonly error = signal<Text | undefined>(undefined);
   protected readonly saving = signal(false);
   protected readonly confirmingDelete = signal(false);
   protected readonly missing = signal(false);
@@ -81,14 +84,20 @@ export class ProjectFormPage {
     this.error.set(undefined);
     try {
       const value = this.form.getRawValue() as ProjectFormValue;
-      const result = await this.store.save(toProjectInput(value, this.store.byId(this.projectId())));
+      const result = await this.store.save(
+        toProjectInput(value, this.store.byId(this.projectId())),
+      );
       if (result.ok) {
-        await this.router.navigate(['/proyectos', result.project.id, 'terminales']);
+        await this.router.navigate([
+          '/proyectos',
+          result.project.id,
+          'terminales',
+        ]);
       } else {
-        this.error.set(result.error);
+        this.error.set(errorText(result.error));
       }
     } catch {
-      this.error.set('No se pudo guardar el proyecto');
+      this.error.set(text('errors.project.saveFailed'));
     } finally {
       this.saving.set(false);
     }
@@ -105,7 +114,7 @@ export class ProjectFormPage {
       await this.store.remove(id);
       await this.router.navigate(['/proyectos']);
     } catch {
-      this.error.set('No se pudo eliminar el proyecto');
+      this.error.set(text('errors.project.deleteFailed'));
       this.confirmingDelete.set(false);
     }
   }

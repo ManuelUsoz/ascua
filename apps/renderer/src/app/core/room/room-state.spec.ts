@@ -93,6 +93,18 @@ describe('RoomState in the desktop shell', () => {
     expect(document.body.dataset['y']).toBe('bottom');
   });
 
+  it('forwards the window drag to main', () => {
+    const { api } = desktopApi();
+    TestBed.configureTestingModule({
+      providers: [{ provide: ASCUA_API, useValue: api }],
+    });
+    const room = TestBed.inject(RoomState);
+    room.dragStart();
+    room.dragEnd();
+    expect(api.dragStart).toHaveBeenCalledTimes(1);
+    expect(api.dragEnd).toHaveBeenCalledTimes(1);
+  });
+
   it('blooms from the origin main announces and collapses on exit', async () => {
     const { api, announce } = desktopApi();
     TestBed.configureTestingModule({

@@ -12,6 +12,7 @@ USER node
 WORKDIR /home/node/ascua
 
 COPY --chown=node:node package.json package-lock.json ./
+COPY --chown=node:node tools/postinstall.mjs tools/
 RUN npm ci
 
 COPY --chown=node:node . .

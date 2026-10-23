@@ -27,7 +27,8 @@ import { TerminalSessions } from '../../core/terminals/terminal-sessions';
 export class TerminalView {
   readonly sessionId = input.required<string>();
 
-  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private readonly host =
+    inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly sessions = inject(TerminalSessions);
   private readonly room = inject(RoomState);
 
@@ -114,6 +115,9 @@ export class TerminalView {
     } catch {
       return;
     }
-    this.sessions.resize(this.sessionId(), { cols: term.cols, rows: term.rows });
+    this.sessions.resize(this.sessionId(), {
+      cols: term.cols,
+      rows: term.rows,
+    });
   }
 }

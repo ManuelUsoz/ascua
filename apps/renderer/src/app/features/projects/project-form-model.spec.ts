@@ -8,7 +8,13 @@ const project: Project = {
   path: 'C:\\code\\api',
   color: '#ff0000',
   terminals: [
-    { id: 't1', name: 'server', command: './mvnw spring-boot:run', cwd: 'back', port: 8080 },
+    {
+      id: 't1',
+      name: 'server',
+      command: './mvnw spring-boot:run',
+      cwd: 'back',
+      port: 8080,
+    },
     { id: 't2', name: 'worker', command: 'npm start' },
   ],
 };

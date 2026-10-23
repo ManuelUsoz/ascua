@@ -22,7 +22,11 @@ export function visibleRows(
 }
 
 /** Case-insensitive path filter: basename matches first, then the rest of the path. */
-export function filterIndex(files: readonly string[], query: string, limit = 200): string[] {
+export function filterIndex(
+  files: readonly string[],
+  query: string,
+  limit = 200,
+): string[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const byName: string[] = [];

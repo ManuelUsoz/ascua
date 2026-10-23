@@ -1,0 +1,28 @@
+{
+  "empty": "Todavía no hay terminales en este proyecto.",
+  "addPista": "Pista",
+  "addTerminal": "Terminal",
+  "shellName": "shell",
+  "pane": {
+    "stop": "Detener {{name}}",
+    "start": "Iniciar {{name}}",
+    "edit": "Editar {{name}}",
+    "reopen": "Reabrir {{name}}",
+    "close": "Cerrar {{name}}",
+    "idle": "Detenida — iniciá para ver la salida"
+  },
+  "pista": {
+    "titleEdit": "Editar pista",
+    "titleNew": "Nueva pista",
+    "name": "Nombre",
+    "port": "Puerto",
+    "command": "Comando",
+    "folder": "Carpeta",
+    "folderPath": "{{path}}",
+    "root": "raíz del proyecto",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirmRemove": "¿Seguro? Quitar",
+    "remove": "Quitar pista"
+  }
+}

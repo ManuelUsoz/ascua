@@ -1,10 +1,21 @@
 import { isAbsolute, win32, posix } from 'node:path';
-import type { Project, ProjectInput, TerminalSpec } from '@ascua/ipc';
+import type {
+  AscuaError,
+  ErrorCode,
+  Project,
+  ProjectInput,
+  TerminalSpec,
+  TerminalSpecInput,
+} from '@ascua/ipc';
 
+/** A rejected input: the renderer translates `error` (`errors.<code>`). */
 export class ProjectInputError extends Error {
-  constructor(message: string) {
-    super(message);
+  readonly error: AscuaError;
+
+  constructor(code: ErrorCode, params?: AscuaError['params']) {
+    super(code);
     this.name = 'ProjectInputError';
+    this.error = params ? { code, params } : { code };
   }
 }
 
@@ -31,22 +42,25 @@ export function relativeCwd(
   return rel.split(path.sep).join('/');
 }
 
-function normalizeCwd(raw: string | undefined, terminal: string): string | undefined {
+function normalizeCwd(
+  raw: string | undefined,
+  terminal: string,
+): string | undefined {
   const cwd = raw?.trim();
   if (!cwd) return undefined;
   if (isAbsoluteAny(cwd)) {
-    throw new ProjectInputError(
-      `La carpeta de "${terminal}" debe ser relativa al proyecto.`,
-    );
+    throw new ProjectInputError('project.terminalCwdAbsolute', {
+      name: terminal,
+    });
   }
   const parts = cwd.split(/[\\/]+/).filter((part) => part && part !== '.');
   let depth = 0;
   for (const part of parts) {
     depth += part === '..' ? -1 : 1;
     if (depth < 0) {
-      throw new ProjectInputError(
-        `La carpeta de "${terminal}" no puede salir del proyecto.`,
-      );
+      throw new ProjectInputError('project.terminalCwdOutside', {
+        name: terminal,
+      });
     }
   }
   return cwd;
@@ -54,12 +68,45 @@ function normalizeCwd(raw: string | undefined, terminal: string): string | undef
 
 function normalizePort(raw: unknown, terminal: string): number | undefined {
   if (raw === undefined || raw === null || raw === '') return undefined;
-  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 1 || raw > 65535) {
-    throw new ProjectInputError(
-      `El puerto de "${terminal}" debe ser un entero entre 1 y 65535.`,
-    );
+  if (
+    typeof raw !== 'number' ||
+    !Number.isInteger(raw) ||
+    raw < 1 ||
+    raw > 65535
+  ) {
+    throw new ProjectInputError('project.terminalPortInvalid', {
+      name: terminal,
+    });
   }
   return raw;
+}
+
+/** Project with the pista added, or replaced when `spec.id` already exists. */
+export function withPista(
+  project: Project,
+  spec: TerminalSpecInput,
+  newId: () => string,
+): Project {
+  if (!spec || typeof spec !== 'object') {
+    throw new ProjectInputError('project.terminalInvalid');
+  }
+  const exists = !!spec.id && project.terminals.some((t) => t.id === spec.id);
+  const terminals: TerminalSpecInput[] = exists
+    ? project.terminals.map((t) => (t.id === spec.id ? spec : t))
+    : [...project.terminals, spec];
+  return normalizeProject({ ...project, terminals }, newId);
+}
+
+export function withoutPista(project: Project, terminalId: string): Project {
+  return normalizeProject(
+    {
+      ...project,
+      terminals: project.terminals.filter((t) => t.id !== terminalId),
+    },
+    () => {
+      throw new ProjectInputError('project.idMissing');
+    },
+  );
 }
 
 export function normalizeProject(
@@ -67,7 +114,7 @@ export function normalizeProject(
   newId: () => string,
 ): Project {
   if (!input || typeof input !== 'object') {
-    throw new ProjectInputError('Datos de proyecto inválidos.');
+    throw new ProjectInputError('project.invalid');
   }
   const optionalString = (value: unknown) =>
     value === undefined || value === null || typeof value === 'string';
@@ -78,7 +125,7 @@ export function normalizeProject(
     !optionalString(input.color) ||
     (input.terminals !== undefined && !Array.isArray(input.terminals))
   ) {
-    throw new ProjectInputError('Datos de proyecto inválidos.');
+    throw new ProjectInputError('project.invalid');
   }
   for (const terminal of input.terminals ?? []) {
     if (
@@ -89,32 +136,34 @@ export function normalizeProject(
       !optionalString(terminal.command) ||
       !optionalString(terminal.cwd)
     ) {
-      throw new ProjectInputError('Datos de terminal inválidos.');
+      throw new ProjectInputError('project.terminalInvalid');
     }
   }
 
   const name = input.name?.trim();
-  if (!name) throw new ProjectInputError('El proyecto necesita un nombre.');
+  if (!name) throw new ProjectInputError('project.nameRequired');
 
   const path = input.path?.trim();
-  if (!path) throw new ProjectInputError('El proyecto necesita una carpeta.');
+  if (!path) throw new ProjectInputError('project.folderRequired');
   if (!isAbsoluteAny(path)) {
-    throw new ProjectInputError('La carpeta del proyecto debe ser absoluta.');
+    throw new ProjectInputError('project.folderNotAbsolute');
   }
 
   const color = input.color?.trim();
   if (color && !COLOR.test(color)) {
-    throw new ProjectInputError('El color debe tener el formato #rrggbb.');
+    throw new ProjectInputError('project.invalidColor');
   }
 
   const terminals = (input.terminals ?? []).map((terminal): TerminalSpec => {
     const terminalName = terminal.name?.trim();
     if (!terminalName) {
-      throw new ProjectInputError('Cada terminal necesita un nombre.');
+      throw new ProjectInputError('project.terminalNameRequired');
     }
     const command = terminal.command?.trim();
     if (!command) {
-      throw new ProjectInputError(`"${terminalName}" necesita un comando.`);
+      throw new ProjectInputError('project.terminalCommandRequired', {
+        name: terminalName,
+      });
     }
     const spec: TerminalSpec = {
       id: terminal.id?.trim() || newId(),

@@ -20,6 +20,8 @@ openbox >/tmp/openbox.log 2>&1 &
 OPENBOX=$!
 sleep 1
 
+step "format check"; npm run format:check
+step "i18n check";    npm run i18n:check
 step "lint renderer";  npx nx lint renderer
 step "lint desktop";   npx nx lint desktop
 step "test renderer";  npx nx test renderer --run

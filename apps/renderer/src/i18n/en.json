@@ -1,0 +1,79 @@
+{
+  "nav": {
+    "projects": "Projects",
+    "terminals": "Terminals",
+    "files": "Files",
+    "newProject": "New project",
+    "edit": "Edit",
+    "settings": "Settings",
+    "spaces": "Spaces"
+  },
+  "room": {
+    "minimize": "Minimize",
+    "close": "Close"
+  },
+  "bubble": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "inTerminal": "In terminal",
+    "queued": "+{{count}} waiting"
+  },
+  "side": {
+    "heading": "PROJECTS",
+    "newProject": "New project",
+    "startAll": "Start all"
+  },
+  "state": {
+    "running": "Running",
+    "stopped": "Stopped",
+    "failed": "Failed",
+    "failedCode": "Failed (code {{code}})"
+  },
+  "errors": {
+    "unknown": "Unexpected error: {{detail}}",
+    "noDesktop": "Only available in the desktop app.",
+    "project": {
+      "notFound": "The project does not exist.",
+      "invalid": "Invalid project data.",
+      "nameRequired": "The project needs a name.",
+      "folderRequired": "The project needs a folder.",
+      "folderNotAbsolute": "The project folder must be absolute.",
+      "invalidColor": "The color must use the #rrggbb format.",
+      "terminalInvalid": "Invalid terminal data.",
+      "terminalNameRequired": "Every terminal needs a name.",
+      "terminalCommandRequired": "\"{{name}}\" needs a command.",
+      "terminalCwdAbsolute": "The folder of \"{{name}}\" must be relative to the project.",
+      "terminalCwdOutside": "The folder of \"{{name}}\" cannot leave the project.",
+      "terminalPortInvalid": "The port of \"{{name}}\" must be an integer between 1 and 65535.",
+      "idMissing": "An id is missing",
+      "folderOutside": "The folder must be inside the project.",
+      "saveFailed": "Could not save the project",
+      "deleteFailed": "Could not delete the project"
+    },
+    "pista": {
+      "saveFailed": "Could not save the track",
+      "removeFailed": "Could not remove the track"
+    },
+    "terminal": {
+      "notFound": "The terminal does not exist.",
+      "folderMissing": "The folder does not exist: {{path}}",
+      "spawnFailed": "{{detail}}",
+      "openFailed": "Could not open the terminal",
+      "openFailedWith": "Could not open the terminal: {{detail}}"
+    },
+    "file": {
+      "gone": "The file no longer exists.",
+      "readDenied": "No permission to read the file.",
+      "writeDenied": "No permission to write the file.",
+      "readFailed": "Could not read the file.",
+      "writeFailed": "Could not save the file.",
+      "outside": "That file is outside the project.",
+      "invalidText": "Invalid text.",
+      "notAFile": "That is not a file.",
+      "tooLargeToSave": "The file is too large to save.",
+      "notUtf8": "That file is not UTF-8; it cannot be saved from Ascua.",
+      "notOpenable": "That file does not open from Ascua; use Show in folder.",
+      "openFailed": "{{detail}}"
+    }
+  }
+}

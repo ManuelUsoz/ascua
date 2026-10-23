@@ -40,6 +40,9 @@ export class OutputBuffer {
   private trim(): void {
     const overflow = this.history.length - this.max;
     const newline = this.history.indexOf('\n', overflow);
-    this.history = newline === -1 ? this.history.slice(overflow) : this.history.slice(newline + 1);
+    this.history =
+      newline === -1
+        ? this.history.slice(overflow)
+        : this.history.slice(newline + 1);
   }
 }

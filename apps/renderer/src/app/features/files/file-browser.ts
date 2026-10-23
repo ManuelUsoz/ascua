@@ -1,16 +1,23 @@
-import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
-import type { FileContent, FileEntry } from '@ascua/ipc';
+import {
+  computed,
+  DestroyRef,
+  inject,
+  Injectable,
+  signal,
+} from '@angular/core';
+import type { AscuaError, FileContent, FileEntry } from '@ascua/ipc';
 import { ASCUA_API } from '../../core/bridge/ascua-api';
-import { errorMessage } from '../../core/bridge/error-message';
+import { toAscuaError } from '../../core/i18n/app-error';
 import { UnsavedChanges } from '../../core/unsaved/unsaved-changes';
 import { filterIndex, visibleRows } from './file-tree-model';
 
-export type DirState = readonly FileEntry[] | 'loading' | { error: string };
+export type DirState = readonly FileEntry[] | 'loading' | { error: AscuaError };
 /** Why there is no editable text: binary, too large or a failed read. */
-export type ViewContent = Exclude<FileContent, { kind: 'text' }> | { error: string };
+export type ViewContent =
+  | Exclude<FileContent, { kind: 'text' }>
+  | { error: AscuaError };
 
-const NO_API = 'Esto solo funciona en la app de escritorio.';
-const message = errorMessage;
+const NO_API: AscuaError = { code: 'noDesktop' };
 
 /**
  * State of the Archivos tab for one project: lazy tree, filter index and the
@@ -39,10 +46,12 @@ export class FileBrowser {
   readonly expanded = signal<ReadonlySet<string>>(new Set());
   readonly selected = signal<string | undefined>(undefined);
   readonly content = signal<ViewContent | undefined>(undefined);
-  readonly index = signal<{ files: string[]; truncated: boolean } | undefined>(undefined);
+  readonly index = signal<{ files: string[]; truncated: boolean } | undefined>(
+    undefined,
+  );
   readonly query = signal('');
-  readonly indexError = signal<string | undefined>(undefined);
-  readonly openError = signal<string | undefined>(undefined);
+  readonly indexError = signal<AscuaError | undefined>(undefined);
+  readonly openError = signal<AscuaError | undefined>(undefined);
   /** Text as last loaded or saved; `loadId` changes on load/reload, not on save. */
   readonly baseline = signal<
     | {
@@ -58,7 +67,7 @@ export class FileBrowser {
   readonly dirty = signal(false);
   readonly saving = signal(false);
   readonly conflict = signal(false);
-  readonly saveError = signal<string | undefined>(undefined);
+  readonly saveError = signal<AscuaError | undefined>(undefined);
 
   readonly root = computed(() => this.dirs()[''] ?? 'loading');
   readonly rows = computed(() => {
@@ -110,7 +119,8 @@ export class FileBrowser {
       const same = path === this.selected();
       // A loaded file stays as is; a failed or non-text one retries on click.
       if (same && this.baseline()) return;
-      if (!same && !(await this.unsaved.confirmDiscard(this.selected() ?? ''))) return;
+      if (!same && !(await this.unsaved.confirmDiscard(this.selected() ?? '')))
+        return;
     }
     const seq = ++this.fileSeq;
     this.setDirty(false);
@@ -122,11 +132,11 @@ export class FileBrowser {
     this.content.set(undefined);
     if (!this.api) return this.content.set({ error: NO_API });
     const epoch = this.epoch;
-    let content: FileContent | { error: string };
+    let content: FileContent | { error: AscuaError };
     try {
       content = await this.api.readFile(this.projectId, path);
     } catch (e) {
-      content = { error: message(e) };
+      content = { error: toAscuaError(e) };
     }
     if (seq !== this.fileSeq || epoch !== this.epoch) return;
     if ('error' in content) this.content.set(content);
@@ -177,7 +187,8 @@ export class FileBrowser {
         this.conflict.set(true);
       }
     } catch (e) {
-      if (seq === this.fileSeq && epoch === this.epoch) this.saveError.set(message(e));
+      if (seq === this.fileSeq && epoch === this.epoch)
+        this.saveError.set(toAscuaError(e));
     } finally {
       this.saving.set(false);
     }
@@ -187,9 +198,9 @@ export class FileBrowser {
     const path = this.selected();
     if (!path || !this.api) return;
     try {
-      this.openError.set((await this.api.openFile(this.projectId, path)) || undefined);
+      this.openError.set(await this.api.openFile(this.projectId, path));
     } catch (e) {
-      this.openError.set(message(e));
+      this.openError.set(toAscuaError(e));
     }
   }
 
@@ -197,9 +208,9 @@ export class FileBrowser {
     const path = this.selected();
     if (!path || !this.api) return;
     try {
-      this.openError.set((await this.api.revealFile(this.projectId, path)) || undefined);
+      this.openError.set(await this.api.revealFile(this.projectId, path));
     } catch (e) {
-      this.openError.set(message(e));
+      this.openError.set(toAscuaError(e));
     }
   }
 
@@ -215,7 +226,7 @@ export class FileBrowser {
       if (epoch === this.epoch) this.indexError.set(undefined);
     } catch (e) {
       // Leave `index` undefined so the next filter focus retries.
-      if (epoch === this.epoch) this.indexError.set(message(e));
+      if (epoch === this.epoch) this.indexError.set(toAscuaError(e));
     } finally {
       if (epoch === this.epoch) this.indexLoading = false;
     }
@@ -224,14 +235,15 @@ export class FileBrowser {
   private async loadDir(dir: string): Promise<void> {
     const epoch = this.epoch;
     const put = (state: DirState) => {
-      if (epoch === this.epoch) this.dirs.update((d) => ({ ...d, [dir]: state }));
+      if (epoch === this.epoch)
+        this.dirs.update((d) => ({ ...d, [dir]: state }));
     };
     if (!this.api) return put({ error: NO_API });
     put('loading');
     try {
       put(await this.api.listDir(this.projectId, dir));
     } catch (e) {
-      put({ error: message(e) });
+      put({ error: toAscuaError(e) });
     }
   }
 }

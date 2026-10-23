@@ -34,7 +34,7 @@ body.is-open #room {
 }
 
 #room-bar,
-#room .v9-body {
+#room .as-workbench {
   opacity: 0;
   visibility: hidden;
   transition:
@@ -43,7 +43,7 @@ body.is-open #room {
 }
 
 body.is-open #room-bar,
-body.is-open #room .v9-body {
+body.is-open #room .as-workbench {
   opacity: 1;
   visibility: visible;
   transition:
@@ -69,7 +69,7 @@ body.is-open #room-bar {
   animation-delay: calc(340ms * var(--spd));
 }
 
-#room .v9-body {
+#room .as-workbench {
   flex: 1;
   min-height: 0;
 }
@@ -101,7 +101,9 @@ button.wbtn {
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 button.wbtn:hover {
@@ -118,6 +120,12 @@ button.wbtn:focus-visible {
 }
 
 @keyframes room-rise {
-  from { opacity: 0; transform: translateY(16px) scale(0.97); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

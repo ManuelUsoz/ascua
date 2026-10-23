@@ -11,6 +11,9 @@ import {
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import type { TerminalSpec } from '@ascua/ipc';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { errorText } from '../../core/i18n/app-error';
+import { text, type Text } from '../../core/i18n/text';
 import { ProjectStore } from '../../core/projects/project-store';
 import { Icon } from '../../shared/icon/icon';
 import { PistaEditor } from './pista-editor';
@@ -24,7 +27,7 @@ import {
 /** Inline popover to create or edit one pista of a project. */
 @Component({
   selector: 'app-pista-form',
-  imports: [ReactiveFormsModule, Icon],
+  imports: [ReactiveFormsModule, TranslocoPipe, Icon],
   templateUrl: './pista-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -38,7 +41,7 @@ export class PistaForm implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly form = createPistaForm(this.fb);
-  protected readonly error = signal<string | undefined>(undefined);
+  protected readonly error = signal<Text | undefined>(undefined);
   protected readonly saving = signal(false);
   protected readonly confirmingRemove = signal(false);
   protected readonly folder = signal(this.form.controls.cwd.value);
@@ -46,7 +49,11 @@ export class PistaForm implements OnInit {
 
   constructor() {
     const host = inject<ElementRef<HTMLElement>>(ElementRef);
-    afterNextRender(() => host.nativeElement.querySelector<HTMLInputElement>('#pista-name')?.focus());
+    afterNextRender(() =>
+      host.nativeElement
+        .querySelector<HTMLInputElement>('#pista-name')
+        ?.focus(),
+    );
   }
 
   /** The parent re-creates this component per draft, so inputs are read once. */
@@ -70,7 +77,7 @@ export class PistaForm implements OnInit {
       this.form.controls.cwd.setValue(result.cwd);
       this.folder.set(result.cwd);
     } else {
-      this.error.set(result.error);
+      this.error.set(errorText(result.error));
     }
   }
 
@@ -85,9 +92,9 @@ export class PistaForm implements OnInit {
         toTerminalInput(value, this.spec()?.id),
       );
       if (result.ok) this.editor.close();
-      else this.error.set(result.error);
+      else this.error.set(errorText(result.error));
     } catch {
-      this.error.set('No se pudo guardar la pista');
+      this.error.set(text('errors.pista.saveFailed'));
     } finally {
       this.saving.set(false);
     }
@@ -103,9 +110,9 @@ export class PistaForm implements OnInit {
     try {
       const result = await this.store.removePista(this.projectId(), spec.id);
       if (result.ok) this.editor.close();
-      else this.error.set(result.error);
+      else this.error.set(errorText(result.error));
     } catch {
-      this.error.set('No se pudo quitar la pista');
+      this.error.set(text('errors.pista.removeFailed'));
       this.confirmingRemove.set(false);
     }
   }

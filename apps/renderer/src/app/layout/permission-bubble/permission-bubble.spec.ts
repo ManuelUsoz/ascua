@@ -3,6 +3,7 @@ import type { AscuaApi, PermissionRequest } from '@ascua/ipc';
 import { ASCUA_API } from '../../core/bridge/ascua-api';
 import { Companion } from '../../core/companion/companion';
 import { RoomState } from '../../core/room/room-state';
+import { i18nTesting } from '../../testing/i18n';
 import { PermissionBubble } from './permission-bubble';
 
 const edit: PermissionRequest = {
@@ -53,6 +54,7 @@ describe('PermissionBubble', () => {
       resolvePermission: vi.fn(async () => undefined),
     };
     TestBed.configureTestingModule({
+      imports: [i18nTesting()],
       providers: [
         { provide: ASCUA_API, useValue: api },
         {
@@ -81,7 +83,7 @@ describe('PermissionBubble', () => {
     );
     expect(text('#tool')).toBe('Edit');
     expect(text('#summary')).toBe('src/app.ts');
-    expect(text('#queued')).toBe('+1 waiting');
+    expect(text('#queued')).toBe('+1 en espera');
     expect(
       element.querySelector<HTMLElement>('#bubble-face .ascua')?.dataset['act'],
     ).toBe('alert');
@@ -93,7 +95,7 @@ describe('PermissionBubble', () => {
     push(ask);
     await settle();
 
-    press('Approve');
+    press('Aprobar');
     await settle();
     expect(api.resolvePermission).toHaveBeenLastCalledWith(edit.id, 'allow');
     expect(text('#tool')).toBe('Bash');
@@ -101,11 +103,11 @@ describe('PermissionBubble', () => {
       element.querySelector<HTMLElement>('#bubble-face .ascua')?.dataset['act'],
     ).toBe('warn');
 
-    press('Reject');
+    press('Rechazar');
     await settle();
     expect(api.resolvePermission).toHaveBeenLastCalledWith(wipe.id, 'deny');
 
-    press('In terminal');
+    press('En la terminal');
     await settle();
     expect(api.resolvePermission).toHaveBeenLastCalledWith(ask.id, 'terminal');
     expect(element.querySelector('#bubble')?.hasAttribute('hidden')).toBe(true);

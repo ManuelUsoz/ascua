@@ -1,10 +1,10 @@
 <aside class="as-side">
   <div class="as-side__head">
-    PROYECTOS
+    {{ 'side.heading' | transloco }}
     <a
       class="as-btn as-btn--ghost as-btn--s as-btn--icon"
       routerLink="/proyectos/nuevo"
-      aria-label="Nuevo proyecto"
+      [attr.aria-label]="'side.newProject' | transloco"
     >
       <app-icon name="plus" />
     </a>
@@ -23,7 +23,10 @@
       }
       <span class="as-tree__name">{{ p.name }}</span>
       <span class="as-tree__meta">{{ counts.running }}/{{ counts.total }}</span>
-      <span class="as-dot" [attr.data-tone]="counts.running > 0 ? 'ok' : null"></span>
+      <span
+        class="as-dot"
+        [attr.data-tone]="counts.running > 0 ? 'ok' : null"
+      ></span>
     </a>
     @if (p.id === crumbs().projectId) {
       @for (t of p.terminals; track t.id) {
@@ -46,7 +49,10 @@
         >
           <app-icon name="terminal" />
           <span class="as-tree__name">{{ s.name ?? 'shell' }}</span>
-          <span class="as-dot" [attr.data-tone]="tone(p.id, s.terminalId)"></span>
+          <span
+            class="as-dot"
+            [attr.data-tone]="tone(p.id, s.terminalId)"
+          ></span>
         </a>
       }
       <button
@@ -55,7 +61,7 @@
         [disabled]="p.terminals.length === 0"
         (click)="sessions.startAll(p)"
       >
-        <app-icon name="play" />Levantar todo
+        <app-icon name="play" />{{ 'side.startAll' | transloco }}
       </button>
     }
   }

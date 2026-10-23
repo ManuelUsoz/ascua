@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { PermissionQueue } from '../../core/permissions/permission-queue';
 import { Character } from '../../shared/character/character';
 
@@ -9,7 +10,7 @@ import { Character } from '../../shared/character/character';
  */
 @Component({
   selector: 'app-permission-bubble',
-  imports: [Character],
+  imports: [Character, TranslocoPipe],
   templateUrl: './permission-bubble.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

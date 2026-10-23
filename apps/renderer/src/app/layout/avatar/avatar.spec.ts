@@ -1,15 +1,10 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ASCUA_API } from '../../core/bridge/ascua-api';
 import { Companion } from '../../core/companion/companion';
 import { RoomState } from '../../core/room/room-state';
 import { Avatar } from './avatar';
 
 describe('Avatar', () => {
-  let api: {
-    dragStart: ReturnType<typeof vi.fn>;
-    dragEnd: ReturnType<typeof vi.fn>;
-  };
   let companion: {
     attach: ReturnType<typeof vi.fn>;
     poke: ReturnType<typeof vi.fn>;
@@ -20,6 +15,8 @@ describe('Avatar', () => {
     isCompact: () => boolean;
     anchor: ReturnType<typeof vi.fn>;
     expand: ReturnType<typeof vi.fn>;
+    dragStart: ReturnType<typeof vi.fn>;
+    dragEnd: ReturnType<typeof vi.fn>;
   };
   let host: HTMLElement;
 
@@ -29,10 +26,6 @@ describe('Avatar', () => {
     );
 
   beforeEach(async () => {
-    api = {
-      dragStart: vi.fn(async () => undefined),
-      dragEnd: vi.fn(async () => undefined),
-    };
     companion = { attach: vi.fn(), poke: vi.fn() };
     room = {
       open: signal(false),
@@ -40,10 +33,11 @@ describe('Avatar', () => {
       isCompact: () => room.compact,
       anchor: vi.fn(),
       expand: vi.fn(async () => undefined),
+      dragStart: vi.fn(),
+      dragEnd: vi.fn(),
     };
     TestBed.configureTestingModule({
       providers: [
-        { provide: ASCUA_API, useValue: api },
         { provide: Companion, useValue: companion },
         { provide: RoomState, useValue: room },
       ],
@@ -91,12 +85,12 @@ describe('Avatar', () => {
     vi.useFakeTimers();
     fire('pointerdown', { screenX: 100, screenY: 100, buttons: 1 });
     fire('pointermove', { screenX: 103, screenY: 100, buttons: 1 });
-    expect(api.dragStart).not.toHaveBeenCalled();
+    expect(room.dragStart).not.toHaveBeenCalled();
     fire('pointermove', { screenX: 110, screenY: 100, buttons: 1 });
     fire('pointermove', { screenX: 140, screenY: 100, buttons: 1 });
-    expect(api.dragStart).toHaveBeenCalledTimes(1);
+    expect(room.dragStart).toHaveBeenCalledTimes(1);
     fire('pointerup', { screenX: 140, screenY: 100 });
-    expect(api.dragEnd).toHaveBeenCalledTimes(1);
+    expect(room.dragEnd).toHaveBeenCalledTimes(1);
     fire('click', { detail: 1 });
     vi.advanceTimersByTime(1000);
     expect(companion.poke).not.toHaveBeenCalled();
@@ -106,6 +100,6 @@ describe('Avatar', () => {
     room.compact = false;
     fire('pointerdown', { screenX: 100, screenY: 100, buttons: 1 });
     fire('pointermove', { screenX: 200, screenY: 100, buttons: 1 });
-    expect(api.dragStart).not.toHaveBeenCalled();
+    expect(room.dragStart).not.toHaveBeenCalled();
   });
 });

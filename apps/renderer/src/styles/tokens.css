@@ -43,8 +43,8 @@
   --radius-pill: 999px;
   --shadow-pop: 0 20px 40px rgba(0, 0, 0, 0.5);
   --shadow-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --shadow-oro: inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 6px 18px rgba(255, 190, 60, 0.25);
+  --shadow-oro:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(255, 190, 60, 0.25);
   --shadow-ask: 0 0 0 3px rgba(92, 217, 242, 0.1);
   --rail-w: 64px;
   --side-w: 220px;
@@ -52,6 +52,7 @@
   --row-h: 30px;
   --tab-h: 34px;
   --font-sans: 'Inter Variable', Inter, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Cascadia Mono',
-    Consolas, ui-monospace, monospace;
+  --font-mono:
+    'JetBrains Mono Variable', 'JetBrains Mono', 'Cascadia Mono', Consolas,
+    ui-monospace, monospace;
 }

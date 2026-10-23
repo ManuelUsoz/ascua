@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 
 /** 24x24 stroke paths from the Ascua design system. */
 export const ICONS = {
@@ -18,6 +23,10 @@ export const ICONS = {
   file: ['M7 3h7l5 5v13H7zM14 3v5h5'],
   search: ['M11 18a7 7 0 1 0 0-14a7 7 0 0 0 0 14zM20 20l-4-4'],
   external: ['M14 4h6v6M20 4l-9 9M18 14v5H5V6h5'],
+  settings: [
+    'M12 15a3 3 0 1 0 0-6a3 3 0 0 0 0 6z',
+    'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3a1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
+  ],
   minimize: ['M5 18h14'],
   close: ['M6 6l12 12M18 6L6 18'],
 } as const satisfies Record<string, readonly string[]>;

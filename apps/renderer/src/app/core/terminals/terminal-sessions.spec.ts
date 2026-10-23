@@ -140,6 +140,21 @@ describe('TerminalSessions', () => {
     expect(sessions.session('p', 'shell-9')).toBeUndefined();
   });
 
+  it('keeps the shell error per project', async () => {
+    await create();
+    api.openShell.mockRejectedValueOnce(new Error('boom'));
+    await sessions.openShell('p');
+    const boom = { code: 'unknown', params: { detail: 'boom' } };
+    expect(sessions.shellError('p')).toEqual(boom);
+    expect(sessions.shellError('other')).toBeUndefined();
+
+    await sessions.openShell('other');
+    expect(sessions.shellError('p')).toEqual(boom);
+
+    await sessions.openShell('p');
+    expect(sessions.shellError('p')).toBeUndefined();
+  });
+
   it('replays then forwards live output without duplicates', async () => {
     let resolve!: (r: TerminalReplay) => void;
     replay = new Promise((r) => (resolve = r));

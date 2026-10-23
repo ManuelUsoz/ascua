@@ -15,7 +15,8 @@ const FLUSH_MS = 16;
 const entries = new Map<string, Entry>();
 
 // Electron adds `parentPort` to utility processes only.
-const parentPort = (process as unknown as { parentPort: Electron.ParentPort }).parentPort;
+const parentPort = (process as unknown as { parentPort: Electron.ParentPort })
+  .parentPort;
 
 function post(event: HostEvent): void {
   parentPort.postMessage(event);
@@ -59,7 +60,12 @@ function spawn(request: Extract<HostRequest, { type: 'spawn' }>): void {
     });
   } catch (error) {
     entry.pty = undefined;
-    post({ type: 'exit', id, exitCode: -1, error: error instanceof Error ? error.message : String(error) });
+    post({
+      type: 'exit',
+      id,
+      exitCode: -1,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
@@ -100,7 +106,10 @@ function handle(request: HostRequest): void {
       break;
     }
     case 'snapshot': {
-      const snapshot = entries.get(request.id)?.buffer.snapshot() ?? { data: '', seq: 0 };
+      const snapshot = entries.get(request.id)?.buffer.snapshot() ?? {
+        data: '',
+        seq: 0,
+      };
       post({ type: 'snapshot', requestId: request.requestId, ...snapshot });
       break;
     }

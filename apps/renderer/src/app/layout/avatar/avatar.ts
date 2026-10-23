@@ -8,7 +8,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { live, type Ascua } from '@ascua/character';
-import { ASCUA_API } from '../../core/bridge/ascua-api';
 import { Companion } from '../../core/companion/companion';
 import { RoomState } from '../../core/room/room-state';
 import { Character } from '../../shared/character/character';
@@ -32,7 +31,6 @@ const DRAG_PX = 4;
 export class Avatar {
   protected readonly room = inject(RoomState);
   private readonly companion = inject(Companion);
-  private readonly api = inject(ASCUA_API);
   private readonly host = viewChild.required<string, ElementRef<HTMLElement>>(
     'host',
     {
@@ -71,11 +69,11 @@ export class Avatar {
     }
     this.press.dragging = true;
     this.dragged = true;
-    this.api?.dragStart();
+    this.room.dragStart();
   }
 
   protected pointerUp(event?: PointerEvent): void {
-    if (this.press?.dragging) this.api?.dragEnd();
+    if (this.press?.dragging) this.room.dragEnd();
     this.press = undefined;
     const host = this.host().nativeElement;
     if (event && host.hasPointerCapture(event.pointerId)) {

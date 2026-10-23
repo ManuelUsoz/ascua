@@ -4,11 +4,12 @@ import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
 import { appRoutes } from './app.routes';
 import { RoomState } from './core/room/room-state';
+import { i18nTesting } from './testing/i18n';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App],
+      imports: [App, i18nTesting()],
       providers: [provideRouter(appRoutes)],
     }).compileComponents();
   });
@@ -57,7 +58,7 @@ describe('App window bindings', () => {
     room.collapse.mockClear();
     room.resized.mockClear();
     await TestBed.configureTestingModule({
-      imports: [App],
+      imports: [App, i18nTesting()],
       providers: [
         provideRouter(appRoutes),
         { provide: RoomState, useValue: room },

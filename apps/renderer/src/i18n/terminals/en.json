@@ -1,0 +1,28 @@
+{
+  "empty": "There are no terminals in this project yet.",
+  "addPista": "Track",
+  "addTerminal": "Terminal",
+  "shellName": "shell",
+  "pane": {
+    "stop": "Stop {{name}}",
+    "start": "Start {{name}}",
+    "edit": "Edit {{name}}",
+    "reopen": "Reopen {{name}}",
+    "close": "Close {{name}}",
+    "idle": "Stopped — start it to see the output"
+  },
+  "pista": {
+    "titleEdit": "Edit track",
+    "titleNew": "New track",
+    "name": "Name",
+    "port": "Port",
+    "command": "Command",
+    "folder": "Folder",
+    "folderPath": "{{path}}",
+    "root": "project root",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirmRemove": "Sure? Remove",
+    "remove": "Remove track"
+  }
+}

@@ -12,6 +12,8 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
 - `npx nx package desktop` -> `dist/packages/win-unpacked/ascua.exe`.
   `npx nx make desktop` -> installers under `dist/executables`.
 - `npx nx lint desktop` / `npx nx lint renderer`.
+- `npm run format` writes Prettier formatting; `npm run format:check` is the
+  gate.
 - `npx nx test renderer --run`; one file:
   `npx nx test renderer --run --testFile=src/app/app.spec.ts`.
   Desktop: `npx nx test desktop --run` (vitest, node env; specs import from
@@ -23,31 +25,44 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   so drag, fullscreen, and permissions are unavailable. Use `serve desktop` to
   test the real app.
 - The Vite `__dirname` config warning during renderer test/build is harmless.
-- `node tools/ui-drive.cjs <outDir>` (after `npx nx build desktop`) drives the
-  real built app with Playwright `_electron` against a temp user-data dir and
-  fixture project: projects, pistas, shells, Archivos, reload-while-open and
-  four viewports, with screenshots in `<outDir>`. Close any running Ascua
-  first: the hook pipe is shared.
+- `node tools/ui-drive.cjs <outDir> [playwright args]` (after `npx nx build
+  desktop`) is a wrapper over the Playwright Test scenarios in
+  `tools/ui-drive/*.spec.ts` (one Electron launch per spec file, temp user-data
+  dir and fixture project): room, projects, pistas, terminals (shells, Levantar
+  todo, viewports), files, editor (dirty, Ctrl+S, conflicts, unsaved guard) and
+  archivos viewports, and settings (language switch that survives a
+  relaunch), with screenshots in `<outDir>`. The driver runs in Spanish
+  whatever the OS language (it seeds `settings.json`); `--grep settings` runs
+  the language scenario, `--grep editor` (or a spec file name) another area.
+  Close any running Ascua first: the hook pipe
+  is shared.
 - `npm run linux:check` proves the Linux build in Docker (needs Docker Desktop
   with Linux containers; the first run is slow). It writes
   `ascua-<version>.AppImage`, `ui-drive/` and `ui-drive-appimage/` to
   `dist/linux/`. On Linux, `nx make desktop` produces the AppImage under
   `dist/executables/`; `nx package desktop` stays dir-only (`linux-unpacked`).
-- `renderer-e2e` is an unmaintained scaffold (its example still expects
-  "Welcome") and is not part of the verification flow.
 
 ## Where things live
 
-- `apps/desktop/src/app/window.ts` - the only `BrowserWindow`: compact bounds,
-  fullscreen, drag, click-through polling, position persistence, permission
-  wiring.
+- `apps/desktop/src/app/window/` - the only `BrowserWindow`. `ascua-window.ts`
+  creates it and wires events to the modules; `fullscreen.ts` (controller,
+  owns `expanded`) with `fullscreen-mode.ts` (native vs Linux pseudo),
+  `geometry.ts` (pure math, `COMPACT`/`AVATAR`), `click-through.ts`, `drag.ts`,
+  `position-store.ts`, `renderer-page.ts` (load + hardening), `window-ipc.ts`.
 - `tools/linux/` - `Dockerfile` (node:24-bookworm + Xvfb + openbox + Electron
   libs) and `check.sh` (lint, tests, build, pty-smoke, ui-drive, `nx make`,
   AppImage extract, pty-smoke + ui-drive on the AppImage).
   `tools/linux-check.mjs` does the docker build/run from Windows, mounting
   `dist/linux` at `/out`.
-- `apps/desktop/src/app/hook-server.ts` - permission pipe/socket server;
-  `tools/ascua-hook.mjs` - the Claude Code hook (one-line JSON, fails open).
+- `apps/desktop/src/app/permissions/` - `hook-server.ts` (permission
+  pipe/socket server) and `permission-bridge.ts` (queue, bubble flag, resend on
+  load); `tools/ascua-hook.mjs` - the Claude Code hook (one-line JSON, fails
+  open).
+- `apps/desktop/src/app/settings/` - `json-settings-repository.ts`
+  (`userData/settings.json`), `settings-ipc.ts`, `initial-language.ts`.
+- `apps/desktop/src/app/storage/atomic-json.ts` - `writeJsonAtomic`, shared by
+  the project and settings repositories.
+- `apps/desktop/src/app/i18n/main-messages.ts` - native-dialog text (es/en).
 - `apps/desktop/src/app/api/main.preload.ts` - the `window.ascua` bridge.
 - `apps/desktop/src/app/projects/` - `ProjectRepository` is the storage swap
   point (SQLite later); `JsonProjectRepository` writes atomically to
@@ -105,11 +120,14 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   - `shared/character/` - the `[appCharacter]` directive that mounts
     `@ascua/character` into its host element.
 - `apps/renderer/src/styles.css` - imports `styles/*.css` (base, tokens,
-  avatar, bubble, room, shell, terminals, bloom, motion) in cascade order.
+  avatar, bubble, room, controls, workbench, projects, terminals, files, settings, bloom,
+  motion) in cascade order.
   `tokens.css` holds the design tokens (never on `html`/`body`; `#room` sets
-  `color-scheme: dark`); `shell.css` the `as-*` workbench classes. All renderer styling stays
+  `color-scheme: dark`); `controls.css` the `as-*` controls (button, chip, state,
+  form fields), `workbench.css` the layout (bar, rail, tree, tabs, page head)
+  and `projects.css` the project screens. All renderer styling stays
   global there; components have no `styleUrl`. Thin scrollbars live in one
-  selector list in `shell.css`: add new scroll areas there. The terminals grid
+  selector list in `workbench.css`: add new scroll areas there. The terminals grid
   goes to one column under an 860px container width, so 1280x720 keeps two
   columns.
 - `libs/character` (Nx project `ascua-character`, import `@ascua/character`) -
@@ -126,9 +144,9 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
 - `maker.options.json` keeps `npmRebuild: false` on purpose: node-pty 1.1.0
   ships N-API prebuilds (`prebuilds/win32-x64`), ABI-stable across Electron
   versions, but electron-builder's rebuild ignores them and compiles from
-  source, which fails without the VS Build Tools Spectre libs (MSB8040). The
-  `postinstall` (`electron-builder install-app-deps`) has the same problem: on
-  such a machine `npm install` exits 1 although the packages are installed.
+  source, which fails without the VS Build Tools Spectre libs (MSB8040). For the
+  same reason `tools/postinstall.mjs` skips `electron-builder install-app-deps`
+  on Windows, so `npm install` exits 0 there.
 - Keep one window. The room is a fullscreen state of the same window, not a
   second window.
 - The renderer is sandboxed with context isolation. Add IPC by extending
@@ -140,11 +158,11 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   `dragStart()`; main samples the cursor and calls `setBounds()`. Do not use
   `-webkit-app-region: drag`.
 - On Windows, `isFullScreen()` can be false while the bounds already cover the
-  display. `expanded` in `window.ts` is the source of truth. Fullscreen is
+  display. `expanded` in `window/fullscreen.ts` is the source of truth. Fullscreen is
   announced only after the bounds match the display; the bloom origin is DIP
   relative to the display's top-left. Preserve this when touching fullscreen.
-- `COMPACT` (420x320) and `AVATAR` (120) are duplicated between `window.ts` and
-  the renderer CSS (`styles/avatar.css`, bubble offset in `styles/bubble.css`).
+- `COMPACT` (420x320) and `AVATAR` (120) are duplicated between
+  `window/geometry.ts` and the renderer CSS (`styles/avatar.css`, bubble offset in `styles/bubble.css`).
   Change both together.
 - The avatar can sit in any corner; main sends `Layout` and the renderer applies
   `body[data-x]`/`body[data-y]`. Keep bloom-origin and hit-test math in sync.
@@ -158,7 +176,7 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   from `file://`. `index.html` has no `<base href>` on purpose: with it a
   reload on `file://` resolved assets against the hash route and broke.
 - A full renderer load (Ctrl+R, dev-server reload) while the room is open
-  makes main call `exitFullscreen()` (`did-navigate` in `window.ts`; hash
+  makes main call `exitFullscreen()` (`did-navigate` in `window/ascua-window.ts`; hash
   routing only fires `did-navigate-in-page`), so the fresh renderer and the
   window agree on compact. Keep `expanded` as the source of truth.
 - `ASCUA_RENDERER=dist` makes main `loadFile` the built renderer even when not
@@ -179,8 +197,10 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   6 and Electron ignores `setBounds` while it thinks it is fullscreen. Bounds
   can be 1 px short (1919x1079); checks allow 2 px. Real GNOME/KDE,
   transparency and Wayland need a manual check.
-- On Linux, node-pty is compiled by `npm ci`/postinstall (no linux prebuilds),
-  so `npmRebuild: false` is fine there.
+- On Linux/macOS, node-pty is compiled by `tools/postinstall.mjs`
+  (`electron-builder install-app-deps`; no linux prebuilds), so
+  `npmRebuild: false` is fine there. The Dockerfile copies the script before
+  `npm ci`.
 - In Docker, Electron needs `ELECTRON_DISABLE_SANDBOX=1` (ui-drive then adds
   `--no-sandbox`), Xvfb plus a WM, and `--shm-size`. dbus errors in the log are
   harmless.
@@ -193,8 +213,7 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   `executableArgs`.
 - `ASCUA_EXECUTABLE=<packaged binary>` drives ui-drive against a packaged app
   (`win-unpacked/ascua.exe` or the extracted AppImage's `ascua`).
-- The renderer dev port 4200 is hard-coded in `constants.ts`; update the
-  Playwright config too if it changes.
+- The renderer dev port 4200 is hard-coded in `constants.ts`.
 - Permission requests queue. Pending requests are re-sent on `did-finish-load`;
   a hook disconnect emits `permissionDismissed`; a request arriving while the
   room is open collapses it. Only one Ascua instance may run because dev and
@@ -211,10 +230,42 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
 - If `nx package desktop` fails because `dist/packages/win-unpacked.tmp` is
   locked, remove it and retry.
 
+## i18n
+
+No hardcoded UI text. Spanish (`es`) and English (`en`) through Transloco.
+
+- Catalogs: `apps/renderer/src/i18n/{es,en}.json` (root scope) and
+  `apps/renderer/src/i18n/<scope>/{es,en}.json` (one lazy scope per feature).
+  A new catalog must be added to the loader map in
+  `core/i18n/loader.ts`; `testing/i18n.ts` (`i18nTesting(lang = 'es')`) builds
+  from the same map, and component specs import it and assert real es.json
+  text. `core/i18n/catalog.spec.ts` checks es/en key parity.
+- Templates use the pipe: `{{ 'nav.projects' | transloco }}`,
+  `[attr.aria-label]="'room.close' | transloco"`. Never a literal.
+- TS models return `Text` (`text(key, params)`, `pluralKey`), never a string;
+  the template renders it. `translateSignal` only where an API needs a string.
+- Feature routes declare `provideTranslocoScope('<scope>')` and a `resolve`
+  with `scopeResolver('<scope>')`, or the page renders empty strings for a frame.
+- Main never sends user-facing prose: it returns `AscuaError` codes (see
+  `@ascua/ipc`, `*_ERROR_CODES`, `encodeError`/`decodeError`) and the renderer
+  shows `errors.<code>` (`toAscuaError`, `errorText`). Add a code to the array
+  and `errors.<code>` to both root catalogs.
+- Native dialogs (quit confirmation) use `apps/desktop/src/app/i18n/main-messages.ts`
+  (`MainText`, typed es/en dictionary).
+- The language lives in main, `userData/settings.json`
+  (`getSettings`/`updateSettings`/`onSettingsChanged`); first launch follows the
+  OS language if es or en, else Spanish. Switch it in Ajustes.
+- Guard: `npm run i18n:check` (`tools/i18n-check.mjs`) fails with `file:line`
+  on literal template text/attributes and prose literals in `throw`, `error:`,
+  `message:`, `buttons:`, `title:`, `label:`, `.set(` and `return`. It is regex
+  based; for a legit non-UI literal add `// i18n-ignore` on the line (or
+  `<!-- i18n-ignore -->` on the line before in a template). `events/` and
+  `main-messages.ts` are skipped.
+
 ## Verify
 
 ```sh
-npx nx lint renderer && npx nx lint desktop && npx nx test renderer --run && npx nx test desktop --run && npx nx build desktop
+npm run format:check && npm run i18n:check && npx nx lint renderer && npx nx lint desktop && npx nx test renderer --run && npx nx test desktop --run && npx nx build desktop
 node tools/ui-drive.cjs dist/ui-drive
 ```
 

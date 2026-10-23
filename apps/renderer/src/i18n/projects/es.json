@@ -1,0 +1,33 @@
+{
+  "index": {
+    "emptyTitle": "Todavía no tenés proyectos",
+    "emptyHint": "Creá uno para levantar sus terminales desde acá.",
+    "selectHint": "Elegí un proyecto de la lista o creá uno nuevo.",
+    "newProject": "Nuevo proyecto"
+  },
+  "notFound": {
+    "title": "No encontré ese proyecto",
+    "back": "Volver a proyectos"
+  },
+  "form": {
+    "titleEdit": "Editar proyecto",
+    "titleNew": "Nuevo proyecto",
+    "name": "Nombre",
+    "folder": "Carpeta",
+    "pickFolder": "Elegir carpeta",
+    "color": "Color",
+    "noColor": "Sin color",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirmDelete": "¿Seguro? Eliminar",
+    "delete": "Eliminar proyecto"
+  },
+  "page": {
+    "running": "{{running}} de {{total}} corriendo",
+    "addPista": "Pista",
+    "addTerminal": "Terminal",
+    "stopAll": "Detener todo",
+    "edit": "Editar proyecto",
+    "sections": "Secciones del proyecto"
+  }
+}

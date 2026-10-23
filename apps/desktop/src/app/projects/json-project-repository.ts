@@ -1,6 +1,6 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { readFile, rename } from 'node:fs/promises';
 import type { Project, ProjectInput } from '@ascua/ipc';
+import { writeJsonAtomic } from '../storage/atomic-json';
 import { normalizeProject, ProjectInputError } from './project-input';
 import type { ProjectRepository } from './project-repository';
 
@@ -8,11 +8,6 @@ interface ProjectsFile {
   version: 1;
   projects: Project[];
 }
-
-const RENAME_RETRIES = 5;
-const RENAME_DELAY_MS = 40;
-
-const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
 export class JsonProjectRepository implements ProjectRepository {
   private projects: Project[] | undefined;
@@ -41,6 +36,23 @@ export class JsonProjectRepository implements ProjectRepository {
       await this.persist(next);
       this.projects = next;
       return structuredClone(copy);
+    });
+  }
+
+  update(
+    id: string,
+    change: (project: Project) => Project,
+  ): Promise<Project | undefined> {
+    return this.enqueue(async () => {
+      const projects = await this.load();
+      const index = projects.findIndex((item) => item.id === id);
+      if (index < 0) return undefined;
+      const updated = structuredClone(change(structuredClone(projects[index])));
+      const next = [...projects];
+      next[index] = updated;
+      await this.persist(next);
+      this.projects = next;
+      return structuredClone(updated);
     });
   }
 
@@ -86,18 +98,21 @@ export class JsonProjectRepository implements ProjectRepository {
     try {
       const data = JSON.parse(raw) as Partial<ProjectsFile>;
       if (data.version !== 1 || !Array.isArray(data.projects)) {
-        throw new Error('Formato de projects.json no reconocido');
+        throw new Error('Formato de projects.json no reconocido'); // i18n-ignore: log only
       }
       const valid: Project[] = [];
       for (const entry of data.projects) {
         try {
           valid.push(
             normalizeProject(entry as ProjectInput, () => {
-              throw new ProjectInputError('Falta un id');
+              throw new ProjectInputError('project.idMissing');
             }),
           );
         } catch (invalid) {
-          console.warn('[ascua] proyecto inválido ignorado en projects.json', invalid);
+          console.warn(
+            '[ascua] proyecto inválido ignorado en projects.json',
+            invalid,
+          );
         }
       }
       return valid;
@@ -115,22 +130,6 @@ export class JsonProjectRepository implements ProjectRepository {
 
   private async persist(projects: Project[]): Promise<void> {
     const data: ProjectsFile = { version: 1, projects };
-    const tmp = `${this.file}.tmp`;
-    await mkdir(dirname(this.file), { recursive: true });
-    await writeFile(tmp, JSON.stringify(data, null, 2), 'utf8');
-    for (let attempt = 0; ; attempt++) {
-      try {
-        await rename(tmp, this.file);
-        return;
-      } catch (error) {
-        const code = (error as NodeJS.ErrnoException).code;
-        const retry =
-          process.platform === 'win32' &&
-          (code === 'EPERM' || code === 'EBUSY') &&
-          attempt < RENAME_RETRIES;
-        if (!retry) throw error;
-        await sleep(RENAME_DELAY_MS);
-      }
-    }
+    await writeJsonAtomic(this.file, data);
   }
 }
