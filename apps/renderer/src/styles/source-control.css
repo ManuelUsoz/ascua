@@ -1,0 +1,168 @@
+/* ---------- source control screen ---------- */
+#room main:has(.sc) {
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: auto;
+}
+
+.sc {
+  flex: 1;
+  box-sizing: border-box;
+  padding: 20px 24px;
+  color: var(--text);
+}
+
+.sc ul {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.sc h2,
+.sc h3 {
+  margin: 12px 0 6px;
+  font-weight: 700;
+}
+
+.sc h3 {
+  font-size: 13px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sc-link {
+  position: absolute;
+  bottom: 24px;
+  color: var(--text);
+  opacity: 0.7;
+  font-size: 14px;
+}
+
+#room main:has(.pop) {
+  position: relative;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sc-back {
+  color: inherit;
+  opacity: 0.7;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.sc-error {
+  color: #ffb4b4;
+}
+
+.sc-muted {
+  opacity: 0.6;
+  font-size: 12px;
+}
+
+.sc-connect {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  margin-top: 12vh;
+}
+
+.sc-code {
+  margin: 0;
+  font-size: clamp(32px, 6vw, 56px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.sc-actions,
+.sc-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sc-head {
+  justify-content: space-between;
+  font-weight: 700;
+}
+
+.sc-btn {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.sc-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.sc-btn:active {
+  transform: scale(0.96);
+}
+
+.sc-ghost {
+  background: transparent;
+}
+
+.sc-cols {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.sc-repos {
+  flex: 0 0 240px;
+}
+
+.sc-detail {
+  flex: 1;
+  min-width: 0;
+}
+
+.sc-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sc-item:hover,
+.sc-item.is-active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.sc-badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+}
+
+.sc-badge[data-state='succeeded'],
+.sc-badge[data-state='merged'] {
+  background: rgba(120, 220, 150, 0.35);
+}
+
+.sc-badge[data-state='failed'] {
+  background: rgba(255, 120, 120, 0.4);
+}
+
+.sc-badge[data-state='running'],
+.sc-badge[data-state='open'] {
+  background: rgba(150, 170, 255, 0.4);
+}

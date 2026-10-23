@@ -1,0 +1,16 @@
+{
+  "name": "ascua-source-control",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/source-control/src",
+  "projectType": "library",
+  "tags": ["type:shared", "scope:source-control"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "{workspaceRoot}/coverage/libs/source-control"
+      }
+    }
+  }
+}

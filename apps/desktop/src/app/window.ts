@@ -2,7 +2,9 @@ import {
   app,
   BrowserWindow,
   ipcMain,
+  net,
   screen,
+  shell,
   type Rectangle,
 } from 'electron';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -14,7 +16,14 @@ import {
   type PermissionDecision,
   type PermissionRequest,
 } from '@ascua/ipc';
-import { rendererAppName, rendererAppPort } from './constants';
+import {
+  githubOAuthClientId,
+  rendererAppName,
+  rendererAppPort,
+} from './constants';
+import { GitHubDeviceAuth, createGitHubProvider } from '@ascua/source-control/github';
+import { CredentialStore } from './source-control/credential-store';
+import { SourceControlService } from './source-control/source-control-service';
 import { HookServer } from './hook-server';
 
 /** Compact companion window, in DIP. Must match the renderer's avatar host. */
@@ -195,6 +204,26 @@ export class WindowController {
       onResolved: (id) => this.permissionResolved(id),
     });
     app.on('will-quit', () => this.hooks.stop());
+
+    const fetchViaNet: typeof fetch = (input, init) =>
+      net.fetch(input as string, init as RequestInit);
+    const sourceControl = new SourceControlService({
+      store: new CredentialStore(),
+      auths: githubOAuthClientId
+        ? {
+            github: new GitHubDeviceAuth({
+              clientId: githubOAuthClientId,
+              fetch: fetchViaNet,
+            }),
+          }
+        : {},
+      factories: { github: createGitHubProvider },
+      fetch: fetchViaNet,
+      notify: (status) => this.send(IPC.sourceControlStatusChanged, status),
+      openExternal: (url) => shell.openExternal(url),
+    });
+    sourceControl.register();
+    void sourceControl.restore();
   }
 
   private showPermission(request: PermissionRequest): void {

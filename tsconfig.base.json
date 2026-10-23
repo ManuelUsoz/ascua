@@ -16,7 +16,9 @@
     "skipDefaultLibCheck": true,
     "paths": {
       "@ascua/character": ["libs/character/src/index.ts"],
-      "@ascua/ipc": ["libs/ascua-ipc/src/index.ts"]
+      "@ascua/ipc": ["libs/ascua-ipc/src/index.ts"],
+      "@ascua/source-control": ["libs/source-control/src/index.ts"],
+      "@ascua/source-control/github": ["libs/source-control/src/github/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

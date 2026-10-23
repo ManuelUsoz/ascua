@@ -2,7 +2,28 @@
 // Angular renderer. Keep this file dependency-free: it is imported from all
 // three worlds.
 
+import type {
+  CiRun,
+  Commit,
+  ProviderId,
+  PullRequest,
+  Repository,
+  RepositoryRef,
+  SourceControlStatus,
+} from '@ascua/source-control';
+
 export const IPC = {
+  sourceControlStatus: 'ascua:source-control:status',
+  sourceControlStatusChanged: 'ascua:source-control:status-changed',
+  sourceControlConnect: 'ascua:source-control:connect',
+  sourceControlCancel: 'ascua:source-control:cancel',
+  sourceControlOpenVerification: 'ascua:source-control:open-verification',
+  sourceControlDisconnect: 'ascua:source-control:disconnect',
+  sourceControlRepositories: 'ascua:source-control:repositories',
+  sourceControlPullRequests: 'ascua:source-control:pull-requests',
+  sourceControlCommits: 'ascua:source-control:commits',
+  sourceControlCiRuns: 'ascua:source-control:ci-runs',
+  sourceControlOpenUrl: 'ascua:source-control:open-url',
   toggleFullscreen: 'ascua:window:toggle-fullscreen',
   exitFullscreen: 'ascua:window:exit-fullscreen',
   isFullscreen: 'ascua:window:is-fullscreen',
@@ -59,8 +80,24 @@ export interface PermissionRequest {
  */
 export type PermissionDecision = 'allow' | 'deny' | 'terminal';
 
+/** Source control, driven from main. No method carries a token. */
+export interface SourceControlBridge {
+  status(): Promise<SourceControlStatus>;
+  connect(provider: ProviderId): Promise<SourceControlStatus>;
+  cancelConnect(): Promise<void>;
+  openVerification(): Promise<void>;
+  disconnect(): Promise<void>;
+  listRepositories(): Promise<Repository[]>;
+  listPullRequests(repo: RepositoryRef): Promise<PullRequest[]>;
+  listCommits(repo: RepositoryRef): Promise<Commit[]>;
+  listCiRuns(repo: RepositoryRef): Promise<CiRun[]>;
+  openUrl(url: string): Promise<void>;
+  onStatusChanged(callback: (status: SourceControlStatus) => void): () => void;
+}
+
 /** The API exposed by the preload script as `window.ascua`. */
 export interface AscuaApi {
+  sourceControl: SourceControlBridge;
   toggleFullscreen(): Promise<BloomOrigin>;
   exitFullscreen(): Promise<void>;
   isFullscreen(): Promise<boolean>;

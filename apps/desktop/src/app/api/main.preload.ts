@@ -7,9 +7,56 @@ import {
   type Layout,
   type PermissionDecision,
   type PermissionRequest,
+  type SourceControlBridge,
 } from '@ascua/ipc';
+import type {
+  CiRun,
+  Commit,
+  PullRequest,
+  Repository,
+  SourceControlStatus,
+} from '@ascua/source-control';
+
+const sourceControl: SourceControlBridge = {
+  status: () =>
+    ipcRenderer.invoke(IPC.sourceControlStatus) as Promise<SourceControlStatus>,
+  connect: (provider) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlConnect,
+      provider,
+    ) as Promise<SourceControlStatus>,
+  cancelConnect: () =>
+    ipcRenderer.invoke(IPC.sourceControlCancel) as Promise<void>,
+  openVerification: () =>
+    ipcRenderer.invoke(IPC.sourceControlOpenVerification) as Promise<void>,
+  disconnect: () =>
+    ipcRenderer.invoke(IPC.sourceControlDisconnect) as Promise<void>,
+  listRepositories: () =>
+    ipcRenderer.invoke(IPC.sourceControlRepositories) as Promise<Repository[]>,
+  listPullRequests: (repo) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlPullRequests,
+      repo,
+    ) as Promise<PullRequest[]>,
+  listCommits: (repo) =>
+    ipcRenderer.invoke(IPC.sourceControlCommits, repo) as Promise<Commit[]>,
+  listCiRuns: (repo) =>
+    ipcRenderer.invoke(IPC.sourceControlCiRuns, repo) as Promise<CiRun[]>,
+  openUrl: (url) =>
+    ipcRenderer.invoke(IPC.sourceControlOpenUrl, url) as Promise<void>,
+  onStatusChanged: (callback) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      value: SourceControlStatus,
+    ) => callback(value);
+    ipcRenderer.on(IPC.sourceControlStatusChanged, listener);
+    return () =>
+      ipcRenderer.removeListener(IPC.sourceControlStatusChanged, listener);
+  },
+};
 
 const api: AscuaApi = {
+  sourceControl,
   toggleFullscreen: () =>
     ipcRenderer.invoke(IPC.toggleFullscreen) as Promise<BloomOrigin>,
   exitFullscreen: () => ipcRenderer.invoke(IPC.exitFullscreen) as Promise<void>,

@@ -4,5 +4,6 @@
   "sourceRoot": "libs/ascua-ipc/src",
   "projectType": "library",
   "tags": ["type:shared", "scope:ipc"],
+  "implicitDependencies": ["ascua-source-control"],
   "targets": {}
 }

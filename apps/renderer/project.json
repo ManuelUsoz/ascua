@@ -5,7 +5,7 @@
   "prefix": "app",
   "sourceRoot": "apps/renderer/src",
   "tags": [],
-  "implicitDependencies": ["ascua-character", "ascua-ipc"],
+  "implicitDependencies": ["ascua-character", "ascua-ipc", "ascua-source-control"],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:browser-esbuild",

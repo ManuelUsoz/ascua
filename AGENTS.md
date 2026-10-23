@@ -15,6 +15,8 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
 - `npx nx test renderer --run`; one file:
   `npx nx test renderer --run --testFile=src/app/app.spec.ts`.
   Desktop has no unit-test target.
+- `npx nx test ascua-source-control --run` - source-control lib specs (not run
+  by the renderer target).
 - `npx nx serve renderer` is a browser preview only: `window.ascua` is absent,
   so drag, fullscreen, and permissions are unavailable. Use `serve desktop` to
   test the real app.
@@ -30,6 +32,9 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
 - `apps/desktop/src/app/hook-server.ts` - permission pipe/socket server;
   `tools/ascua-hook.mjs` - the Claude Code hook (one-line JSON, fails open).
 - `apps/desktop/src/app/api/main.preload.ts` - the `window.ascua` bridge.
+- `apps/desktop/src/app/source-control/` - `CredentialStore` (token encrypted
+  with `safeStorage` in `userData/source-control.json`) and
+  `SourceControlService` (OAuth, provider calls, IPC handlers).
 - `apps/renderer/src/app` - the Angular renderer. `app.ts` only composes
   `layout/` and binds Escape/resize.
   - `core/` - root services with signals: `room/room-state.ts` (bloom,
@@ -40,7 +45,7 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
     (bar, ring, embers and the `<router-outlet>`).
   - `features/<name>/` - screens shown inside the room. Each default-exports
     `<name>.routes.ts` and is registered with `loadChildren` in
-    `app.routes.ts`. Only `home` exists today.
+    `app.routes.ts`. Features today: `home`, `source-control`.
   - `shared/character/` - the `[appCharacter]` directive that mounts
     `@ascua/character` into its host element.
 - `apps/renderer/src/styles.css` - imports `styles/*.css` (base, avatar,
@@ -50,8 +55,17 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   framework-agnostic SVG character and life loop. Art is all-rights-reserved;
   see `NOTICE`.
 - `libs/ascua-ipc` (Nx project `ascua-ipc`, import `@ascua/ipc`) - IPC channel
-  names and shared types. Keep it dependency-free; it is imported by main,
-  preload, and renderer.
+  names and shared types. Keep it free of runtime dependencies; it is imported
+  by main, preload, and renderer. It may `import type` from shared libs (e.g.
+  `@ascua/source-control`), never a runtime import.
+- `libs/source-control` (Nx project `ascua-source-control`, import
+  `@ascua/source-control`) - provider-agnostic domain models, ports and errors.
+  `@ascua/source-control/github` is the GitHub adapter (REST + OAuth device
+  flow); it runs in main only, the renderer imports types only. Tokens never
+  leave main: no IPC payload, log or renderer state may carry one.
+  `githubOAuthClientId` in `apps/desktop/src/app/constants.ts` is the (public)
+  client ID of a GitHub OAuth App with Device Flow enabled; connect fails
+  until it is set.
 - Shared libs are source-only (no build target); they resolve through
   `tsconfig.base.json` paths and are wired with `implicitDependencies`.
 
@@ -109,7 +123,7 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
 ## Verify
 
 ```sh
-npx nx lint renderer && npx nx lint desktop && npx nx test renderer --run && npx nx build desktop
+npx nx lint renderer && npx nx lint desktop && npx nx test renderer --run && npx nx test ascua-source-control --run && npx nx build desktop
 ```
 
 Run `npx nx package desktop` when changing packaging, preload, or the hook.

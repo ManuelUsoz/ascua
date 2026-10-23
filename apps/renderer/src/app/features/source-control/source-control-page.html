@@ -1,0 +1,115 @@
+<section class="sc">
+  <a class="sc-back" routerLink="/">&larr; Back</a>
+  @if (state.error(); as message) {
+    <p class="sc-error">{{ message }}</p>
+  }
+
+  @switch (state.status().state) {
+    @case ('connecting') {
+      @if (state.status(); as s) {
+        @if (s.state === 'connecting') {
+          <div class="sc-connect">
+            <p>Enter this code on GitHub</p>
+            <p class="sc-code">{{ s.challenge.userCode }}</p>
+            <div class="sc-actions">
+              <button type="button" class="sc-btn" (click)="state.openVerification()">
+                Open GitHub
+              </button>
+              <button type="button" class="sc-btn sc-ghost" (click)="state.cancel()">
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+      }
+    }
+    @case ('connected') {
+      @if (state.status(); as s) {
+        @if (s.state === 'connected') {
+          <header class="sc-head">
+            <span>{{ s.account.login }}</span>
+            <button type="button" class="sc-btn sc-ghost" (click)="state.disconnect()">
+              Disconnect
+            </button>
+          </header>
+          <div class="sc-cols">
+            <ul class="sc-repos">
+              @for (repo of state.repositories(); track repo.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="sc-item"
+                    [class.is-active]="state.selected()?.id === repo.id"
+                    (click)="state.select(repo)"
+                  >
+                    {{ repo.fullName }}
+                  </button>
+                </li>
+              }
+            </ul>
+            @if (state.selected(); as repo) {
+              <div class="sc-detail">
+                <h2>{{ repo.fullName }}</h2>
+                @if (state.loading()) {
+                  <p class="sc-muted">Loading...</p>
+                }
+                <h3>Pull requests</h3>
+                <ul>
+                  @for (pr of state.pullRequests(); track pr.id) {
+                    <li>
+                      <button type="button" class="sc-item" (click)="state.open(pr.webUrl)">
+                        <span class="sc-muted">#{{ pr.number }}</span>
+                        {{ pr.title }}
+                        <span class="sc-badge" [attr.data-state]="prState(pr)">{{ prState(pr) }}</span>
+                        <span class="sc-muted">{{ pr.sourceBranch }} &rarr; {{ pr.targetBranch }}</span>
+                      </button>
+                    </li>
+                  } @empty {
+                    <li class="sc-muted">None</li>
+                  }
+                </ul>
+                <h3>Last commits</h3>
+                <ul>
+                  @for (commit of state.commits(); track commit.sha) {
+                    <li>
+                      <button type="button" class="sc-item" (click)="state.open(commit.webUrl)">
+                        <span class="sc-muted">{{ commit.sha.slice(0, 7) }}</span>
+                        {{ commit.title }}
+                        <span class="sc-muted">{{ commit.author.name }}</span>
+                      </button>
+                    </li>
+                  } @empty {
+                    <li class="sc-muted">None</li>
+                  }
+                </ul>
+                <h3>CI runs</h3>
+                <ul>
+                  @for (run of state.ciRuns(); track run.id) {
+                    <li>
+                      <button type="button" class="sc-item" (click)="state.open(run.webUrl)">
+                        {{ run.name }}
+                        <span class="sc-badge" [attr.data-state]="run.status">{{ run.status }}</span>
+                        @if (run.branch) {
+                          <span class="sc-muted">{{ run.branch }}</span>
+                        }
+                      </button>
+                    </li>
+                  } @empty {
+                    <li class="sc-muted">None</li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+    @default {
+      <div class="sc-connect">
+        <button type="button" class="sc-btn" (click)="state.connect('github')">
+          Connect GitHub
+        </button>
+      </div>
+    }
+  }
+</section>
