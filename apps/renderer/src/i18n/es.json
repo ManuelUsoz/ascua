@@ -6,6 +6,7 @@
     "newProject": "Nuevo proyecto",
     "edit": "Editar",
     "settings": "Ajustes",
+    "repositories": "Repositorios",
     "spaces": "Espacios"
   },
   "room": {
@@ -32,6 +33,18 @@
   "errors": {
     "unknown": "Error inesperado: {{detail}}",
     "noDesktop": "Solo disponible en la app de escritorio.",
+    "sourceControl": {
+      "notConnected": "No estás conectado al proveedor.",
+      "authExpired": "La sesión expiró o fue revocada. Conéctate de nuevo.",
+      "rateLimited": "Límite de peticiones alcanzado. Reintenta en {{minutes}} min.",
+      "network": "No se pudo contactar al proveedor. Revisa tu conexión.",
+      "denied": "La autorización fue denegada.",
+      "codeExpired": "El código expiró. Inicia la conexión de nuevo.",
+      "notFound": "No existe, o no tienes acceso.",
+      "forbidden": "Acceso prohibido (política de la organización o SSO).",
+      "unavailable": "El flujo de dispositivo está desactivado en la app del proveedor.",
+      "rejected": "GitHub rechazó la revisión (no puedes aprobar ni pedir cambios en tu propio pull request)."
+    },
     "project": {
       "notFound": "No existe el proyecto.",
       "invalid": "Datos de proyecto inválidos.",

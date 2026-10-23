@@ -1,0 +1,8 @@
+{
+  "name": "source-control",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/source-control/src",
+  "projectType": "library",
+  "tags": ["type:shared", "scope:source-control"],
+  "targets": {}
+}

@@ -6,6 +6,7 @@
     "newProject": "New project",
     "edit": "Edit",
     "settings": "Settings",
+    "repositories": "Repositories",
     "spaces": "Spaces"
   },
   "room": {
@@ -32,6 +33,18 @@
   "errors": {
     "unknown": "Unexpected error: {{detail}}",
     "noDesktop": "Only available in the desktop app.",
+    "sourceControl": {
+      "notConnected": "You are not connected to the provider.",
+      "authExpired": "The session expired or was revoked. Connect again.",
+      "rateLimited": "Rate limit reached. Try again in {{minutes}} min.",
+      "network": "Could not reach the provider. Check your connection.",
+      "denied": "Authorization was denied.",
+      "codeExpired": "The code expired. Start the connection again.",
+      "notFound": "Not found, or you do not have access to it.",
+      "forbidden": "Access is forbidden (organization policy or SSO).",
+      "unavailable": "The device flow is disabled on the provider's app.",
+      "rejected": "GitHub rejected the review (you cannot approve or request changes on your own pull request)."
+    },
     "project": {
       "notFound": "The project does not exist.",
       "invalid": "Invalid project data.",

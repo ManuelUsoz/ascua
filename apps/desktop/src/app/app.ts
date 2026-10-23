@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, net, safeStorage, shell } from 'electron';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { environment } from '../environments/environment';
@@ -15,6 +15,14 @@ import {
 } from './permissions/permission-bridge';
 import { JsonProjectRepository } from './projects/json-project-repository';
 import { registerProjectIpc } from './projects/project-ipc';
+import {
+  SafeStorageCredentialStore,
+  electronCipher,
+} from './source-control/credential-store';
+import { GitHubDeviceFlow } from './source-control/github/github-device-flow';
+import { GitHubProvider } from './source-control/github/github-provider';
+import { registerSourceControlIpc } from './source-control/source-control-ipc';
+import { SourceControlService } from './source-control/source-control-service';
 import { PtyHostClient } from './terminals/pty-host-client';
 import { guardQuit } from './terminals/quit-guard';
 import { resolveShell } from './terminals/shell';
@@ -111,6 +119,29 @@ export default class App {
         send: (channel, payload) => App.controller.send(channel, payload),
         onChange: (s) => text.set(s.language),
       });
+      // `net.fetch` is read at call time so a test driver can stub it.
+      const scFetch: typeof fetch = (input, init) =>
+        net.fetch(input as string, init);
+      registerSourceControlIpc(
+        new SourceControlService({
+          adapters: {
+            github: {
+              provider: new GitHubProvider(scFetch),
+              authorizer: new GitHubDeviceFlow({
+                fetch: scFetch,
+                clientId: 'Ov23liPOEd2g5MaAWlgZ',
+                scopes: ['repo', 'read:user'],
+              }),
+            },
+          },
+          store: new SafeStorageCredentialStore(
+            join(App.application.getPath('userData'), 'source-control.json'),
+            electronCipher(safeStorage),
+          ),
+          send: (channel, payload) => App.controller.send(channel, payload),
+          openExternal: (url) => shell.openExternal(url),
+        }),
+      );
       guardQuit({
         text,
         manager,

@@ -1,0 +1,186 @@
+<header class="as-pr__head">
+  <button
+    type="button"
+    class="as-btn as-btn--ghost as-btn--s"
+    (click)="back.emit()"
+  >
+    <app-icon name="chevron-left" />{{
+      'repositories.pr.back' | transloco: { repo: repo().name }
+    }}
+  </button>
+  <div class="as-pr__title-row">
+    <h1 class="as-repos__h1">{{ pr().title }}</h1>
+    <span class="as-item__id">#{{ pr().number }}</span>
+  </div>
+  <div class="as-pr__meta">
+    <span class="as-state" [attr.data-tone]="pr().draft ? 'idle' : 'ok'">{{
+      (pr().draft
+        ? 'repositories.browser.draft'
+        : 'repositories.pr.state.' + pr().state
+      ) | transloco
+    }}</span>
+    <span class="as-chip"
+      ><app-icon name="git-branch" />{{ pr().sourceBranch }} →
+      {{ pr().targetBranch }}</span
+    >
+    <span class="as-source"
+      ><span class="as-mono">{{ mono }}</span
+      >{{
+        'repositories.pr.opened'
+          | transloco
+            : {
+                author: pr().author.login,
+                time: (pr().createdAt | relativeTime: lang()),
+              }
+      }}</span
+    >
+    @if (diff()) {
+      <span class="as-pr__stat add">+{{ totals().add }}</span>
+      <span class="as-pr__stat del">−{{ totals().del }}</span>
+    }
+  </div>
+  @if (pr().body; as body) {
+    <p class="as-pr__body">{{ body }}</p>
+  }
+  <div class="as-row">
+    @if (!own()) {
+      <button
+        type="button"
+        class="as-btn as-btn--primary"
+        [disabled]="submitting()"
+        (click)="submit('approve')"
+      >
+        <app-icon name="check" />{{
+          'repositories.pr.actions.approve' | transloco
+        }}
+      </button>
+      <button
+        type="button"
+        class="as-btn as-btn--quiet"
+        [disabled]="submitting()"
+        (click)="compose('requestChanges')"
+      >
+        {{ 'repositories.pr.actions.requestChanges' | transloco }}
+      </button>
+    }
+    <button
+      type="button"
+      class="as-btn as-btn--ghost"
+      [disabled]="submitting()"
+      (click)="compose('comment')"
+    >
+      {{ 'repositories.pr.actions.comment' | transloco }}
+    </button>
+    @if (done(); as d) {
+      <span class="as-state" data-tone="ok">{{
+        'repositories.pr.done.' + d | transloco
+      }}</span>
+    }
+  </div>
+  @if (error(); as e) {
+    <p class="as-form__error" role="alert">{{ e.key | transloco: e.params }}</p>
+  }
+  @if (composing(); as event) {
+    <div class="as-pr__composer">
+      <textarea
+        class="as-field"
+        rows="4"
+        [attr.aria-label]="'repositories.pr.composer.label' | transloco"
+        [placeholder]="'repositories.pr.composer.placeholder' | transloco"
+        [ngModel]="comment()"
+        (ngModelChange)="comment.set($event)"
+      ></textarea>
+      <div class="as-row">
+        <button
+          type="button"
+          class="as-btn as-btn--primary"
+          [disabled]="submitting() || !comment().trim()"
+          (click)="submit(event)"
+        >
+          {{ 'repositories.pr.composer.send' | transloco }}
+        </button>
+        <button type="button" class="as-btn as-btn--ghost" (click)="cancel()">
+          {{ 'repositories.pr.composer.cancel' | transloco }}
+        </button>
+      </div>
+    </div>
+  }
+  <div class="as-tabs" role="tablist">
+    <button type="button" class="as-tab" role="tab" aria-selected="true">
+      {{ 'repositories.pr.tabs.files' | transloco }}
+      <span class="as-count as-count--quiet">{{ totals().count }}</span>
+    </button>
+  </div>
+</header>
+<main class="as-pr__main">
+  @if (diffError(); as e) {
+    <p class="as-form__error" role="alert">{{ e.key | transloco: e.params }}</p>
+  }
+  @if (diffLoading()) {
+    <p class="as-repos__muted">{{ 'repositories.loading' | transloco }}</p>
+  }
+  @for (item of files(); track item.file.path) {
+    <section class="as-diff" [id]="'pr-file-' + item.i">
+      <header class="as-diff__file">
+        <span
+          ><span class="as-diff__dir">{{ item.dir }}</span
+          >{{ item.base }}</span
+        >
+        <span class="add">+{{ item.file.additions }}</span>
+        <span class="del">−{{ item.file.deletions }}</span>
+        @if (item.file.status === 'added') {
+          <span class="as-state" data-tone="ok">{{
+            'repositories.pr.file.added' | transloco
+          }}</span>
+        } @else if (item.file.status === 'removed') {
+          <span class="as-state" data-tone="alert">{{
+            'repositories.pr.file.removed' | transloco
+          }}</span>
+        } @else if (item.file.status === 'renamed') {
+          <span class="as-state">{{
+            'repositories.pr.file.renamed' | transloco
+          }}</span>
+        }
+        <span class="as-source"
+          ><span class="as-mono">{{ mono }}</span
+          >{{ pr().author.login }}</span
+        >
+      </header>
+      @if (item.hunks; as hunks) {
+        @if (item.file.status === 'added') {
+          <p class="as-faint">{{ 'repositories.pr.newFile' | transloco }}</p>
+        }
+        @for (h of hunks; track $index) {
+          <div class="as-diff__hunk">{{ h.header }} {{ h.context }}</div>
+          <div class="as-diff__side">
+            @for (l of h.left; track $index) {
+              <div
+                class="as-diff__ln"
+                [class.as-diff__ln--del]="l.kind === 'del'"
+              >
+                <span>{{ l.n }}</span> {{ l.kind === 'pad' ? '' : l.text }}
+              </div>
+            }
+          </div>
+          <div class="as-diff__side">
+            @for (l of h.right; track $index) {
+              <div
+                class="as-diff__ln"
+                [class.as-diff__ln--add]="l.kind === 'add'"
+              >
+                <span>{{ l.n }}</span> {{ l.kind === 'pad' ? '' : l.text }}
+              </div>
+            }
+          </div>
+        }
+      } @else {
+        <p class="as-repos__muted">
+          {{ 'repositories.pr.binary' | transloco }}
+        </p>
+      }
+    </section>
+  }
+  @if (diff()?.truncated) {
+    <p class="as-repos__muted">{{ 'repositories.pr.truncated' | transloco }}</p>
+  }
+</main>

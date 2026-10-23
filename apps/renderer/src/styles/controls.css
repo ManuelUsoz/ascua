@@ -14,7 +14,13 @@
   height: 20px;
 }
 
-:where(.as-btn, .as-tab, .as-rail__item, .as-tree__row):focus-visible {
+:where(
+  .as-btn,
+  .as-tab,
+  .as-rail__item,
+  .as-tree__row,
+  .as-item
+):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
@@ -160,8 +166,14 @@ a.as-btn {
 [data-tone='live'] {
   --tone: var(--oro);
 }
+[data-tone='idle'] {
+  --tone: var(--idle);
+}
 .as-state[data-tone] {
   color: var(--tone);
+}
+.as-state[data-tone='idle'] {
+  color: var(--ink-muted);
 }
 [data-tone] > .as-dot,
 .as-dot[data-tone] {
@@ -260,4 +272,116 @@ a.as-btn {
 .as-select option {
   background: var(--surface-raised);
   color: var(--ink);
+}
+
+.as-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.as-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Source: a neutral monogram, never a brand colour. */
+.as-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-faint);
+  font: 500 11px/1 var(--font-mono);
+  white-space: nowrap;
+}
+.as-mono {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: 700 8px/1 var(--font-mono);
+}
+
+/* Work item */
+.as-item {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 6px var(--space-3);
+  align-items: start;
+  padding: var(--space-3) 14px;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+}
+button.as-item {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.as-item:hover {
+  border-color: var(--line-mid);
+  background: var(--surface-raised);
+}
+.as-item[aria-selected='true'] {
+  background: var(--oro-wash);
+  border-color: color-mix(in srgb, var(--oro) 50%, var(--line));
+}
+.as-item__kind {
+  color: var(--violeta);
+  padding-top: 2px;
+}
+.as-item__title {
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 20px;
+  min-width: 0;
+}
+.as-item__meta {
+  grid-column: 2 / 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 17px;
+}
+.as-item__id {
+  font: 500 11px/1 var(--font-mono);
+  color: var(--ink-muted);
+}
+
+/* Current account box (side bottom) */
+.as-current {
+  margin: 0 4px;
+  padding: 10px;
+  border-radius: var(--radius-m);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-highlight);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+/* pinned to the bottom of the side, the list above scrolls behind it */
+.as-side > .as-current {
+  position: sticky;
+  bottom: 0;
+  flex: none;
+  margin-top: auto;
+}
+.as-current strong {
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-weight: 600;
 }

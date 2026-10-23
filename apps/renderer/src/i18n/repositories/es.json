@@ -1,0 +1,120 @@
+{
+  "title": "Repositorios",
+  "loading": "Cargando…",
+  "retry": "Reintentar",
+  "refresh": "Actualizar",
+  "soon": "Próximamente",
+  "disconnected": {
+    "title": "Conecta tu cuenta de {{provider}}",
+    "connect": "Conectar GitHub"
+  },
+  "connect": {
+    "eyebrow": "Elige dónde vive tu código",
+    "providers": "Proveedor",
+    "note": "Por ahora Ascua solo se conecta a GitHub; los demás llegarán pronto.",
+    "lead": "Te doy un código de un solo uso y tú lo autorizas en el navegador. Ascua nunca ve tu contraseña.",
+    "steps": {
+      "one": "Pulsa el botón y recibe un código.",
+      "two": "Pégalo en la página de autorización.",
+      "three": "Autoriza a Ascua y vuelve aquí."
+    }
+  },
+  "scopes": {
+    "title": "Lo que puede hacer Ascua",
+    "repos": "Tus repos",
+    "prs": "Pull requests",
+    "commits": "Commits",
+    "diffs": "Diffs de cada archivo",
+    "review": "Aprobar, pedir cambios y comentar"
+  },
+  "term": {
+    "github": "pull requests",
+    "gitlab": "merge requests",
+    "bitbucket": "pull requests",
+    "azure": "pull requests"
+  },
+  "status": {
+    "disconnected": "{{provider}} sin conectar",
+    "area": "Repositorios",
+    "connected": "GitHub conectado",
+    "updated": "Actualizado {{time}}",
+    "files": "{{count}} archivos · +{{add}} −{{del}}"
+  },
+  "deviceCode": {
+    "eyebrow": "Tu código",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "open": "Abrir {{host}}",
+    "waiting": "Esperando que autorices",
+    "expires": "El código vence en {{time}}",
+    "expired": "El código venció",
+    "again": "Pedir otro código",
+    "cancel": "Cancelar"
+  },
+  "side": {
+    "title": "Repos",
+    "loadMore": "Cargar más",
+    "connected": "Conectado",
+    "sessionOnly": "Solo durante esta sesión: este equipo no puede guardar el token de forma cifrada.",
+    "disconnect": "Desconectar",
+    "disconnectNote": "Desconectar solo borra el token de este equipo. Para revocar el acceso, ve a github.com/settings/applications."
+  },
+  "browser": {
+    "repo": "Repo",
+    "noRepos": "No hay repositorios.",
+    "private": "Privado",
+    "fork": "Fork",
+    "archived": "Archivado",
+    "openRepo": "Abrir en GitHub",
+    "prsTitle": "{{term}} abiertos",
+    "noPrs": "No hay pull requests abiertos",
+    "noPrsHint": "Todo tranquilo por aquí: no hay nada esperando revisión.",
+    "commitsTitle": "Últimos commits",
+    "noCommits": "No hay commits.",
+    "draft": "Borrador"
+  },
+  "pr": {
+    "state": {
+      "open": "Abierto",
+      "closed": "Cerrado",
+      "merged": "Fusionado"
+    },
+    "back": "Pull requests de {{repo}}",
+    "opened": "{{author}} abrió {{time}}",
+    "actions": {
+      "approve": "Aprobar",
+      "requestChanges": "Pedir cambios",
+      "comment": "Comentar"
+    },
+    "composer": {
+      "label": "Comentario de la revisión",
+      "placeholder": "Escribe tu comentario…",
+      "send": "Enviar",
+      "cancel": "Cancelar"
+    },
+    "done": {
+      "approve": "Aprobado",
+      "requestChanges": "Cambios pedidos",
+      "comment": "Comentario enviado"
+    },
+    "tabs": {
+      "files": "Archivos cambiados"
+    },
+    "side": {
+      "title": "Archivos"
+    },
+    "summary": {
+      "title": "Resumen",
+      "lines": "+{{add}} agregadas −{{del}} borradas",
+      "files": "en {{count}} archivos"
+    },
+    "newFile": "archivo nuevo",
+    "binary": "Binario o demasiado grande para mostrar.",
+    "truncated": "Hay más archivos de los que se muestran.",
+    "file": {
+      "added": "Nuevo",
+      "removed": "Eliminado",
+      "renamed": "Renombrado"
+    }
+  }
+}

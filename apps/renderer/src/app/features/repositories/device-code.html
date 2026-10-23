@@ -1,0 +1,46 @@
+<div class="as-connect__codebox">
+  <div>
+    <span class="as-connect__eyebrow">{{
+      'repositories.deviceCode.eyebrow' | transloco
+    }}</span>
+    <p class="as-repos__code">{{ prompt().userCode }}</p>
+  </div>
+  <button type="button" class="as-btn as-btn--quiet" (click)="copy()">
+    <app-icon name="copy" /><span aria-live="polite">{{
+      (copied()
+        ? 'repositories.deviceCode.copied'
+        : 'repositories.deviceCode.copy'
+      ) | transloco
+    }}</span>
+  </button>
+</div>
+<button
+  type="button"
+  class="as-btn as-btn--primary as-btn--block"
+  (click)="store.openVerification()"
+>
+  <app-icon name="external" />{{
+    'repositories.deviceCode.open' | transloco: { host: provider.verifyHost }
+  }}
+</button>
+<div class="as-connect__foot">
+  <span class="as-state" data-tone="live">{{
+    'repositories.deviceCode.waiting' | transloco
+  }}</span>
+  <span class="as-connect__expiry">
+    <app-icon name="clock" />{{
+      (remaining() > 0
+        ? 'repositories.deviceCode.expires'
+        : 'repositories.deviceCode.expired'
+      ) | transloco: { time: clock() }
+    }}
+  </span>
+</div>
+<div class="as-connect__actions">
+  <button type="button" class="as-btn as-btn--ghost" (click)="store.connect()">
+    {{ 'repositories.deviceCode.again' | transloco }}
+  </button>
+  <button type="button" class="as-btn as-btn--ghost" (click)="store.cancel()">
+    {{ 'repositories.deviceCode.cancel' | transloco }}
+  </button>
+</div>

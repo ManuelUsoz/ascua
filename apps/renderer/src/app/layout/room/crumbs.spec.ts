@@ -42,6 +42,18 @@ describe('crumbsFrom', () => {
     ).toEqual({ area: 'nav.settings' });
   });
 
+  it('reads the side context of repositorios', () => {
+    expect(
+      crumbsFrom(
+        node(
+          {},
+          {},
+          node({}, { area: 'nav.repositories', side: 'repositories' }),
+        ),
+      ),
+    ).toEqual({ area: 'nav.repositories', side: 'repositories' });
+  });
+
   it('keeps a section without a project', () => {
     expect(crumbsFrom(node({}, { section: 'nav.newProject' }))).toEqual({
       section: 'nav.newProject',

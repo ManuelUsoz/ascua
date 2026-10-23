@@ -1,0 +1,89 @@
+@let status = store.status();
+@if (status?.state === 'connected' && selection.selectedPr()) {
+  <aside class="as-side">
+    <div class="as-side__head">
+      {{ 'repositories.pr.side.title' | transloco }}
+      <span class="as-count as-count--quiet">{{ files().length }}</span>
+    </div>
+    @for (f of files(); track f.path; let i = $index) {
+      <button
+        type="button"
+        class="as-tree__row"
+        [attr.aria-current]="selection.activeFile() === i ? 'true' : null"
+        (click)="goTo(i)"
+      >
+        <span class="as-tree__name">{{ f.base }}</span>
+        <span class="as-tree__meta">+{{ f.additions }} −{{ f.deletions }}</span>
+      </button>
+    }
+    <div class="as-current">
+      <span class="as-eyebrow">{{
+        'repositories.pr.summary.title' | transloco
+      }}</span>
+      <strong>{{
+        'repositories.pr.summary.lines'
+          | transloco: { add: totals().add, del: totals().del }
+      }}</strong>
+      <span class="as-faint">{{
+        'repositories.pr.summary.files' | transloco: { count: files().length }
+      }}</span>
+    </div>
+  </aside>
+} @else if (status?.state === 'connected') {
+  <aside class="as-side">
+    <div class="as-side__head">
+      {{ 'repositories.side.title' | transloco }}
+      <span class="as-count as-count--quiet">{{
+        selection.repos().length
+      }}</span>
+    </div>
+    @for (repo of selection.repos(); track repo.id) {
+      <button
+        type="button"
+        class="as-tree__row as-repos__item"
+        [attr.aria-current]="
+          repo.id === selection.selectedRepo()?.id ? 'true' : null
+        "
+        (click)="selection.selectRepo(repo)"
+      >
+        <app-icon name="repo" />
+        <span class="as-tree__name">{{ repo.fullName }}</span>
+      </button>
+    }
+    @if (selection.nextPage()) {
+      <button
+        type="button"
+        class="as-btn as-btn--ghost as-btn--s"
+        [disabled]="selection.reposLoading()"
+        (click)="selection.loadRepos(true)"
+      >
+        {{ 'repositories.side.loadMore' | transloco }}
+      </button>
+    }
+    <div class="as-current">
+      <span class="as-state" data-tone="ok">{{
+        'repositories.side.connected' | transloco
+      }}</span>
+      <strong>{{ store.account()?.login }}</strong>
+      <span class="as-source"
+        ><span class="as-mono">{{ provider.mono }}</span
+        >{{ provider.host }}</span
+      >
+      @if (status && status.state === 'connected' && !status.persisted) {
+        <span class="as-faint">{{
+          'repositories.side.sessionOnly' | transloco
+        }}</span>
+      }
+      <span class="as-faint">{{
+        'repositories.side.disconnectNote' | transloco
+      }}</span>
+      <button
+        type="button"
+        class="as-btn as-btn--ghost as-btn--s"
+        (click)="store.disconnect()"
+      >
+        {{ 'repositories.side.disconnect' | transloco }}
+      </button>
+    </div>
+  </aside>
+}

@@ -2,6 +2,20 @@
 // Angular renderer. Keep this file dependency-free: it is imported from all
 // three worlds.
 
+import type {
+  Account,
+  Commit,
+  CommitQuery,
+  Page,
+  PageQuery,
+  ProviderId,
+  PullRequest,
+  PullRequestDiff,
+  PullRequestQuery,
+  Repository,
+  ReviewInput,
+} from '@ascua/source-control';
+
 export const IPC = {
   toggleFullscreen: 'ascua:window:toggle-fullscreen',
   exitFullscreen: 'ascua:window:exit-fullscreen',
@@ -42,6 +56,18 @@ export const IPC = {
   getSettings: 'ascua:settings:get',
   updateSettings: 'ascua:settings:update',
   settingsChanged: 'ascua:settings:changed',
+  sourceControlStatus: 'ascua:source-control:status',
+  sourceControlConnect: 'ascua:source-control:connect',
+  sourceControlCancel: 'ascua:source-control:cancel',
+  sourceControlOpenVerification: 'ascua:source-control:open-verification',
+  sourceControlDisconnect: 'ascua:source-control:disconnect',
+  sourceControlChanged: 'ascua:source-control:changed',
+  sourceControlRepositories: 'ascua:source-control:repositories',
+  sourceControlPullRequests: 'ascua:source-control:pull-requests',
+  sourceControlCommits: 'ascua:source-control:commits',
+  sourceControlDiff: 'ascua:source-control:diff',
+  sourceControlReview: 'ascua:source-control:review',
+  sourceControlOpenUrl: 'ascua:source-control:open-url',
 } as const;
 
 export const LANGUAGES = ['es', 'en'] as const;
@@ -98,12 +124,26 @@ export const FILE_ERROR_CODES = [
   'file.openFailed',
 ] as const;
 
+export const SOURCE_CONTROL_ERROR_CODES = [
+  'sourceControl.notConnected',
+  'sourceControl.authExpired',
+  'sourceControl.rateLimited',
+  'sourceControl.network',
+  'sourceControl.denied',
+  'sourceControl.codeExpired',
+  'sourceControl.notFound',
+  'sourceControl.forbidden',
+  'sourceControl.unavailable',
+  'sourceControl.rejected',
+] as const;
+
 /** Every error code the renderer translates as `errors.<code>`. */
 export type ErrorCode =
   | (typeof COMMON_ERROR_CODES)[number]
   | (typeof PROJECT_ERROR_CODES)[number]
   | (typeof TERMINAL_ERROR_CODES)[number]
-  | (typeof FILE_ERROR_CODES)[number];
+  | (typeof FILE_ERROR_CODES)[number]
+  | (typeof SOURCE_CONTROL_ERROR_CODES)[number];
 
 /** A failure main (or the renderer) reports as a code plus parameters. */
 export interface AscuaError {
@@ -284,6 +324,30 @@ export type SaveFileResult =
   | { ok: true; version: string; size: number }
   | { ok: false; conflict: true };
 
+/** What the user must do on the provider's page to authorize Ascua. */
+export interface DeviceCodePrompt {
+  userCode: string;
+  verificationUri: string;
+  /** Epoch ms. */
+  expiresAt: number;
+}
+
+export type SourceControlStatus =
+  | { provider: ProviderId; state: 'disconnected'; error?: AscuaError }
+  | { provider: ProviderId; state: 'connecting'; prompt: DeviceCodePrompt }
+  | {
+      provider: ProviderId;
+      state: 'connected';
+      account: Account;
+      /** False when the token is kept in memory only (no encryption). */
+      persisted: boolean;
+    };
+
+/** `refresh` bypasses main's in-memory cache. */
+export interface Refreshable {
+  refresh?: boolean;
+}
+
 export function terminalKey(projectId: string, terminalId: string): string {
   return `${projectId}:${terminalId}`;
 }
@@ -366,4 +430,47 @@ export interface AscuaApi {
   ): Promise<SaveFileResult>;
   /** Show in the file manager; resolves to an error, or undefined. */
   revealFile(projectId: string, path: string): Promise<AscuaError | undefined>;
+  getSourceControlStatus(provider: ProviderId): Promise<SourceControlStatus>;
+  /** Starts the device flow; the result is the code the user must enter. */
+  connectSourceControl(provider: ProviderId): Promise<DeviceCodePrompt>;
+  cancelSourceControlConnect(provider: ProviderId): Promise<void>;
+  /** Opens the pending verification page; resolves to an error, or undefined. */
+  openSourceControlVerification(
+    provider: ProviderId,
+  ): Promise<AscuaError | undefined>;
+  disconnectSourceControl(provider: ProviderId): Promise<void>;
+  onSourceControlChanged(
+    callback: (status: SourceControlStatus) => void,
+  ): () => void;
+  listRepositories(
+    provider: ProviderId,
+    query?: PageQuery & Refreshable,
+  ): Promise<Page<Repository>>;
+  listPullRequests(
+    provider: ProviderId,
+    repoId: string,
+    query?: PullRequestQuery & Refreshable,
+  ): Promise<Page<PullRequest>>;
+  listCommits(
+    provider: ProviderId,
+    repoId: string,
+    query?: CommitQuery & Refreshable,
+  ): Promise<Page<Commit>>;
+  getPullRequestDiff(
+    provider: ProviderId,
+    repoId: string,
+    number: number,
+    query?: Refreshable,
+  ): Promise<PullRequestDiff>;
+  submitPullRequestReview(
+    provider: ProviderId,
+    repoId: string,
+    number: number,
+    review: ReviewInput,
+  ): Promise<void>;
+  /** Opens a provider web page; resolves to an error, or undefined. */
+  openSourceControlUrl(
+    provider: ProviderId,
+    url: string,
+  ): Promise<AscuaError | undefined>;
 }

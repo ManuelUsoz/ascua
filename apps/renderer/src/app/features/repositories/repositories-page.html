@@ -1,0 +1,108 @@
+<div class="as-repos">
+  @if (loading()) {
+    <p class="as-repos__muted">{{ 'repositories.loading' | transloco }}</p>
+  } @else if (connected()) {
+    <app-repository-browser />
+  } @else {
+    <div class="as-repos__stage">
+      <section class="as-connect">
+        <div class="as-connect__head">
+          <p class="as-connect__eyebrow">
+            {{ 'repositories.connect.eyebrow' | transloco }}
+          </p>
+          <h1 class="as-connect__title">
+            {{
+              'repositories.disconnected.title'
+                | transloco: { provider: current.name }
+            }}
+          </h1>
+        </div>
+        <div
+          class="as-connect__providers"
+          role="radiogroup"
+          [attr.aria-label]="'repositories.connect.providers' | transloco"
+        >
+          @for (p of providers; track p.id) {
+            <button
+              type="button"
+              role="radio"
+              class="as-connect__provider"
+              [attr.aria-checked]="p.id === current.id"
+              [disabled]="!p.available"
+            >
+              <span class="as-source"
+                ><span class="as-mono">{{ p.mono }}</span></span
+              >
+              <span>{{ p.name }}</span>
+              @if (!p.available) {
+                <span class="as-connect__soon">{{
+                  'repositories.soon' | transloco
+                }}</span>
+              }
+            </button>
+          }
+        </div>
+        <p class="as-connect__note">
+          {{ 'repositories.connect.note' | transloco }}
+        </p>
+        <p class="as-connect__lead">
+          {{ 'repositories.connect.lead' | transloco }}
+        </p>
+        <ol class="as-connect__steps">
+          @for (step of steps; track step) {
+            <li class="as-connect__step">
+              <span class="as-connect__num">{{ $index + 1 }}</span>
+              {{ 'repositories.connect.steps.' + step | transloco }}
+            </li>
+          }
+        </ol>
+        @if (failure(); as e) {
+          <div class="as-form__error" role="alert">
+            {{ e.key | transloco: e.params }}
+            <button type="button" class="as-btn as-btn--s" (click)="load()">
+              {{ 'repositories.retry' | transloco }}
+            </button>
+          </div>
+        }
+        @if (connecting(); as c) {
+          <app-device-code [prompt]="c.prompt" />
+        } @else {
+          @if (statusFailure(); as e) {
+            <p class="as-form__error" role="alert">
+              {{ e.key | transloco: e.params }}
+            </p>
+          }
+          <button
+            type="button"
+            class="as-btn as-btn--primary as-btn--block"
+            [disabled]="store.busy()"
+            (click)="store.connect()"
+          >
+            {{ 'repositories.disconnected.connect' | transloco }}
+          </button>
+        }
+        <div class="as-connect__scopes">
+          <p class="as-connect__eyebrow">
+            {{ 'repositories.scopes.title' | transloco }}
+          </p>
+          <div class="as-row">
+            @for (scope of scopes; track scope) {
+              <span class="as-chip">{{
+                'repositories.scopes.' + scope | transloco
+              }}</span>
+            }
+          </div>
+        </div>
+      </section>
+    </div>
+    <footer class="as-statusbar">
+      <span class="as-state" data-tone="idle">{{
+        'repositories.status.disconnected'
+          | transloco: { provider: current.name }
+      }}</span>
+      <span class="as-statusbar__end">{{
+        'repositories.status.area' | transloco
+      }}</span>
+    </footer>
+  }
+</div>
