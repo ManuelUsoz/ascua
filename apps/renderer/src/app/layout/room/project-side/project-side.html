@@ -57,9 +57,12 @@
       }
       <button
         type="button"
-        class="as-btn as-btn--primary as-btn--block as-side__start"
+        appButton
+        variant="primary"
+        block
+        class="as-side__start"
         [disabled]="p.terminals.length === 0"
-        (click)="sessions.startAll(p)"
+        (clicked)="sessions.startAll(p)"
       >
         <app-icon name="play" />{{ 'side.startAll' | transloco }}
       </button>

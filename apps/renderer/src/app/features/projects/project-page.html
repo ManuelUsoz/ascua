@@ -13,24 +13,30 @@
     </span>
     <div class="as-page-head__tools">
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--quiet as-btn--s"
-        (click)="editor.create()"
+        variant="quiet"
+        size="s"
+        (clicked)="editor.create()"
       >
         <app-icon name="plus" />{{ 'projects.page.addPista' | transloco }}
       </button>
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--quiet as-btn--s"
-        (click)="openShell()"
+        variant="quiet"
+        size="s"
+        (clicked)="openShell()"
       >
         <app-icon name="plus" />{{ 'projects.page.addTerminal' | transloco }}
       </button>
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--danger as-btn--s"
+        variant="danger"
+        size="s"
         [disabled]="counts().running === 0"
-        (click)="sessions.stopAll(p)"
+        (clicked)="sessions.stopAll(p)"
       >
         <app-icon name="stop" />{{ 'projects.page.stopAll' | transloco }}
       </button>

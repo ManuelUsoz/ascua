@@ -12,21 +12,27 @@
       }
       <span class="as-term__cmd">{{ spec.command }}</span>
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+        variant="ghost"
+        size="s"
+        icon
         [attr.aria-label]="
           (running() ? 'terminals.pane.stop' : 'terminals.pane.start')
             | transloco: { name: name() }
         "
-        (click)="toggle()"
+        (clicked)="toggle()"
       >
         <app-icon [name]="running() ? 'stop' : 'play'" />
       </button>
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+        variant="ghost"
+        size="s"
+        icon
         [attr.aria-label]="'terminals.pane.edit' | transloco: { name: name() }"
-        (click)="editor.edit(spec)"
+        (clicked)="editor.edit(spec)"
       >
         <app-icon name="edit" />
       </button>
@@ -34,21 +40,27 @@
       <span class="as-term__cmd"></span>
       @if (!running()) {
         <button
+          appButton
           type="button"
-          class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+          variant="ghost"
+          size="s"
+          icon
           [attr.aria-label]="
             'terminals.pane.reopen' | transloco: { name: name() }
           "
-          (click)="toggle()"
+          (clicked)="toggle()"
         >
           <app-icon name="play" />
         </button>
       }
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+        variant="ghost"
+        size="s"
+        icon
         [attr.aria-label]="'terminals.pane.close' | transloco: { name: name() }"
-        (click)="close()"
+        (clicked)="close()"
       >
         <app-icon name="close" />
       </button>

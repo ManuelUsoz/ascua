@@ -13,6 +13,7 @@ import { errorText, toAscuaError } from '../../core/i18n/app-error';
 import type { Text } from '../../core/i18n/text';
 import { RepositorySelection } from '../../core/source-control/repository-selection';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { Spinner } from '../../shared/spinner/spinner';
 import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
@@ -31,6 +32,7 @@ import { PROVIDER_OPTIONS, termKey } from './providers';
     RelativeTimePipe,
     Spinner,
     AsSelect,
+    Button,
   ],
   templateUrl: './repository-browser.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

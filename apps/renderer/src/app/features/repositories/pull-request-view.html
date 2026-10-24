@@ -1,8 +1,10 @@
 <header class="as-pr__head">
   <button
     type="button"
-    class="as-btn as-btn--ghost as-btn--s"
-    (click)="back.emit()"
+    appButton
+    variant="ghost"
+    size="s"
+    (clicked)="back.emit()"
   >
     <app-icon name="chevron-left" />{{
       'repositories.pr.back' | transloco: { repo: repo().name }
@@ -46,9 +48,10 @@
     @if (!own()) {
       <button
         type="button"
-        class="as-btn as-btn--primary"
+        appButton
+        variant="primary"
         [disabled]="submitting()"
-        (click)="submit('approve')"
+        (clicked)="submit('approve')"
       >
         <app-icon name="check" />{{
           'repositories.pr.actions.approve' | transloco
@@ -56,18 +59,20 @@
       </button>
       <button
         type="button"
-        class="as-btn as-btn--quiet"
+        appButton
+        variant="quiet"
         [disabled]="submitting()"
-        (click)="compose('requestChanges')"
+        (clicked)="compose('requestChanges')"
       >
         {{ 'repositories.pr.actions.requestChanges' | transloco }}
       </button>
     }
     <button
       type="button"
-      class="as-btn as-btn--ghost"
+      appButton
+      variant="ghost"
       [disabled]="submitting()"
-      (click)="compose('comment')"
+      (clicked)="compose('comment')"
     >
       {{ 'repositories.pr.actions.comment' | transloco }}
     </button>
@@ -93,13 +98,14 @@
       <div class="as-row">
         <button
           type="button"
-          class="as-btn as-btn--primary"
+          appButton
+          variant="primary"
           [disabled]="submitting() || !comment().trim()"
-          (click)="submit(event)"
+          (clicked)="submit(event)"
         >
           {{ 'repositories.pr.composer.send' | transloco }}
         </button>
-        <button type="button" class="as-btn as-btn--ghost" (click)="cancel()">
+        <button type="button" appButton variant="ghost" (clicked)="cancel()">
           {{ 'repositories.pr.composer.cancel' | transloco }}
         </button>
       </div>

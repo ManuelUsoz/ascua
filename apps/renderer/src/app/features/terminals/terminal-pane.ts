@@ -8,6 +8,7 @@ import {
 import { terminalKey, type TerminalSpec } from '@ascua/ipc';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TerminalSessions } from '../../core/terminals/terminal-sessions';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { PistaEditor } from './pista-editor';
 import { terminalStateView } from './terminal-state';
@@ -16,7 +17,7 @@ import { TerminalView } from './terminal-view';
 /** A terminal card: a saved pista (`spec` set) or an ad-hoc shell. */
 @Component({
   selector: 'app-terminal-pane',
-  imports: [TranslocoPipe, Icon, TerminalView],
+  imports: [TranslocoPipe, Icon, TerminalView, Button],
   templateUrl: './terminal-pane.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { style: 'display: contents' },

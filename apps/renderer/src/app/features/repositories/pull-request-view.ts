@@ -19,6 +19,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { errorText, toAscuaError } from '../../core/i18n/app-error';
 import type { Text } from '../../core/i18n/text';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { Spinner } from '../../shared/spinner/spinner';
 import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
@@ -28,7 +29,14 @@ import { PROVIDER_OPTIONS } from './providers';
 /** One pull request: header, review actions and a side-by-side diff. */
 @Component({
   selector: 'app-pull-request-view',
-  imports: [TranslocoPipe, FormsModule, Icon, RelativeTimePipe, Spinner],
+  imports: [
+    TranslocoPipe,
+    FormsModule,
+    Icon,
+    RelativeTimePipe,
+    Spinner,
+    Button,
+  ],
   templateUrl: './pull-request-view.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

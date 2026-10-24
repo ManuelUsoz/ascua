@@ -3,13 +3,14 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ProjectStore } from '../../../core/projects/project-store';
 import { TerminalSessions } from '../../../core/terminals/terminal-sessions';
+import { Button } from '../../../shared/button/button';
 import { Icon } from '../../../shared/icon/icon';
 import { injectCrumbs } from '../crumbs';
 
 /** Project tree: every project, with the current one expanded. */
 @Component({
   selector: 'app-project-side',
-  imports: [RouterLink, Icon, TranslocoPipe],
+  imports: [RouterLink, Button, Icon, TranslocoPipe],
   templateUrl: './project-side.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

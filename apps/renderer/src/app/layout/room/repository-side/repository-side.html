@@ -58,8 +58,10 @@
     } @else if (selection.nextPage()) {
       <button
         type="button"
-        class="as-btn as-btn--ghost as-btn--s"
-        (click)="selection.loadRepos(true)"
+        appButton
+        variant="ghost"
+        size="s"
+        (clicked)="selection.loadRepos(true)"
       >
         {{ 'repositories.side.loadMore' | transloco }}
       </button>
@@ -83,8 +85,10 @@
       }}</span>
       <button
         type="button"
-        class="as-btn as-btn--ghost as-btn--s"
-        (click)="store.disconnect()"
+        appButton
+        variant="ghost"
+        size="s"
+        (clicked)="store.disconnect()"
       >
         {{ 'repositories.side.disconnect' | transloco }}
       </button>
