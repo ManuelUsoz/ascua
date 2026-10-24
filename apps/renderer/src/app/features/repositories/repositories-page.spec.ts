@@ -1,7 +1,10 @@
-import { signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import type { AscuaError, SourceControlStatus } from '@ascua/ipc';
+import type { Repository } from '@ascua/source-control';
 import { provideTranslocoScope } from '@jsverse/transloco';
+import { RepositorySelection } from '../../core/source-control/repository-selection';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
 import { i18nTesting } from '../../testing/i18n';
 import { RepositoriesPage } from './repositories-page';
@@ -97,6 +100,62 @@ describe('RepositoriesPage', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  describe('route-driven selection', () => {
+    @Component({ template: '' })
+    class Stub {}
+
+    function create() {
+      TestBed.configureTestingModule({
+        imports: [RepositoriesPage, i18nTesting()],
+        providers: [
+          { provide: SourceControlStore, useValue: store },
+          provideTranslocoScope('repositories'),
+          provideRouter([
+            { path: 'repositorios', component: Stub },
+            { path: 'repositorios/:repoId', component: Stub },
+          ]),
+        ],
+      });
+      const selection = TestBed.inject(RepositorySelection);
+      const follow = vi.spyOn(selection, 'follow').mockResolvedValue();
+      const router = TestBed.inject(Router);
+      const navigate = vi.spyOn(router, 'navigate');
+      const fixture = TestBed.createComponent(RepositoriesPage);
+      return { selection, follow, router, navigate, fixture };
+    }
+
+    it('follows the repo named by the route', async () => {
+      const { router, follow, fixture } = create();
+      await router.navigateByUrl('/repositorios/octo%2Fhello');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(follow).toHaveBeenCalledWith({ repoId: 'octo/hello' });
+    });
+
+    it('redirects the root to the first repo, id as one segment', async () => {
+      const { selection, router, navigate, fixture } = create();
+      selection.repos.set([{ id: 'octo/hello' } as Repository]);
+      await router.navigateByUrl('/repositorios');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(navigate).toHaveBeenCalledWith(['/repositorios', 'octo/hello'], {
+        replaceUrl: true,
+      });
+    });
+
+    it('goes back to the root when the selection is missing', async () => {
+      const { selection, router, navigate, fixture } = create();
+      await router.navigateByUrl('/repositorios/gone%2Frepo');
+      fixture.detectChanges();
+      selection.missing.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(navigate).toHaveBeenCalledWith(['/repositorios'], {
+        replaceUrl: true,
+      });
+    });
   });
 
   it('shows the browser when connected', async () => {

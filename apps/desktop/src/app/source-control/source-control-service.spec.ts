@@ -48,6 +48,7 @@ function setup(
     listBranches: vi.fn(async () => ({ items: [] })),
     listCommits: vi.fn(),
     getPullRequestDiff: vi.fn(),
+    getCommitDiff: vi.fn(async () => ({ files: [], truncated: false })),
     submitReview: vi.fn(),
   };
   const authorizer = {
@@ -224,6 +225,22 @@ describe('SourceControlService', () => {
     expect(provider.listBranches).toHaveBeenCalledTimes(1);
     await service.listBranches('github', 'o/r', { refresh: true });
     expect(provider.listBranches).toHaveBeenCalledTimes(2);
+  });
+
+  it('caches a commit diff until refresh', async () => {
+    const { service, provider } = setup();
+    await service.getCommitDiff('github', 'o/r', 'abc1234');
+    await service.getCommitDiff('github', 'o/r', 'abc1234');
+    expect(provider.getCommitDiff).toHaveBeenCalledTimes(1);
+    await service.getCommitDiff('github', 'o/r', 'abc1234', { refresh: true });
+    expect(provider.getCommitDiff).toHaveBeenCalledTimes(2);
+  });
+
+  it('caches pull request commits apart from branch commits', async () => {
+    const { service, provider } = setup();
+    await service.listCommits('github', 'o/r', { pullRequest: 7 });
+    await service.listCommits('github', 'o/r', { branch: 'dev' });
+    expect(provider.listCommits).toHaveBeenCalledTimes(2);
   });
 
   it('disconnect removes the credential and clears the cache', async () => {

@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron';
 import { IPC, encodeError } from '@ascua/ipc';
 import {
+  isCommitSha,
   isProviderId,
   type ProviderId,
   type ReviewEvent,
@@ -35,6 +36,13 @@ function repoId(value: unknown): string {
 function prNumber(value: unknown): number {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) {
     throw new TypeError('invalid pull request'); // i18n-ignore
+  }
+  return value;
+}
+
+function commitSha(value: unknown): string {
+  if (typeof value !== 'string' || !isCommitSha(value)) {
+    throw new TypeError('invalid commit'); // i18n-ignore
   }
   return value;
 }
@@ -114,6 +122,13 @@ export function registerSourceControlIpc(service: SourceControlService): void {
           prNumber(n),
           query(q),
         ),
+      ),
+  );
+  ipcMain.handle(
+    IPC.sourceControlCommitDiff,
+    (_e, p: unknown, id: unknown, s: unknown, q: unknown) =>
+      guarded(() =>
+        service.getCommitDiff(provider(p), repoId(id), commitSha(s), query(q)),
       ),
   );
   ipcMain.handle(

@@ -17,6 +17,7 @@ import {
   type PageQuery,
   type ProviderId,
   type PullRequest,
+  type CommitDiff,
   type PullRequestDiff,
   type PullRequestQuery,
   type Repository,
@@ -255,6 +256,20 @@ export class SourceControlService {
       query.refresh,
       (c) =>
         this.adapter(provider).provider.getPullRequestDiff(c, repoId, number),
+    );
+  }
+
+  getCommitDiff(
+    provider: ProviderId,
+    repoId: string,
+    sha: string,
+    query: { refresh?: boolean } = {},
+  ): Promise<CommitDiff> {
+    return this.cached(
+      provider,
+      key(provider, 'commit-diff', repoId, sha),
+      query.refresh,
+      (c) => this.adapter(provider).provider.getCommitDiff(c, repoId, sha),
     );
   }
 

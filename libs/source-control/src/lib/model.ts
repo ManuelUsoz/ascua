@@ -11,6 +11,11 @@ export function isProviderId(value: unknown): value is ProviderId {
   );
 }
 
+/** True for a full or abbreviated hex commit sha (7 to 40 characters). */
+export function isCommitSha(value: string): boolean {
+  return /^[0-9a-f]{7,40}$/i.test(value);
+}
+
 export interface Account {
   provider: ProviderId;
   id: string;
@@ -82,6 +87,9 @@ export interface PullRequestDiff {
   truncated: boolean;
 }
 
+/** The files a single commit changed. */
+export type CommitDiff = PullRequestDiff;
+
 export interface Page<T> {
   items: T[];
   /** Opaque cursor for the next page; absent on the last one. */
@@ -100,6 +108,8 @@ export interface PullRequestQuery extends PageQuery {
 
 export interface CommitQuery extends PageQuery {
   branch?: string;
+  /** When set, the commits of that pull request; `branch` is ignored. */
+  pullRequest?: number;
 }
 
 export interface Branch {

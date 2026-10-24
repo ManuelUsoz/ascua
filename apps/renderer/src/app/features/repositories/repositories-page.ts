@@ -2,12 +2,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
   type OnInit,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { errorText } from '../../core/i18n/app-error';
+import { injectCrumbs } from '../../layout/room/crumbs';
+import { RepositorySelection } from '../../core/source-control/repository-selection';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
 import { Button } from '../../shared/button/button';
 import { Spinner } from '../../shared/spinner/spinner';
@@ -29,6 +34,9 @@ export class RepositoriesPage implements OnInit {
   protected readonly steps = ['one', 'two', 'three'];
   protected readonly scopes = ['repos', 'prs', 'commits', 'diffs', 'review'];
   protected readonly loading = signal(true);
+  private readonly selection = inject(RepositorySelection);
+  private readonly router = inject(Router);
+  private readonly crumbs = injectCrumbs();
 
   protected readonly failure = computed(() => {
     const error = this.store.error();
@@ -50,6 +58,40 @@ export class RepositoriesPage implements OnInit {
     const error = this.disconnected()?.error;
     return error ? errorText(error) : undefined;
   });
+
+  constructor() {
+    effect(() => {
+      const { repoId, prNumber, commitSha } = this.crumbs();
+      untracked(() => {
+        void this.selection.follow({
+          ...(repoId ? { repoId } : {}),
+          ...(prNumber !== undefined ? { prNumber } : {}),
+          ...(commitSha ? { commitSha } : {}),
+        });
+      });
+    });
+
+    effect(() => {
+      if (this.crumbs().repoId) return;
+      if (this.selection.reposLoading()) return;
+      const first = this.selection.repos().length
+        ? this.selection.firstRepoId()
+        : undefined;
+      if (!first) return;
+      untracked(() => {
+        void this.router.navigate(['/repositorios', first], {
+          replaceUrl: true,
+        });
+      });
+    });
+
+    effect(() => {
+      if (!this.selection.missing()) return;
+      untracked(() => {
+        void this.router.navigate(['/repositorios'], { replaceUrl: true });
+      });
+    });
+  }
 
   ngOnInit(): void {
     void this.load();

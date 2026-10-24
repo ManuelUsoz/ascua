@@ -26,6 +26,7 @@ import type {
   Commit,
   Page,
   PullRequest,
+  CommitDiff,
   PullRequestDiff,
   Repository,
 } from '@ascua/source-control';
@@ -193,6 +194,14 @@ const api: AscuaApi = {
       number,
       query,
     ) as Promise<PullRequestDiff>,
+  getCommitDiff: (provider, repoId, sha, query) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlCommitDiff,
+      provider,
+      repoId,
+      sha,
+      query,
+    ) as Promise<CommitDiff>,
   submitPullRequestReview: (provider, repoId, number, review) =>
     ipcRenderer.invoke(
       IPC.sourceControlReview,

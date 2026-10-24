@@ -107,6 +107,35 @@ const stubGitHub = () =>
           },
         ]);
       }
+      if (p === '/repos/octocat/hello/pulls/7/commits') {
+        return json([
+          {
+            sha: 'abc1234567890abcdef1234567890abcdef12345',
+            html_url: 'https://github.com/octocat/hello/commit/abc1234',
+            commit: {
+              message: 'Say hello world',
+              author: { name: 'Hub Bot', date: '2026-01-02T00:00:00Z' },
+            },
+            author: { login: 'hubot' },
+          },
+        ]);
+      }
+      if (
+        p ===
+        '/repos/octocat/hello/commits/abc1234567890abcdef1234567890abcdef12345'
+      ) {
+        return json({
+          files: [
+            {
+              filename: 'hello.txt',
+              status: 'modified',
+              additions: 1,
+              deletions: 1,
+              patch: '@@ -1 +1 @@\n-hello\n+hello world',
+            },
+          ],
+        });
+      }
       if (p === '/repos/octocat/hello/pulls/7/reviews') {
         if (init?.method !== 'POST') return new Response('{}', { status: 405 });
         g.__reviews.push(JSON.parse(String(init.body ?? '{}')));
@@ -160,6 +189,33 @@ test('connect GitHub, browse a repo and its PR diff, then disconnect', async () 
   await d.page.waitForSelector('.as-diff__ln--del');
   await d.shot('repositories-04-diff');
 
+  await d.page.waitForSelector(
+    '.as-repos__item[aria-current] >> text=octocat/hello',
+  );
+  await d.page.click('button.viewed[role="checkbox"]');
+  await d.page.waitForSelector(
+    'button.viewed[role="checkbox"][aria-checked="true"]',
+  );
+  expect(
+    await d.page
+      .locator('[role="progressbar"] .as-progress__fill')
+      .getAttribute('data-complete'),
+  ).not.toBeNull();
+  await d.page.click('button.viewed[role="checkbox"]');
+
+  await d.page.click('[role="tab"]:has-text("Commits")');
+  await d.page.waitForSelector('.as-pr__main .as-repos__commit');
+  await d.shot('repositories-05b-commits');
+  await d.page.click('.as-pr__main .as-repos__commit');
+  await d.page.waitForSelector('.as-pr__main .as-diff__file');
+  await d.page.waitForSelector('.as-pr__main .as-diff__hunk');
+  await d.shot('repositories-05c-commit-diff');
+  await d.page.click(
+    '.as-commit__head button:has-text("Volver a los commits")',
+  );
+  await d.page.waitForSelector('.as-pr__main .as-repos__commit');
+  await d.page.click('[role="tab"]:has-text("Archivos cambiados")');
+
   await d.page.click('.as-btn--primary:has-text("Aprobar")');
   await d.page.waitForSelector('.as-state:has-text("Aprobado")');
   const reviews = await ascua.app.evaluate(
@@ -170,7 +226,7 @@ test('connect GitHub, browse a repo and its PR diff, then disconnect', async () 
   expect(reviews[0].event).toBe('APPROVE');
   await d.shot('repositories-05-approved');
 
-  await d.page.click('button:has-text("Pull requests de hello")');
+  await d.page.click('.as-crumb__link:has-text("Repositorios")');
   await d.page.waitForSelector('.as-repos__pr >> text=Add greeting');
   await d.page.click('.as-current button:has-text("Desconectar")');
   await d.page.waitForSelector('button:has-text("Conectar GitHub")');
