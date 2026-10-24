@@ -110,6 +110,30 @@ describe('RepositoryBrowser', () => {
     expect(bar).toContain('octocat');
   });
 
+  it('shows the first-load spinner while repositories are pending', async () => {
+    const { store, fixture } = setup([pr]);
+    store.repositories.mockReturnValue(new Promise(() => undefined));
+    const el: HTMLElement = fixture.nativeElement;
+    fixture.detectChanges();
+    await settle(fixture);
+
+    const text = el.querySelector('[role=status]')?.textContent ?? '';
+    expect(text).toContain('Trayendo tu información de GitHub');
+    expect(text).toContain('Puede tardar un segundo.');
+  });
+
+  it('shows an inline loading spinner while PRs are pending', async () => {
+    const { store, fixture } = setup([pr]);
+    store.pullRequests.mockReturnValue(new Promise(() => undefined));
+    const el: HTMLElement = fixture.nativeElement;
+    fixture.detectChanges();
+    await settle(fixture);
+
+    expect(el.querySelector('[role=status]')?.textContent).toContain(
+      'Cargando',
+    );
+  });
+
   it('loads the diff when a PR is clicked', async () => {
     const { store, fixture } = setup([pr]);
     const el: HTMLElement = fixture.nativeElement;

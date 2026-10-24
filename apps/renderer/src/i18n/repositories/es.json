@@ -1,6 +1,10 @@
 {
   "title": "Repositorios",
   "loading": "Cargando…",
+  "firstLoad": {
+    "title": "Trayendo tu información de {{provider}}",
+    "subtitle": "Puede tardar un segundo."
+  },
   "retry": "Reintentar",
   "refresh": "Actualizar",
   "soon": "Próximamente",

@@ -9,6 +9,7 @@ import { RepositorySelection } from '../../../core/source-control/repository-sel
 import { SourceControlStore } from '../../../core/source-control/source-control-store';
 import { PROVIDER_OPTIONS } from '../../../features/repositories/providers';
 import { Icon } from '../../../shared/icon/icon';
+import { Spinner } from '../../../shared/spinner/spinner';
 
 /**
  * Side slot of Repositorios: the repos list and the account box. Its keys use
@@ -16,7 +17,7 @@ import { Icon } from '../../../shared/icon/icon';
  */
 @Component({
   selector: 'app-repository-side',
-  imports: [TranslocoPipe, Icon],
+  imports: [TranslocoPipe, Icon, Spinner],
   templateUrl: './repository-side.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

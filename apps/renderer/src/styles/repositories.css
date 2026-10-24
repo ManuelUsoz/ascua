@@ -184,6 +184,14 @@ app-device-code {
   min-height: 0;
   height: 100%;
 }
+.as-repos__loading {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
 .as-repos__body {
   flex: 1;
   min-height: 0;

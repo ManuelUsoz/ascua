@@ -66,6 +66,15 @@ describe('RepositoriesPage', () => {
     );
   });
 
+  it('shows the first-load spinner while the status loads', async () => {
+    store.load.mockReturnValueOnce(new Promise<void>(() => undefined));
+    const el = await render();
+    const text = el.querySelector('[role=status]')?.textContent ?? '';
+    expect(text).toContain('Trayendo tu información de GitHub');
+    expect(text).toContain('Puede tardar un segundo.');
+    expect(el.textContent).not.toContain('Cargando…');
+  });
+
   it('shows the user code and its expiry while connecting', async () => {
     vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
     vi.setSystemTime(1_000_000);

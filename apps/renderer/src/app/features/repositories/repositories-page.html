@@ -1,6 +1,15 @@
 <div class="as-repos">
   @if (loading()) {
-    <p class="as-repos__muted">{{ 'repositories.loading' | transloco }}</p>
+    <div class="as-repos__loading">
+      <app-spinner
+        mode="withTitleAndSubt"
+        [size]="40"
+        [title]="
+          'repositories.firstLoad.title' | transloco: { provider: current.name }
+        "
+        [subtitle]="'repositories.firstLoad.subtitle' | transloco"
+      />
+    </div>
   } @else if (connected()) {
     <app-repository-browser />
   } @else {

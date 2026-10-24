@@ -9,6 +9,7 @@ import {
 import { TranslocoPipe } from '@jsverse/transloco';
 import { errorText } from '../../core/i18n/app-error';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
+import { Spinner } from '../../shared/spinner/spinner';
 import { DeviceCode } from './device-code';
 import { PROVIDER_OPTIONS } from './providers';
 import { RepositoryBrowser } from './repository-browser';
@@ -16,7 +17,7 @@ import { RepositoryBrowser } from './repository-browser';
 /** Repositorios: connect GitHub, then browse repositories, PRs and commits. */
 @Component({
   selector: 'app-repositories-page',
-  imports: [TranslocoPipe, DeviceCode, RepositoryBrowser],
+  imports: [TranslocoPipe, DeviceCode, RepositoryBrowser, Spinner],
   templateUrl: './repositories-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

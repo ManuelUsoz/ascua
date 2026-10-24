@@ -74,4 +74,72 @@ describe('RepositorySide', () => {
     buttons[buttons.length - 1].click();
     expect(disconnect).toHaveBeenCalled();
   });
+
+  const render = (
+    status: unknown,
+    reposLoading: boolean,
+    error: unknown = undefined,
+  ): HTMLElement => {
+    TestBed.configureTestingModule({
+      imports: [RepositorySide, i18nTesting()],
+      providers: [
+        {
+          provide: SourceControlStore,
+          useValue: {
+            status: signal(status),
+            account: signal(undefined),
+            error: signal(error),
+          },
+        },
+        {
+          provide: RepositorySelection,
+          useValue: {
+            repos: signal([repo('a')]),
+            selectedRepo: signal(undefined),
+            selectedPr: signal(undefined),
+            diff: signal(undefined),
+            activeFile: signal(0),
+            nextPage: signal('2'),
+            reposLoading: signal(reposLoading),
+          },
+        },
+        provideTranslocoScope('repositories'),
+      ],
+    });
+    const fixture = TestBed.createComponent(RepositorySide);
+    fixture.detectChanges();
+    return fixture.nativeElement;
+  };
+
+  it('renders nothing when disconnected', () => {
+    const el = render({ provider: 'github', state: 'disconnected' }, false);
+    expect(el.querySelector('aside')).toBeNull();
+  });
+
+  it('shows the shell with a spinner while the status loads', () => {
+    const el = render(undefined, false);
+    expect(el.querySelector('.as-side__head')?.textContent).toContain('Repos');
+    expect(el.querySelector('[role=status]')?.textContent).toContain(
+      'Cargando',
+    );
+  });
+
+  it('renders nothing when the status failed to load', () => {
+    const el = render(undefined, false, { code: 'x' });
+    expect(el.querySelector('aside')).toBeNull();
+  });
+
+  it('shows a spinner instead of the load-more button while loading', () => {
+    const connected = {
+      provider: 'github',
+      state: 'connected',
+      account: { login: 'octocat' },
+      persisted: true,
+    };
+    const el = render(connected, true);
+    expect(el.querySelector('[role=status]')?.textContent).toContain(
+      'Cargando',
+    );
+    expect(el.querySelector('.as-side > .as-btn--ghost')).toBeNull();
+  });
 });

@@ -19,7 +19,16 @@
         </p>
       }
       @if (sel.reposLoading() && !sel.selectedRepo()) {
-        <p class="as-repos__muted">{{ 'repositories.loading' | transloco }}</p>
+        <div class="as-repos__loading">
+          <app-spinner
+            mode="withTitleAndSubt"
+            [size]="40"
+            [title]="
+              'repositories.firstLoad.title' | transloco: { provider: provider }
+            "
+            [subtitle]="'repositories.firstLoad.subtitle' | transloco"
+          />
+        </div>
       }
       @if (sel.selectedRepo(); as repo) {
         <header class="as-repos__head">
@@ -85,9 +94,10 @@
             </p>
           }
           @if (sel.prsLoading()) {
-            <p class="as-repos__muted">
-              {{ 'repositories.loading' | transloco }}
-            </p>
+            <app-spinner
+              mode="withHorizText"
+              [label]="'repositories.loading' | transloco"
+            />
           }
           @if (sel.prs().length) {
             <div class="as-stack">
@@ -153,9 +163,10 @@
             </p>
           }
           @if (sel.commitsLoading()) {
-            <p class="as-repos__muted">
-              {{ 'repositories.loading' | transloco }}
-            </p>
+            <app-spinner
+              mode="withHorizText"
+              [label]="'repositories.loading' | transloco"
+            />
           }
           @if (sel.commits().length) {
             <div class="as-repos__commits">

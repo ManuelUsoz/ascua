@@ -50,11 +50,15 @@
         <span class="as-tree__name">{{ repo.fullName }}</span>
       </button>
     }
-    @if (selection.nextPage()) {
+    @if (selection.reposLoading()) {
+      <app-spinner
+        mode="withHorizText"
+        [label]="'repositories.loading' | transloco"
+      />
+    } @else if (selection.nextPage()) {
       <button
         type="button"
         class="as-btn as-btn--ghost as-btn--s"
-        [disabled]="selection.reposLoading()"
         (click)="selection.loadRepos(true)"
       >
         {{ 'repositories.side.loadMore' | transloco }}
@@ -85,5 +89,15 @@
         {{ 'repositories.side.disconnect' | transloco }}
       </button>
     </div>
+  </aside>
+} @else if (status === undefined && !store.error()) {
+  <aside class="as-side">
+    <div class="as-side__head">
+      {{ 'repositories.side.title' | transloco }}
+    </div>
+    <app-spinner
+      mode="withHorizText"
+      [label]="'repositories.loading' | transloco"
+    />
   </aside>
 }

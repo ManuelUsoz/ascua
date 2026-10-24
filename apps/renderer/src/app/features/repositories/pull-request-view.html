@@ -117,7 +117,10 @@
     <p class="as-form__error" role="alert">{{ e.key | transloco: e.params }}</p>
   }
   @if (diffLoading()) {
-    <p class="as-repos__muted">{{ 'repositories.loading' | transloco }}</p>
+    <app-spinner
+      mode="withHorizText"
+      [label]="'repositories.loading' | transloco"
+    />
   }
   @for (item of files(); track item.file.path) {
     <section class="as-diff" [id]="'pr-file-' + item.i">

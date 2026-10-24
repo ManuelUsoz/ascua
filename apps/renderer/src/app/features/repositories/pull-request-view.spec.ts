@@ -72,6 +72,15 @@ describe('PullRequestView', () => {
     expect(el.querySelector('.as-diff__ln--del')?.textContent).toContain('old');
   });
 
+  it('shows a loading spinner while the diff is pending', () => {
+    const { el, fixture } = setup();
+    fixture.componentRef.setInput('diffLoading', true);
+    fixture.detectChanges();
+    expect(el.querySelector('[role=status]')?.textContent).toContain(
+      'Cargando',
+    );
+  });
+
   it('approves directly and shows Aprobado', async () => {
     const { review, fixture, el } = setup();
     button(el, 'Aprobar')?.click();
