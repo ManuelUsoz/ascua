@@ -1,35 +1,5 @@
 @let status = store.status();
-@if (status?.state === 'connected' && selection.selectedPr()) {
-  <aside class="as-side">
-    <div class="as-side__head">
-      {{ 'repositories.pr.side.title' | transloco }}
-      <span class="as-count as-count--quiet">{{ files().length }}</span>
-    </div>
-    @for (f of files(); track f.path; let i = $index) {
-      <button
-        type="button"
-        class="as-tree__row"
-        [attr.aria-current]="selection.activeFile() === i ? 'true' : null"
-        (click)="goTo(i)"
-      >
-        <span class="as-tree__name">{{ f.base }}</span>
-        <span class="as-tree__meta">+{{ f.additions }} −{{ f.deletions }}</span>
-      </button>
-    }
-    <div class="as-current">
-      <span class="as-eyebrow">{{
-        'repositories.pr.summary.title' | transloco
-      }}</span>
-      <strong>{{
-        'repositories.pr.summary.lines'
-          | transloco: { add: totals().add, del: totals().del }
-      }}</strong>
-      <span class="as-faint">{{
-        'repositories.pr.summary.files' | transloco: { count: files().length }
-      }}</span>
-    </div>
-  </aside>
-} @else if (status?.state === 'connected') {
+@if (status?.state === 'connected') {
   <aside class="as-side">
     <div class="as-side__head">
       {{ 'repositories.side.title' | transloco }}

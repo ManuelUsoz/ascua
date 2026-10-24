@@ -6,6 +6,7 @@ import { ProjectSide } from './project-side/project-side';
 import { Rail } from './rail/rail';
 import { RepositorySide } from './repository-side/repository-side';
 import { RoomBar } from './room-bar/room-bar';
+import { RoomCrumbs } from './room-crumbs/room-crumbs';
 
 /**
  * The room that blooms out of the avatar: the fullscreen state of the same
@@ -13,7 +14,14 @@ import { RoomBar } from './room-bar/room-bar';
  */
 @Component({
   selector: 'app-room',
-  imports: [RouterOutlet, RoomBar, Rail, ProjectSide, RepositorySide],
+  imports: [
+    RouterOutlet,
+    RoomBar,
+    RoomCrumbs,
+    Rail,
+    ProjectSide,
+    RepositorySide,
+  ],
   templateUrl: './room.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

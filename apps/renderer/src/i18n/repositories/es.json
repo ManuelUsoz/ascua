@@ -84,12 +84,10 @@
       "closed": "Cerrado",
       "merged": "Fusionado"
     },
-    "back": "Pull requests de {{repo}}",
     "opened": "{{author}} abrió {{time}}",
     "actions": {
       "approve": "Aprobar",
-      "requestChanges": "Pedir cambios",
-      "comment": "Comentar"
+      "requestChanges": "Pedir cambios"
     },
     "composer": {
       "label": "Comentario de la revisión",
@@ -103,15 +101,31 @@
       "comment": "Comentario enviado"
     },
     "tabs": {
-      "files": "Archivos cambiados"
+      "files": "Archivos cambiados",
+      "commits": "Commits"
     },
-    "side": {
-      "title": "Archivos"
+    "commits": {
+      "empty": "Este pull request no tiene commits."
+    },
+    "commit": {
+      "back": "Volver a los commits",
+      "files": "Archivos del commit",
+      "empty": "Este commit no cambia archivos."
+    },
+    "tree": {
+      "label": "Archivos cambiados"
     },
     "summary": {
       "title": "Resumen",
       "lines": "+{{add}} agregadas −{{del}} borradas",
       "files": "en {{count}} archivos"
+    },
+    "viewed": {
+      "bar": "Progreso de revisión",
+      "all": "Todo visto",
+      "toggle": "Marcar {{file}} como visto",
+      "progress": "{{done}}/{{total}} vistos",
+      "state": "Visto"
     },
     "newFile": "archivo nuevo",
     "binary": "Binario o demasiado grande para mostrar.",

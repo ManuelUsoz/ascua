@@ -3,7 +3,8 @@ app-icon,
 app-rail,
 app-project-side,
 app-repository-side,
-app-room-bar {
+app-room-bar,
+app-room-crumbs {
   display: contents;
 }
 
@@ -11,6 +12,7 @@ app-room-bar {
 .as-bar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-3);
   height: var(--bar-h);
   padding: 0 14px;
@@ -19,17 +21,66 @@ app-room-bar {
   box-shadow: var(--shadow-highlight);
   box-sizing: border-box;
 }
-.as-bar__crumbs {
+.as-workbench__crumbs {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 10px 16px 0;
+}
+.as-crumbs {
+  min-width: 0;
+  font-size: 13px;
+}
+.as-crumbs__list {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  color: var(--ink-muted);
+  margin: 0;
+  padding: 0;
+  list-style: none;
   white-space: nowrap;
 }
-.as-bar__crumbs b {
+.as-crumbs__list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.as-crumbs__list li + li::before {
+  content: '\203A';
+  color: var(--ink-faint);
+}
+.as-crumb__link,
+.as-crumb__more,
+.as-crumb__current {
+  min-width: 0;
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: inherit;
+}
+.as-crumb__link,
+.as-crumb__more {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.as-crumb__link:disabled {
+  cursor: default;
+}
+.as-crumb__current {
   color: var(--ink);
   font-weight: 600;
+}
+.as-crumb__mono {
+  font-family: var(--font-mono);
+}
+.as-crumb__link:focus-visible,
+.as-crumb__more:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
 }
 
 /* Rail */
@@ -88,6 +139,7 @@ app-room-bar {
   overflow-y: auto;
 }
 .as-side__head {
+  text-transform: capitalize;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -306,6 +358,7 @@ app-repositories-page::-webkit-scrollbar,
 .as-repos__main::-webkit-scrollbar,
 .as-repos__side::-webkit-scrollbar,
 .as-pr__main::-webkit-scrollbar,
+.as-pr__tree::-webkit-scrollbar,
 .as-diff__side::-webkit-scrollbar,
 .as-files__scroll::-webkit-scrollbar,
 .as-files__body::-webkit-scrollbar,
@@ -323,6 +376,7 @@ app-repositories-page::-webkit-scrollbar-button,
 .as-repos__main::-webkit-scrollbar-button,
 .as-repos__side::-webkit-scrollbar-button,
 .as-pr__main::-webkit-scrollbar-button,
+.as-pr__tree::-webkit-scrollbar-button,
 .as-diff__side::-webkit-scrollbar-button,
 .as-files__scroll::-webkit-scrollbar-button,
 .as-files__body::-webkit-scrollbar-button,
@@ -339,6 +393,7 @@ app-repositories-page::-webkit-scrollbar-thumb,
 .as-repos__main::-webkit-scrollbar-thumb,
 .as-repos__side::-webkit-scrollbar-thumb,
 .as-pr__main::-webkit-scrollbar-thumb,
+.as-pr__tree::-webkit-scrollbar-thumb,
 .as-diff__side::-webkit-scrollbar-thumb,
 .as-files__scroll::-webkit-scrollbar-thumb,
 .as-files__body::-webkit-scrollbar-thumb,
@@ -356,6 +411,7 @@ app-repositories-page::-webkit-scrollbar-track,
 .as-repos__main::-webkit-scrollbar-track,
 .as-repos__side::-webkit-scrollbar-track,
 .as-pr__main::-webkit-scrollbar-track,
+.as-pr__tree::-webkit-scrollbar-track,
 .as-diff__side::-webkit-scrollbar-track,
 .as-diff__side::-webkit-scrollbar-corner,
 .as-files__scroll::-webkit-scrollbar-track,

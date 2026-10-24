@@ -1,13 +1,4 @@
 <header class="as-pr__head">
-  <button
-    type="button"
-    class="as-btn as-btn--ghost as-btn--s"
-    (click)="back.emit()"
-  >
-    <app-icon name="chevron-left" />{{
-      'repositories.pr.back' | transloco: { repo: repo().name }
-    }}
-  </button>
   <div class="as-pr__title-row">
     <h1 class="as-repos__h1">{{ pr().title }}</h1>
     <span class="as-item__id">#{{ pr().number }}</span>
@@ -60,14 +51,6 @@
         {{ 'repositories.pr.actions.requestChanges' | transloco }}
       </button>
     }
-    <button
-      type="button"
-      class="as-btn as-btn--ghost"
-      [disabled]="submitting()"
-      (click)="compose('comment')"
-    >
-      {{ 'repositories.pr.actions.comment' | transloco }}
-    </button>
     @if (done(); as d) {
       <span class="as-state" data-tone="ok">{{
         'repositories.pr.done.' + d | transloco
@@ -103,84 +86,155 @@
     </div>
   }
   <div class="as-tabs" role="tablist">
-    <button type="button" class="as-tab" role="tab" aria-selected="true">
+    <button
+      type="button"
+      class="as-tab"
+      role="tab"
+      [attr.aria-selected]="tab() === 'files'"
+      (click)="tab.set('files')"
+    >
       {{ 'repositories.pr.tabs.files' | transloco }}
       <span class="as-count as-count--quiet">{{ totals().count }}</span>
     </button>
+    <button
+      type="button"
+      class="as-tab"
+      role="tab"
+      [attr.aria-selected]="tab() === 'commits'"
+      (click)="tab.set('commits')"
+    >
+      {{ 'repositories.pr.tabs.commits' | transloco }}
+      <span class="as-count as-count--quiet">{{ commits().length }}</span>
+    </button>
   </div>
+  @if (tab() === 'files' && totals().count) {
+    <div class="as-pr__review">
+      <span
+        class="as-progress"
+        role="progressbar"
+        aria-valuemin="0"
+        [attr.aria-valuemax]="totals().count"
+        [attr.aria-valuenow]="viewedCount()"
+        [attr.aria-label]="'repositories.pr.viewed.bar' | transloco"
+      >
+        <span
+          class="as-progress__fill"
+          [attr.data-complete]="viewedCount() === totals().count ? '' : null"
+          [style.transform]="'scaleX(' + viewedPercent() / 100 + ')'"
+        ></span>
+      </span>
+      <span class="as-pr__progress-text">{{
+        'repositories.pr.viewed.progress'
+          | transloco: { done: viewedCount(), total: totals().count }
+      }}</span>
+      @if (viewedCount() === totals().count) {
+        <span class="as-state" data-tone="ok">{{
+          'repositories.pr.viewed.all' | transloco
+        }}</span>
+      }
+    </div>
+  }
 </header>
 <main class="as-pr__main">
-  @if (diffError(); as e) {
-    <p class="as-form__error" role="alert">{{ e.key | transloco: e.params }}</p>
-  }
-  @if (diffLoading()) {
-    <app-spinner
-      mode="withHorizText"
-      [label]="'repositories.loading' | transloco"
+  @if (tab() === 'files') {
+    @if (diffError(); as e) {
+      <p class="as-form__error" role="alert">
+        {{ e.key | transloco: e.params }}
+      </p>
+    }
+    @if (diffLoading()) {
+      <app-spinner
+        mode="withHorizText"
+        [label]="'repositories.loading' | transloco"
+      />
+    }
+    <div class="as-pr__split">
+      <div class="as-pr__side">
+        <app-diff-file-list
+          [files]="diff()?.files ?? []"
+          [viewed]="viewed()"
+          [active]="activeFile()"
+          [label]="'repositories.pr.tree.label' | transloco"
+          (fileSelect)="goTo($event)"
+        />
+        <div class="as-pr__summary">
+          <span class="as-pr__summary-title">{{
+            'repositories.pr.summary.title' | transloco
+          }}</span>
+          <span>{{
+            'repositories.pr.summary.lines'
+              | transloco: { add: totals().add, del: totals().del }
+          }}</span>
+          <span>{{
+            'repositories.pr.summary.files'
+              | transloco: { count: totals().count }
+          }}</span>
+        </div>
+      </div>
+      <div class="as-pr__diffs">
+        @for (item of files(); track item.file.path) {
+          <app-file-diff
+            [id]="'pr-file-' + item.i"
+            [file]="item.file"
+            [viewable]="true"
+            [viewed]="viewed().has(item.file.path)"
+            [author]="pr().author.login"
+            (toggleViewed)="toggleViewed(item.file.path)"
+          />
+        }
+        @if (diff()?.truncated) {
+          <p class="as-repos__muted">
+            {{ 'repositories.pr.truncated' | transloco }}
+          </p>
+        }
+      </div>
+    </div>
+  } @else if (commit(); as c) {
+    <app-commit-diff-view
+      [commit]="c"
+      [diff]="commitDiff()"
+      [loading]="commitDiffLoading()"
+      [error]="commitDiffError()"
+      (back)="closeCommit.emit()"
     />
-  }
-  @for (item of files(); track item.file.path) {
-    <section class="as-diff" [id]="'pr-file-' + item.i">
-      <header class="as-diff__file">
-        <span
-          ><span class="as-diff__dir">{{ item.dir }}</span
-          >{{ item.base }}</span
-        >
-        <span class="add">+{{ item.file.additions }}</span>
-        <span class="del">−{{ item.file.deletions }}</span>
-        @if (item.file.status === 'added') {
-          <span class="as-state" data-tone="ok">{{
-            'repositories.pr.file.added' | transloco
-          }}</span>
-        } @else if (item.file.status === 'removed') {
-          <span class="as-state" data-tone="alert">{{
-            'repositories.pr.file.removed' | transloco
-          }}</span>
-        } @else if (item.file.status === 'renamed') {
-          <span class="as-state">{{
-            'repositories.pr.file.renamed' | transloco
-          }}</span>
-        }
-        <span class="as-source"
-          ><span class="as-mono">{{ mono }}</span
-          >{{ pr().author.login }}</span
-        >
-      </header>
-      @if (item.hunks; as hunks) {
-        @if (item.file.status === 'added') {
-          <p class="as-faint">{{ 'repositories.pr.newFile' | transloco }}</p>
-        }
-        @for (h of hunks; track $index) {
-          <div class="as-diff__hunk">{{ h.header }} {{ h.context }}</div>
-          <div class="as-diff__side">
-            @for (l of h.left; track $index) {
-              <div
-                class="as-diff__ln"
-                [class.as-diff__ln--del]="l.kind === 'del'"
+  } @else {
+    @if (commitsError(); as e) {
+      <p class="as-form__error" role="alert">
+        {{ e.key | transloco: e.params }}
+      </p>
+    }
+    @if (commitsLoading()) {
+      <app-spinner
+        mode="withHorizText"
+        [label]="'repositories.loading' | transloco"
+      />
+    }
+    @if (commits().length) {
+      <ul class="as-repos__commits">
+        @for (c of commits(); track c.sha) {
+          <li>
+            <button
+              type="button"
+              class="as-repos__commit"
+              (click)="openCommit.emit(c)"
+            >
+              <code class="as-repos__sha">{{ c.sha.slice(0, 7) }}</code>
+              <span class="as-repos__msg">{{ c.title }}</span>
+              <span class="as-source"
+                ><span class="as-mono">{{ mono }}</span
+                >{{ c.author.name }}</span
               >
-                <span>{{ l.n }}</span> {{ l.kind === 'pad' ? '' : l.text }}
-              </div>
-            }
-          </div>
-          <div class="as-diff__side">
-            @for (l of h.right; track $index) {
-              <div
-                class="as-diff__ln"
-                [class.as-diff__ln--add]="l.kind === 'add'"
-              >
-                <span>{{ l.n }}</span> {{ l.kind === 'pad' ? '' : l.text }}
-              </div>
-            }
-          </div>
+              <span class="as-repos__when">{{
+                c.authoredAt | relativeTime: lang()
+              }}</span>
+            </button>
+          </li>
         }
-      } @else {
-        <p class="as-repos__muted">
-          {{ 'repositories.pr.binary' | transloco }}
-        </p>
-      }
-    </section>
-  }
-  @if (diff()?.truncated) {
-    <p class="as-repos__muted">{{ 'repositories.pr.truncated' | transloco }}</p>
+      </ul>
+    } @else if (!commitsLoading() && !commitsError()) {
+      <p class="as-repos__muted">
+        {{ 'repositories.pr.commits.empty' | transloco }}
+      </p>
+    }
   }
 </main>

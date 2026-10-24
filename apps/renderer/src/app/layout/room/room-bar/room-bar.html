@@ -1,15 +1,4 @@
 <header id="room-bar" class="as-bar">
-  <div class="as-bar__crumbs">
-    @if (project(); as p) {
-      <b>{{ p.name }}</b>
-    } @else {
-      <b>{{ area() | transloco }}</b>
-    }
-    @if (section(); as s) {
-      <span>/</span>
-      <span>{{ s | transloco }}</span>
-    }
-  </div>
   <span class="room-buttons">
     <button
       class="wbtn"

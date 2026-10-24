@@ -62,6 +62,7 @@ describe('RepositoryBrowser', () => {
           ],
         }),
       ),
+      commitDiff: vi.fn(() => Promise.resolve({ truncated: false, files: [] })),
       diff: vi.fn(() =>
         Promise.resolve({
           truncated: false,
@@ -183,6 +184,27 @@ describe('RepositoryBrowser', () => {
     expect(el.querySelector('.as-diff__ln--add')?.textContent).toContain('new');
     expect(el.querySelector('.as-statusbar')?.textContent).toContain(
       '1 archivos',
+    );
+  });
+
+  it('opens the commit diff from a row in the PR Commits tab', async () => {
+    const { store, fixture } = setup([pr]);
+    const el: HTMLElement = fixture.nativeElement;
+    fixture.detectChanges();
+    await settle(fixture);
+
+    el.querySelector<HTMLButtonElement>('.as-repos__pr')?.click();
+    await settle(fixture);
+    [...el.querySelectorAll<HTMLButtonElement>('[role=tab]')]
+      .find((b) => b.textContent?.includes('Commits'))
+      ?.click();
+    await settle(fixture);
+    el.querySelector<HTMLButtonElement>('button.as-repos__commit')?.click();
+    await settle(fixture);
+    expect(store.commitDiff).toHaveBeenCalledWith(
+      'octo/hello',
+      'abcdef1234',
+      undefined,
     );
   });
 

@@ -8,6 +8,15 @@
         [diffLoading]="sel.diffLoading()"
         [diffError]="sel.diffError()"
         [account]="store.account()"
+        [commits]="sel.prCommits()"
+        [commitsLoading]="sel.prCommitsLoading()"
+        [commitsError]="sel.prCommitsError()"
+        [commit]="sel.selectedCommit()"
+        [commitDiff]="sel.commitDiff()"
+        [commitDiffLoading]="sel.commitDiffLoading()"
+        [commitDiffError]="sel.commitDiffError()"
+        (openCommit)="sel.selectCommit($event)"
+        (closeCommit)="sel.clearCommit()"
         (back)="sel.back()"
       />
     }

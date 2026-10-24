@@ -35,7 +35,9 @@ describe('RepositorySelection', () => {
       }),
     ),
     diff: vi.fn(() => Promise.resolve({ truncated: false, files: [] })),
+    commitDiff: vi.fn(() => Promise.resolve({ truncated: false, files: [] })),
   };
+  const commit = { sha: 'abc1234def' } as never;
   const pr = { number: 7 } as never;
 
   function service(): RepositorySelection {
@@ -66,6 +68,39 @@ describe('RepositorySelection', () => {
     sel.back();
     expect(sel.selectedPr()).toBeUndefined();
     expect(sel.diff()).toBeUndefined();
+  });
+
+  it('loads the commits of a PR and the diff of one commit', async () => {
+    const sel = service();
+    await sel.loadRepos();
+    await sel.selectPr(pr);
+    expect(store.commits).toHaveBeenCalledWith('octo/a', { pullRequest: 7 });
+    await sel.selectCommit(commit);
+    expect(store.commitDiff).toHaveBeenCalledWith(
+      'octo/a',
+      'abc1234def',
+      undefined,
+    );
+    expect(sel.commitDiff()).toBeDefined();
+    sel.back();
+    expect(sel.prCommits()).toEqual([]);
+    expect(sel.selectedCommit()).toBeUndefined();
+    expect(sel.commitDiff()).toBeUndefined();
+  });
+
+  it('drops a stale commit diff after clearCommit', async () => {
+    const sel = service();
+    await sel.loadRepos();
+    let resolve!: (v: unknown) => void;
+    store.commitDiff.mockReturnValueOnce(
+      new Promise((r) => (resolve = r)) as never,
+    );
+    const pending = sel.selectCommit(commit);
+    sel.clearCommit();
+    resolve({ truncated: false, files: [] });
+    await pending;
+    expect(sel.commitDiff()).toBeUndefined();
+    expect(sel.commitDiffLoading()).toBe(false);
   });
 
   it('preselects the default branch and reloads only commits on select', async () => {

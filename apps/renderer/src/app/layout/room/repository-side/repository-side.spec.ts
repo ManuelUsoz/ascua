@@ -48,8 +48,6 @@ describe('RepositorySide', () => {
             repos: signal([repo('a'), repo('b')]),
             selectedRepo: signal(repo('a')),
             selectedPr: signal(undefined),
-            diff: signal(undefined),
-            activeFile: signal(0),
             nextPage: signal(undefined),
             reposLoading: signal(false),
             selectRepo,
@@ -79,6 +77,7 @@ describe('RepositorySide', () => {
     status: unknown,
     reposLoading: boolean,
     error: unknown = undefined,
+    selectedPr: unknown = undefined,
   ): HTMLElement => {
     TestBed.configureTestingModule({
       imports: [RepositorySide, i18nTesting()],
@@ -96,9 +95,7 @@ describe('RepositorySide', () => {
           useValue: {
             repos: signal([repo('a')]),
             selectedRepo: signal(undefined),
-            selectedPr: signal(undefined),
-            diff: signal(undefined),
-            activeFile: signal(0),
+            selectedPr: signal(selectedPr),
             nextPage: signal('2'),
             reposLoading: signal(reposLoading),
           },
@@ -127,6 +124,17 @@ describe('RepositorySide', () => {
   it('renders nothing when the status failed to load', () => {
     const el = render(undefined, false, { code: 'x' });
     expect(el.querySelector('aside')).toBeNull();
+  });
+
+  it('keeps listing the repos while a PR is open', () => {
+    const connected = {
+      provider: 'github',
+      state: 'connected',
+      account: { login: 'octocat' },
+      persisted: true,
+    };
+    const el = render(connected, false, undefined, { number: 7 });
+    expect(el.querySelectorAll('.as-repos__item').length).toBe(1);
   });
 
   it('shows a spinner instead of the load-more button while loading', () => {
