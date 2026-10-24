@@ -1,4 +1,8 @@
 {
+  "breadcrumb": {
+    "label": "Path",
+    "showHidden": "Show hidden levels"
+  },
   "nav": {
     "projects": "Projects",
     "terminals": "Terminals",

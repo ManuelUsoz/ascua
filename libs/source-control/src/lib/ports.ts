@@ -2,6 +2,7 @@ import type {
   Account,
   Branch,
   Commit,
+  CommitDiff,
   CommitQuery,
   Credential,
   Page,
@@ -44,6 +45,11 @@ export interface SourceControlProvider {
     repoId: string,
     number: number,
   ): Promise<PullRequestDiff>;
+  getCommitDiff(
+    credential: Credential,
+    repoId: string,
+    sha: string,
+  ): Promise<CommitDiff>;
   submitReview(
     credential: Credential,
     repoId: string,

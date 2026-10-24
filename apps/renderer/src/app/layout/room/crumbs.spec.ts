@@ -54,6 +54,28 @@ describe('crumbsFrom', () => {
     ).toEqual({ area: 'nav.repositories', side: 'repositories' });
   });
 
+  it('reads repo, pull request and commit from nested params', () => {
+    const tree = node(
+      {},
+      {},
+      node(
+        { repoId: 'octo/a' },
+        {},
+        node({ number: '7' }, {}, node({ sha: 'abc' }, {})),
+      ),
+    );
+    expect(crumbsFrom(tree)).toEqual({
+      repoId: 'octo/a',
+      prNumber: 7,
+      commitSha: 'abc',
+    });
+  });
+
+  it('ignores a non-numeric pull request number', () => {
+    const tree = node({ repoId: 'octo/a' }, {}, node({ number: 'x' }, {}));
+    expect(crumbsFrom(tree)).toEqual({ repoId: 'octo/a' });
+  });
+
   it('keeps a section without a project', () => {
     expect(crumbsFrom(node({}, { section: 'nav.newProject' }))).toEqual({
       section: 'nav.newProject',

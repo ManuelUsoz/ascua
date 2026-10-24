@@ -1,0 +1,18 @@
+<nav class="as-pr__tree" [attr.aria-label]="label()">
+  @for (r of rows(); track r.file.path) {
+    <button
+      type="button"
+      class="as-tree__row"
+      [title]="r.file.path"
+      [attr.aria-current]="active() === r.i ? 'true' : null"
+      [attr.data-viewed]="viewed().has(r.file.path) ? '' : null"
+      (click)="fileSelect.emit(r.i)"
+    >
+      <app-icon [name]="viewed().has(r.file.path) ? 'check' : 'file'" />
+      <span class="as-tree__name">{{ r.base }}</span>
+      <span class="as-tree__meta"
+        >+{{ r.file.additions }} −{{ r.file.deletions }}</span
+      >
+    </button>
+  }
+</nav>

@@ -1,4 +1,8 @@
 {
+  "breadcrumb": {
+    "label": "Ruta",
+    "showHidden": "Mostrar niveles ocultos"
+  },
   "nav": {
     "projects": "Proyectos",
     "terminals": "Terminales",

@@ -1,0 +1,11 @@
+<button type="button" class="as-repos__commit" (click)="chosen.emit(commit())">
+  <code class="as-repos__sha">{{ commit().sha.slice(0, 7) }}</code>
+  <span class="as-repos__msg">{{ commit().title }}</span>
+  <span class="as-source"
+    ><span class="as-mono">{{ mono }}</span
+    >{{ commit().author.name }}</span
+  >
+  <span class="as-repos__when">{{
+    commit().authoredAt | relativeTime: lang()
+  }}</span>
+</button>

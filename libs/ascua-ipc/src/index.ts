@@ -6,6 +6,7 @@ import type {
   Account,
   Branch,
   Commit,
+  CommitDiff,
   CommitQuery,
   Page,
   PageQuery,
@@ -68,6 +69,7 @@ export const IPC = {
   sourceControlBranches: 'ascua:source-control:branches',
   sourceControlCommits: 'ascua:source-control:commits',
   sourceControlDiff: 'ascua:source-control:diff',
+  sourceControlCommitDiff: 'ascua:source-control:commit-diff',
   sourceControlReview: 'ascua:source-control:review',
   sourceControlOpenUrl: 'ascua:source-control:open-url',
 } as const;
@@ -469,6 +471,12 @@ export interface AscuaApi {
     number: number,
     query?: Refreshable,
   ): Promise<PullRequestDiff>;
+  getCommitDiff(
+    provider: ProviderId,
+    repoId: string,
+    sha: string,
+    query?: Refreshable,
+  ): Promise<CommitDiff>;
   submitPullRequestReview(
     provider: ProviderId,
     repoId: string,

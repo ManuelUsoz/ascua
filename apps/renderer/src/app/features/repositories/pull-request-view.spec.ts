@@ -72,6 +72,97 @@ describe('PullRequestView', () => {
     expect(el.querySelector('.as-diff__ln--del')?.textContent).toContain('old');
   });
 
+  it('marks files as viewed from the diff header and drives the progress bar', () => {
+    const { el, fixture } = setup();
+    fixture.componentRef.setInput('diff', {
+      truncated: false,
+      files: [...diff.files, { ...diff.files[0], path: 'src/b.ts' }],
+    });
+    fixture.detectChanges();
+    const boxes = () => [
+      ...el.querySelectorAll<HTMLElement>('.as-diff__file button.viewed'),
+    ];
+    const bar = () => el.querySelector('[role=progressbar]') as HTMLElement;
+    const fill = () => el.querySelector('.as-progress__fill') as HTMLElement;
+    expect(boxes().length).toBe(2);
+    expect(bar().getAttribute('aria-valuenow')).toBe('0');
+    expect(bar().getAttribute('aria-valuemax')).toBe('2');
+    expect(fill().style.transform).toBe('scaleX(0)');
+    const rows = () => el.querySelectorAll('.as-diff__side').length;
+    const before = rows();
+    boxes()[0].click();
+    fixture.detectChanges();
+    expect(bar().getAttribute('aria-valuenow')).toBe('1');
+    expect(fill().style.transform).toBe('scaleX(0.5)');
+    expect(el.textContent).toContain('1/2 vistos');
+    expect(rows()).toBeLessThan(before);
+    boxes()[0].click();
+    fixture.detectChanges();
+    expect(rows()).toBe(before);
+    expect(bar().getAttribute('aria-valuenow')).toBe('0');
+  });
+
+  it('marks the tree row active on click', () => {
+    const { el, fixture } = setup();
+    Element.prototype.scrollIntoView = vi.fn();
+    const row = el.querySelector('.as-pr__tree .as-tree__row') as HTMLElement;
+    expect(row.getAttribute('aria-current')).toBeNull();
+    row.click();
+    fixture.detectChanges();
+    expect(row.getAttribute('aria-current')).toBe('true');
+  });
+
+  it('has no Comentar button', () => {
+    const { el } = setup();
+    expect(button(el, 'Comentar')).toBeUndefined();
+  });
+
+  it('lists the commits in their tab and emits openCommit', () => {
+    const { el, fixture } = setup();
+    const commit = {
+      sha: 'abc1234567',
+      title: 'Arregla',
+      author: { name: 'Hubot' },
+      authoredAt: '2026-01-01T00:00:00Z',
+    };
+    fixture.componentRef.setInput('commits', [commit]);
+    fixture.detectChanges();
+    const opened: unknown[] = [];
+    fixture.componentInstance.openCommit.subscribe((c) => opened.push(c));
+    button(el, 'Commits')?.click();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('abc1234');
+    expect(el.textContent).toContain('Arregla');
+    (el.querySelector('button.as-repos__commit') as HTMLElement).click();
+    expect(opened).toEqual([commit]);
+  });
+
+  it('shows the commit view in the Commits tab and emits closeCommit on back', () => {
+    const { el, fixture } = setup();
+    fixture.componentRef.setInput('commit', {
+      sha: 'abc1234567',
+      title: 'Arregla',
+      author: { name: 'Hubot' },
+      authoredAt: '2026-01-01T00:00:00Z',
+    });
+    fixture.componentRef.setInput('commitDiff', diff);
+    fixture.detectChanges();
+    button(el, 'Commits')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('app-commit-diff-view')).not.toBeNull();
+    let n = 0;
+    fixture.componentInstance.closeCommit.subscribe(() => n++);
+    button(el, 'Volver a los commits')?.click();
+    expect(n).toBe(1);
+  });
+
+  it('shows the empty text when the PR has no commits', () => {
+    const { el, fixture } = setup();
+    button(el, 'Commits')?.click();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Este pull request no tiene commits.');
+  });
+
   it('shows a loading spinner while the diff is pending', () => {
     const { el, fixture } = setup();
     fixture.componentRef.setInput('diffLoading', true);
@@ -91,7 +182,7 @@ describe('PullRequestView', () => {
 
   it('approves without the open comment draft and keeps it', async () => {
     const { review, fixture, el } = setup();
-    button(el, 'Comentar')?.click();
+    button(el, 'Pedir cambios')?.click();
     await flush(fixture);
     const area = el.querySelector('textarea') as HTMLTextAreaElement;
     area.value = 'borrador';
@@ -105,9 +196,9 @@ describe('PullRequestView', () => {
     ).toBe('borrador');
   });
 
-  it('requires text to comment', async () => {
+  it('requires text to request changes', async () => {
     const { review, fixture, el } = setup();
-    button(el, 'Comentar')?.click();
+    button(el, 'Pedir cambios')?.click();
     fixture.detectChanges();
     const send = button(el, 'Enviar');
     expect(send?.disabled).toBe(true);
@@ -119,7 +210,7 @@ describe('PullRequestView', () => {
     button(el, 'Enviar')?.click();
     await flush(fixture);
     expect(review).toHaveBeenCalledWith('octo/hello', 7, {
-      event: 'comment',
+      event: 'requestChanges',
       body: 'hola',
     });
   });
@@ -127,7 +218,34 @@ describe('PullRequestView', () => {
   it('hides Aprobar on your own PR', () => {
     const { el } = setup('hubot');
     expect(button(el, 'Aprobar')).toBeUndefined();
-    expect(button(el, 'Comentar')).toBeDefined();
+  });
+
+  it('opens a merged PR without review actions', () => {
+    const { el, fixture } = setup();
+    fixture.componentRef.setInput('pr', { ...pr, state: 'merged' });
+    fixture.detectChanges();
+    const state = el.querySelector('.as-pr__meta .as-state');
+    expect(state?.textContent).toContain('Fusionado');
+    expect(state?.getAttribute('data-tone')).toBe('merged');
+    expect(el.querySelector('.as-diff__ln--add')).not.toBeNull();
+    expect(button(el, 'Aprobar')).toBeUndefined();
+    expect(button(el, 'Pedir cambios')).toBeUndefined();
+  });
+
+  it('opens a closed PR without Aprobar', () => {
+    const { el, fixture } = setup();
+    fixture.componentRef.setInput('pr', { ...pr, state: 'closed' });
+    fixture.detectChanges();
+    const state = el.querySelector('.as-pr__meta .as-state');
+    expect(state?.textContent).toContain('Cerrado');
+    expect(state?.getAttribute('data-tone')).toBe('alert');
+    expect(button(el, 'Aprobar')).toBeUndefined();
+  });
+
+  it('keeps both actions on an open PR', () => {
+    const { el } = setup();
+    expect(button(el, 'Aprobar')).toBeDefined();
+    expect(button(el, 'Pedir cambios')).toBeDefined();
   });
 
   it('shows an alert when the review fails', async () => {

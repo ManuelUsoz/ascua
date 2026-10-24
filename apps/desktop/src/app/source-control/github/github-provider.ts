@@ -1,4 +1,4 @@
-import { SourceControlError } from '@ascua/source-control';
+import { SourceControlError, isCommitSha } from '@ascua/source-control';
 import type {
   Account,
   Branch,
@@ -10,6 +10,7 @@ import type {
   PageQuery,
   ProviderId,
   PullRequest,
+  CommitDiff,
   PullRequestDiff,
   PullRequestQuery,
   Repository,
@@ -124,6 +125,32 @@ export class GitHubProvider implements SourceControlProvider {
   ): Promise<Page<Commit>> {
     const base = parseRepoId(repoId);
     const page = validCursor(query.cursor);
+    if (query.pullRequest !== undefined) {
+      const n = query.pullRequest;
+      if (!Number.isInteger(n) || n < 1) {
+        throw new SourceControlError('notFound');
+      }
+    }
+    if (query.pullRequest !== undefined) {
+      // A PR has at most 250 commits: follow the pages (100 each) up to the
+      // cap and leave the rest as `next`.
+      const items: unknown[] = [];
+      let cursor: string | undefined = page ?? '1';
+      let fetched = 0;
+      while (cursor !== undefined && fetched < DIFF_MAX_PAGES) {
+        const res = await githubFetch(
+          this.fetchFn,
+          credential,
+          `${base}/pulls/${query.pullRequest}/commits`,
+          { per_page: 100, page: cursor },
+        );
+        if (!res.ok) throw toSourceControlError(res);
+        items.push(...((await res.json()) as unknown[]));
+        cursor = nextCursor(res.headers.get('link'));
+        fetched++;
+      }
+      return { items: items.map(toCommit), next: cursor };
+    }
     const response = await githubFetch(
       this.fetchFn,
       credential,
@@ -170,16 +197,43 @@ export class GitHubProvider implements SourceControlProvider {
     if (!Number.isInteger(number) || number < 1) {
       throw new SourceControlError('notFound');
     }
+    return this.diffPages(
+      credential,
+      `${base}/pulls/${number}/files`,
+      (json) => json as unknown[],
+    );
+  }
+
+  async getCommitDiff(
+    credential: Credential,
+    repoId: string,
+    sha: string,
+  ): Promise<CommitDiff> {
+    const base = parseRepoId(repoId);
+    if (typeof sha !== 'string' || !isCommitSha(sha)) {
+      throw new SourceControlError('notFound');
+    }
+    return this.diffPages(
+      credential,
+      `${base}/commits/${sha}`,
+      (json) => (json as { files?: unknown[] }).files ?? [],
+    );
+  }
+
+  private async diffPages(
+    credential: Credential,
+    path: string,
+    pick: (json: unknown) => unknown[],
+  ): Promise<PullRequestDiff> {
     const files: DiffFile[] = [];
     let page: string | undefined = '1';
     let fetched = 0;
     while (page !== undefined && fetched < DIFF_MAX_PAGES) {
-      const response = await this.get(
-        credential,
-        `${base}/pulls/${number}/files`,
-        { per_page: 100, page },
-      );
-      const items = (await response.json()) as unknown[];
+      const response = await this.get(credential, path, {
+        per_page: 100,
+        page,
+      });
+      const items = pick(await response.json());
       files.push(...items.map(toDiffFile));
       page = nextCursor(response.headers.get('link'));
       fetched++;

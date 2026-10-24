@@ -14,6 +14,7 @@ import type {
 import type {
   Branch,
   Commit,
+  CommitDiff,
   CommitQuery,
   Page,
   PageQuery,
@@ -143,6 +144,16 @@ export class SourceControlStore {
   ): Promise<PullRequestDiff> {
     return this.call((api) =>
       api.getPullRequestDiff(this.provider, repoId, number, query),
+    );
+  }
+
+  commitDiff(
+    repoId: string,
+    sha: string,
+    query?: Refreshable,
+  ): Promise<CommitDiff> {
+    return this.call((api) =>
+      api.getCommitDiff(this.provider, repoId, sha, query),
     );
   }
 

@@ -10,6 +10,7 @@ import type { AscuaError } from '@ascua/ipc';
 import type {
   Branch,
   Commit,
+  CommitDiff,
   PullRequest,
   PullRequestDiff,
   Repository,
@@ -29,8 +30,14 @@ export class RepositorySelection {
   private repoTicket = 0;
   private diffTicket = 0;
   private commitsTicket = 0;
+  private prCommitsTicket = 0;
+  private commitDiffTicket = 0;
   private prsTicket = 0;
+  private followTicket = 0;
   private branchRepoId: string | undefined;
+
+  /** True when the route names a repo, PR or commit that cannot be found. */
+  readonly missing = signal(false);
 
   readonly repos = signal<Repository[]>([]);
   readonly nextPage = signal<string | undefined>(undefined);
@@ -60,7 +67,13 @@ export class RepositorySelection {
   readonly diff = signal<PullRequestDiff | undefined>(undefined);
   readonly diffLoading = signal(false);
   readonly diffError = signal<Text | undefined>(undefined);
-  readonly activeFile = signal<number | undefined>(undefined);
+  readonly prCommits = signal<Commit[]>([]);
+  readonly prCommitsLoading = signal(false);
+  readonly prCommitsError = signal<Text | undefined>(undefined);
+  readonly selectedCommit = signal<Commit | undefined>(undefined);
+  readonly commitDiff = signal<CommitDiff | undefined>(undefined);
+  readonly commitDiffLoading = signal(false);
+  readonly commitDiffError = signal<Text | undefined>(undefined);
   readonly loadedAt = signal<number | undefined>(undefined);
 
   constructor() {
@@ -70,7 +83,7 @@ export class RepositorySelection {
     });
   }
 
-  /** Loads the first page, or the next one; selects the first repo if none. */
+  /** Loads the first page, or the next one. */
   async loadRepos(more = false, refresh = false): Promise<void> {
     this.reposLoading.set(true);
     this.reposError.set(undefined);
@@ -88,8 +101,75 @@ export class RepositorySelection {
     } finally {
       this.reposLoading.set(false);
     }
-    const first = this.repos()[0];
-    if (!this.selectedRepo() && first) await this.selectRepo(first);
+  }
+
+  /** The repo the screen opens when the URL names none. */
+  firstRepoId(): string | undefined {
+    return this.repos()[0]?.id;
+  }
+
+  /** Reconciles the selection to the route; the URL is the source of truth. */
+  async follow(route: {
+    repoId?: string;
+    prNumber?: number;
+    commitSha?: string;
+  }): Promise<void> {
+    const ticket = ++this.followTicket;
+    const stale = () => ticket !== this.followTicket;
+    this.missing.set(false);
+    const { repoId, prNumber, commitSha } = route;
+    if (!repoId) return;
+
+    if (repoId !== this.selectedRepo()?.id) {
+      let repo = this.repos().find((r) => r.id === repoId);
+      while (!repo && this.nextPage()) {
+        await this.loadRepos(true);
+        if (stale()) return;
+        repo = this.repos().find((r) => r.id === repoId);
+      }
+      if (!repo) {
+        this.missing.set(true);
+        return;
+      }
+      await this.selectRepo(repo);
+      if (stale()) return;
+    }
+    const repo = this.selectedRepo();
+    if (!repo) return;
+
+    if (prNumber === undefined) {
+      if (this.selectedPr()) this.back();
+    } else if (prNumber !== this.selectedPr()?.number) {
+      let pr = this.prs().find((p) => p.number === prNumber);
+      if (!pr) {
+        try {
+          const page = await this.store.pullRequests(repo.id, { state: 'all' });
+          pr = page.items.find((p) => p.number === prNumber);
+        } catch {
+          pr = undefined;
+        }
+        if (stale()) return;
+      }
+      if (!pr) {
+        this.missing.set(true);
+        return;
+      }
+      await this.selectPr(pr);
+      if (stale()) return;
+    }
+
+    if (!commitSha) {
+      if (this.selectedCommit()) this.clearCommit();
+      return;
+    }
+    if (commitSha === this.selectedCommit()?.sha) return;
+    const list = this.selectedPr() ? this.prCommits() : this.commits();
+    const found = list.find((c) => c.sha === commitSha);
+    if (!found) {
+      this.missing.set(true);
+      return;
+    }
+    await this.selectCommit(found);
   }
 
   selectRepo(repo: Repository): Promise<void> {
@@ -112,9 +192,28 @@ export class RepositorySelection {
   selectPr(pr: PullRequest): Promise<void> {
     const repo = this.selectedRepo();
     this.selectedPr.set(pr);
-    this.activeFile.set(undefined);
+    this.clearCommit();
     if (!repo) return Promise.resolve();
-    return this.loadDiff(repo, pr, false);
+    return Promise.all([
+      this.loadDiff(repo, pr, false),
+      this.loadPrCommits(repo, pr, false),
+    ]).then(() => undefined);
+  }
+
+  selectCommit(commit: Commit): Promise<void> {
+    const repo = this.selectedRepo();
+    this.selectedCommit.set(commit);
+    if (!repo) return Promise.resolve();
+    return this.loadCommitDiff(repo, commit, false);
+  }
+
+  /** Leaves the open commit. */
+  clearCommit(): void {
+    this.commitDiffTicket++;
+    this.selectedCommit.set(undefined);
+    this.commitDiff.set(undefined);
+    this.commitDiffError.set(undefined);
+    this.commitDiffLoading.set(false);
   }
 
   /** Leaves the open pull request. */
@@ -126,17 +225,24 @@ export class RepositorySelection {
   async refresh(): Promise<void> {
     const repo = this.selectedRepo();
     const pr = this.selectedPr();
+    const commit = this.selectedCommit();
     await Promise.all([
       this.loadRepos(false, true),
       repo ? this.loadRepo(repo, true) : undefined,
       repo && pr ? this.loadDiff(repo, pr, true) : undefined,
+      repo && pr ? this.loadPrCommits(repo, pr, true) : undefined,
+      repo && commit ? this.loadCommitDiff(repo, commit, true) : undefined,
     ]);
   }
 
   /** Forgets everything (on disconnect). */
   reset(): void {
+    this.followTicket++;
+    this.missing.set(false);
     this.repoTicket++;
     this.diffTicket++;
+    this.prCommitsTicket++;
+    this.commitDiffTicket++;
     this.commitsTicket++;
     this.prsTicket++;
     this.branches.set([]);
@@ -164,7 +270,11 @@ export class RepositorySelection {
     this.diff.set(undefined);
     this.diffError.set(undefined);
     this.diffLoading.set(false);
-    this.activeFile.set(undefined);
+    this.prCommitsTicket++;
+    this.prCommits.set([]);
+    this.prCommitsError.set(undefined);
+    this.prCommitsLoading.set(false);
+    this.clearCommit();
   }
 
   private async loadRepo(repo: Repository, refresh: boolean): Promise<void> {
@@ -204,7 +314,7 @@ export class RepositorySelection {
     this.prsLoading.set(true);
     try {
       const page = await this.store.pullRequests(repo.id, {
-        state: 'open',
+        state: 'all',
         ...(branch ? { branch } : {}),
         ...(refresh ? { refresh } : {}),
       });
@@ -237,6 +347,53 @@ export class RepositorySelection {
       if (current()) this.commitsError.set(errorText(asError(e)));
     } finally {
       if (current()) this.commitsLoading.set(false);
+    }
+  }
+
+  private async loadPrCommits(
+    repo: Repository,
+    pr: PullRequest,
+    refresh: boolean,
+  ): Promise<void> {
+    const ticket = ++this.prCommitsTicket;
+    this.prCommits.set([]);
+    this.prCommitsError.set(undefined);
+    this.prCommitsLoading.set(true);
+    try {
+      const page = await this.store.commits(repo.id, {
+        pullRequest: pr.number,
+        ...(refresh ? { refresh } : {}),
+      });
+      if (ticket === this.prCommitsTicket) this.prCommits.set(page.items);
+    } catch (e) {
+      if (ticket === this.prCommitsTicket)
+        this.prCommitsError.set(errorText(asError(e)));
+    } finally {
+      if (ticket === this.prCommitsTicket) this.prCommitsLoading.set(false);
+    }
+  }
+
+  private async loadCommitDiff(
+    repo: Repository,
+    commit: Commit,
+    refresh: boolean,
+  ): Promise<void> {
+    const ticket = ++this.commitDiffTicket;
+    this.commitDiff.set(undefined);
+    this.commitDiffError.set(undefined);
+    this.commitDiffLoading.set(true);
+    try {
+      const diff = await this.store.commitDiff(
+        repo.id,
+        commit.sha,
+        refresh ? { refresh } : undefined,
+      );
+      if (ticket === this.commitDiffTicket) this.commitDiff.set(diff);
+    } catch (e) {
+      if (ticket === this.commitDiffTicket)
+        this.commitDiffError.set(errorText(asError(e)));
+    } finally {
+      if (ticket === this.commitDiffTicket) this.commitDiffLoading.set(false);
     }
   }
 
