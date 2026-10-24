@@ -24,6 +24,7 @@ import { Spinner } from '../../shared/spinner/spinner';
 import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
 import { toSideBySide } from './side-by-side';
 import { PROVIDER_OPTIONS } from './providers';
+import { prStateKey, prTone } from './pr-state';
 
 /** One pull request: header, review actions and a side-by-side diff. */
 @Component({
@@ -36,6 +37,8 @@ export class PullRequestView {
   private readonly store = inject(SourceControlStore);
   protected readonly lang = toSignal(inject(TranslocoService).langChanges$);
   protected readonly mono = PROVIDER_OPTIONS[0].mono;
+  protected readonly prTone = prTone;
+  protected readonly prStateKey = prStateKey;
 
   readonly repo = input.required<Repository>();
   readonly pr = input.required<PullRequest>();
@@ -51,6 +54,7 @@ export class PullRequestView {
   protected readonly done = signal<ReviewEvent | undefined>(undefined);
   protected readonly error = signal<Text | undefined>(undefined);
 
+  protected readonly isOpen = computed(() => this.pr().state === 'open');
   protected readonly own = computed(() => {
     const login = this.account()?.login;
     return !!login && login === this.pr().author.login;

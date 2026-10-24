@@ -300,6 +300,9 @@ app-repository-browser {
 .as-repos__pr .as-row {
   gap: 8px;
 }
+.as-repos__pr .as-item__kind[data-tone] {
+  color: var(--tone);
+}
 
 /* PR viewer */
 .as-pr__head {

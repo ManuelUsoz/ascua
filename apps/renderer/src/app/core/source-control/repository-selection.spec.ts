@@ -50,7 +50,7 @@ describe('RepositorySelection', () => {
     await sel.loadRepos();
     expect(sel.selectedRepo()?.id).toBe('octo/a');
     expect(store.pullRequests).toHaveBeenCalledWith('octo/a', {
-      state: 'open',
+      state: 'all',
       branch: 'main',
     });
     expect(sel.nextPage()).toBe('c2');
@@ -81,9 +81,21 @@ describe('RepositorySelection', () => {
     expect(sel.branch()).toBe('dev');
     expect(store.commits).toHaveBeenLastCalledWith('octo/a', { branch: 'dev' });
     expect(store.pullRequests).toHaveBeenLastCalledWith('octo/a', {
-      state: 'open',
+      state: 'all',
       branch: 'dev',
     });
+  });
+
+  it('keeps open, merged and closed PRs in provider order', async () => {
+    const items = [
+      { number: 3, state: 'open', merged: false },
+      { number: 2, state: 'closed', merged: true },
+      { number: 1, state: 'closed', merged: false },
+    ];
+    store.pullRequests.mockResolvedValueOnce({ items } as never);
+    const sel = service();
+    await sel.loadRepos();
+    expect(sel.prs().map((p) => p.number)).toEqual([3, 2, 1]);
   });
 
   it('resets the branch when the repo changes', async () => {

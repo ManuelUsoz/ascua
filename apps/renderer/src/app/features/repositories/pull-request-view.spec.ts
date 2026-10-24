@@ -130,6 +130,37 @@ describe('PullRequestView', () => {
     expect(button(el, 'Comentar')).toBeDefined();
   });
 
+  it('opens a merged PR with Comentar only', () => {
+    const { el, fixture } = setup();
+    fixture.componentRef.setInput('pr', { ...pr, state: 'merged' });
+    fixture.detectChanges();
+    const state = el.querySelector('.as-pr__meta .as-state');
+    expect(state?.textContent).toContain('Fusionado');
+    expect(state?.getAttribute('data-tone')).toBe('merged');
+    expect(el.querySelector('.as-diff__ln--add')).not.toBeNull();
+    expect(button(el, 'Aprobar')).toBeUndefined();
+    expect(button(el, 'Pedir cambios')).toBeUndefined();
+    expect(button(el, 'Comentar')).toBeDefined();
+  });
+
+  it('opens a closed PR without Aprobar', () => {
+    const { el, fixture } = setup();
+    fixture.componentRef.setInput('pr', { ...pr, state: 'closed' });
+    fixture.detectChanges();
+    const state = el.querySelector('.as-pr__meta .as-state');
+    expect(state?.textContent).toContain('Cerrado');
+    expect(state?.getAttribute('data-tone')).toBe('alert');
+    expect(button(el, 'Aprobar')).toBeUndefined();
+    expect(button(el, 'Comentar')).toBeDefined();
+  });
+
+  it('keeps all three actions on an open PR', () => {
+    const { el } = setup();
+    expect(button(el, 'Aprobar')).toBeDefined();
+    expect(button(el, 'Pedir cambios')).toBeDefined();
+    expect(button(el, 'Comentar')).toBeDefined();
+  });
+
   it('shows an alert when the review fails', async () => {
     const { fixture, el } = setup(
       'octocat',

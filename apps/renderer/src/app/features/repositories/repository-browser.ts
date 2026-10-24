@@ -19,6 +19,7 @@ import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
 import type { PullRequestDiff } from '@ascua/source-control';
 import { PullRequestView } from './pull-request-view';
 import { PROVIDER_OPTIONS, termKey } from './providers';
+import { prStateKey, prTone } from './pr-state';
 
 /** Repositories of the account; the selected one lists its PRs and commits. */
 @Component({
@@ -42,6 +43,8 @@ export class RepositoryBrowser implements OnInit {
   protected readonly provider = PROVIDER_OPTIONS[0].name;
   protected readonly mono = PROVIDER_OPTIONS[0].mono;
   protected readonly term = termKey(PROVIDER_OPTIONS[0].id);
+  protected readonly prTone = prTone;
+  protected readonly prStateKey = prStateKey;
   protected readonly openError = signal<Text | undefined>(undefined);
 
   ngOnInit(): void {

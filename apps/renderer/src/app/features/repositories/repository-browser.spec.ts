@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { Repository } from '@ascua/source-control';
+import type { PullRequest, Repository } from '@ascua/source-control';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
 import { i18nTesting } from '../../testing/i18n';
@@ -34,7 +34,7 @@ const pr = {
 };
 
 describe('RepositoryBrowser', () => {
-  function setup(prs: (typeof pr)[]) {
+  function setup(prs: PullRequest[]) {
     const store = {
       status: signal(undefined),
       account: signal({ login: 'octocat' }),
@@ -105,7 +105,7 @@ describe('RepositoryBrowser', () => {
     await settle(fixture);
 
     expect(store.pullRequests).toHaveBeenCalledWith('octo/hello', {
-      state: 'open',
+      state: 'all',
       branch: 'main',
     });
     expect(store.commits).toHaveBeenCalledWith('octo/hello', {
@@ -142,7 +142,7 @@ describe('RepositoryBrowser', () => {
       branch: 'dev',
     });
     expect(store.pullRequests).toHaveBeenLastCalledWith('octo/hello', {
-      state: 'open',
+      state: 'all',
       branch: 'dev',
     });
   });
@@ -193,7 +193,38 @@ describe('RepositoryBrowser', () => {
     await settle(fixture);
 
     expect(el.querySelector('.as-repos__empty')?.textContent).toContain(
-      'No hay pull requests abiertos',
+      'No hay pull requests en esta rama',
     );
+  });
+
+  it('shows merged and closed PRs with their tone and opens a merged one', async () => {
+    const merged = {
+      ...pr,
+      number: 8,
+      title: 'Done',
+      state: 'merged' as const,
+    };
+    const closed = {
+      ...pr,
+      number: 9,
+      title: 'Nope',
+      state: 'closed' as const,
+    };
+    const { store, fixture } = setup([pr, merged, closed]);
+    const el: HTMLElement = fixture.nativeElement;
+    fixture.detectChanges();
+    await settle(fixture);
+
+    const rows = el.querySelectorAll('.as-repos__pr');
+    const states = el.querySelectorAll('.as-repos__pr .as-state');
+    expect(rows.length).toBe(3);
+    expect(states[1].getAttribute('data-tone')).toBe('merged');
+    expect(states[1].textContent).toContain('Fusionado');
+    expect(states[2].getAttribute('data-tone')).toBe('alert');
+    expect(states[2].textContent).toContain('Cerrado');
+
+    (rows[1] as HTMLButtonElement).click();
+    await settle(fixture);
+    expect(store.diff).toHaveBeenCalledWith('octo/hello', 8, undefined);
   });
 });

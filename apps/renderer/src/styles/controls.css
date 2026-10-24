@@ -154,6 +154,9 @@ a.as-btn {
 [data-tone='ok'] {
   --tone: var(--ok);
 }
+[data-tone='merged'] {
+  --tone: var(--violeta);
+}
 [data-tone='ask'] {
   --tone: var(--ask);
 }

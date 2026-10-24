@@ -204,7 +204,7 @@ export class RepositorySelection {
     this.prsLoading.set(true);
     try {
       const page = await this.store.pullRequests(repo.id, {
-        state: 'open',
+        state: 'all',
         ...(branch ? { branch } : {}),
         ...(refresh ? { refresh } : {}),
       });

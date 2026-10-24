@@ -13,11 +13,8 @@
     <span class="as-item__id">#{{ pr().number }}</span>
   </div>
   <div class="as-pr__meta">
-    <span class="as-state" [attr.data-tone]="pr().draft ? 'idle' : 'ok'">{{
-      (pr().draft
-        ? 'repositories.browser.draft'
-        : 'repositories.pr.state.' + pr().state
-      ) | transloco
+    <span class="as-state" [attr.data-tone]="prTone(pr())">{{
+      prStateKey(pr()) | transloco
     }}</span>
     <span class="as-chip"
       ><app-icon name="git-branch" />{{ pr().sourceBranch }} →
@@ -43,7 +40,7 @@
     <p class="as-pr__body">{{ body }}</p>
   }
   <div class="as-row">
-    @if (!own()) {
+    @if (!own() && isOpen()) {
       <button
         type="button"
         class="as-btn as-btn--primary"

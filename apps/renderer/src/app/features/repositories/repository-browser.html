@@ -112,20 +112,13 @@
                   [attr.aria-selected]="pr.number === sel.selectedPr()?.number"
                   (click)="sel.selectPr(pr)"
                 >
-                  <span class="as-item__kind"
+                  <span class="as-item__kind" [attr.data-tone]="prTone(pr)"
                     ><app-icon name="pull-request"
                   /></span>
                   <span class="as-item__title">{{ pr.title }}</span>
-                  <span
-                    class="as-state"
-                    [attr.data-tone]="pr.draft ? 'idle' : 'ok'"
-                    >{{
-                      (pr.draft
-                        ? 'repositories.browser.draft'
-                        : 'repositories.pr.state.' + pr.state
-                      ) | transloco
-                    }}</span
-                  >
+                  <span class="as-state" [attr.data-tone]="prTone(pr)">{{
+                    prStateKey(pr) | transloco
+                  }}</span>
                   <span class="as-item__meta">
                     <span class="as-item__id">#{{ pr.number }}</span>
                     <span class="as-source"
