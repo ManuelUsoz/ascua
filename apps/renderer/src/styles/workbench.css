@@ -139,7 +139,7 @@ app-room-crumbs {
   overflow-y: auto;
 }
 .as-side__head {
-  text-transform: capitalize;
+  text-transform: uppercase;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -346,79 +346,23 @@ app-settings-page {
 .as-page-head__error {
   flex-basis: 100%;
 }
-/* Thin dark scrollbars, no arrow buttons (webkit pseudo-elements only: scrollbar-width/color would disable them).
-   Every scroll area in the room goes in this one list. */
-.as-term-grid::-webkit-scrollbar,
-.as-term__body .xterm-viewport::-webkit-scrollbar,
-.as-side::-webkit-scrollbar,
-app-project-form-page::-webkit-scrollbar,
-app-projects-index-page::-webkit-scrollbar,
-app-settings-page::-webkit-scrollbar,
-app-repositories-page::-webkit-scrollbar,
-.as-repos__main::-webkit-scrollbar,
-.as-repos__side::-webkit-scrollbar,
-.as-pr__main::-webkit-scrollbar,
-.as-pr__tree::-webkit-scrollbar,
-.as-diff__side::-webkit-scrollbar,
-.as-files__scroll::-webkit-scrollbar,
-.as-files__body::-webkit-scrollbar,
-.as-files__editor .cm-scroller::-webkit-scrollbar {
+/* Thin scrollbars for every scroll area, styled from the design system: the thumb is line-strong (controls need 3:1), neutral ink-faint on hover, pill radius. Webkit pseudo-elements only: scrollbar-width/color would disable them. */
+*::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-.as-term-grid::-webkit-scrollbar-button,
-.as-term__body .xterm-viewport::-webkit-scrollbar-button,
-.as-side::-webkit-scrollbar-button,
-app-project-form-page::-webkit-scrollbar-button,
-app-projects-index-page::-webkit-scrollbar-button,
-app-settings-page::-webkit-scrollbar-button,
-app-repositories-page::-webkit-scrollbar-button,
-.as-repos__main::-webkit-scrollbar-button,
-.as-repos__side::-webkit-scrollbar-button,
-.as-pr__main::-webkit-scrollbar-button,
-.as-pr__tree::-webkit-scrollbar-button,
-.as-diff__side::-webkit-scrollbar-button,
-.as-files__scroll::-webkit-scrollbar-button,
-.as-files__body::-webkit-scrollbar-button,
-.as-files__editor .cm-scroller::-webkit-scrollbar-button {
+*::-webkit-scrollbar-button {
   display: none;
 }
-.as-term-grid::-webkit-scrollbar-thumb,
-.as-term__body .xterm-viewport::-webkit-scrollbar-thumb,
-.as-side::-webkit-scrollbar-thumb,
-app-project-form-page::-webkit-scrollbar-thumb,
-app-projects-index-page::-webkit-scrollbar-thumb,
-app-settings-page::-webkit-scrollbar-thumb,
-app-repositories-page::-webkit-scrollbar-thumb,
-.as-repos__main::-webkit-scrollbar-thumb,
-.as-repos__side::-webkit-scrollbar-thumb,
-.as-pr__main::-webkit-scrollbar-thumb,
-.as-pr__tree::-webkit-scrollbar-thumb,
-.as-diff__side::-webkit-scrollbar-thumb,
-.as-files__scroll::-webkit-scrollbar-thumb,
-.as-files__body::-webkit-scrollbar-thumb,
-.as-files__editor .cm-scroller::-webkit-scrollbar-thumb {
-  background: var(--line-mid);
-  border-radius: 4px;
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--radius-pill);
 }
-.as-term-grid::-webkit-scrollbar-track,
-.as-term__body .xterm-viewport::-webkit-scrollbar-track,
-.as-side::-webkit-scrollbar-track,
-app-project-form-page::-webkit-scrollbar-track,
-app-projects-index-page::-webkit-scrollbar-track,
-app-settings-page::-webkit-scrollbar-track,
-app-repositories-page::-webkit-scrollbar-track,
-.as-repos__main::-webkit-scrollbar-track,
-.as-repos__side::-webkit-scrollbar-track,
-.as-pr__main::-webkit-scrollbar-track,
-.as-pr__tree::-webkit-scrollbar-track,
-.as-diff__side::-webkit-scrollbar-track,
-.as-diff__side::-webkit-scrollbar-corner,
-.as-files__scroll::-webkit-scrollbar-track,
-.as-files__body::-webkit-scrollbar-track,
-.as-files__body::-webkit-scrollbar-corner,
-.as-files__editor .cm-scroller::-webkit-scrollbar-track,
-.as-files__editor .cm-scroller::-webkit-scrollbar-corner {
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-faint);
+}
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
   background: transparent;
 }
 

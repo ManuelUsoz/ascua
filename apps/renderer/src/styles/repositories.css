@@ -378,6 +378,24 @@ app-pull-request-view {
   gap: 8px 12px;
   margin-bottom: 14px;
 }
+.as-commit__head > .as-btn {
+  flex-basis: 100%;
+  justify-content: flex-start;
+}
+/* .as-mono is a 16px monogram box; the sha text overflowed it onto the title. */
+.as-commit__head .as-repos__sha {
+  flex: none;
+  white-space: nowrap;
+  display: inline;
+  width: auto;
+  height: auto;
+  border: 0;
+  background: none;
+}
+.as-commit__head .as-repos__msg {
+  flex: 1 1 200px;
+  min-width: 0;
+}
 .as-pr__split {
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr);

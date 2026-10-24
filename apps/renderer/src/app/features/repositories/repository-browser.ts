@@ -17,6 +17,8 @@ import { Icon } from '../../shared/icon/icon';
 import { Spinner } from '../../shared/spinner/spinner';
 import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
 import type { PullRequestDiff } from '@ascua/source-control';
+import { CommitDiffView } from './commit-diff-view';
+import { CommitRow } from './commit-row';
 import { PullRequestView } from './pull-request-view';
 import { PROVIDER_OPTIONS, termKey } from './providers';
 import { prStateKey, prTone } from './pr-state';
@@ -32,6 +34,8 @@ import { prStateKey, prTone } from './pr-state';
     RelativeTimePipe,
     Spinner,
     AsSelect,
+    CommitRow,
+    CommitDiffView,
   ],
   templateUrl: './repository-browser.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

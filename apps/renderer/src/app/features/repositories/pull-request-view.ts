@@ -26,6 +26,7 @@ import { Icon } from '../../shared/icon/icon';
 import { Spinner } from '../../shared/spinner/spinner';
 import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
 import { CommitDiffView } from './commit-diff-view';
+import { CommitRow } from './commit-row';
 import { DiffFileList } from './diff-file-list';
 import { FileDiff } from './file-diff';
 import { PROVIDER_OPTIONS } from './providers';
@@ -45,6 +46,7 @@ type PrTab = 'files' | 'commits';
     FileDiff,
     DiffFileList,
     CommitDiffView,
+    CommitRow,
   ],
   templateUrl: './pull-request-view.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

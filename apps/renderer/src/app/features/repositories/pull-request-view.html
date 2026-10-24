@@ -200,21 +200,7 @@
       <ul class="as-repos__commits">
         @for (c of commits(); track c.sha) {
           <li>
-            <button
-              type="button"
-              class="as-repos__commit"
-              (click)="openCommit.emit(c)"
-            >
-              <code class="as-repos__sha">{{ c.sha.slice(0, 7) }}</code>
-              <span class="as-repos__msg">{{ c.title }}</span>
-              <span class="as-source"
-                ><span class="as-mono">{{ mono }}</span
-                >{{ c.author.name }}</span
-              >
-              <span class="as-repos__when">{{
-                c.authoredAt | relativeTime: lang()
-              }}</span>
-            </button>
+            <app-commit-row [commit]="c" (chosen)="openCommit.emit($event)" />
           </li>
         }
       </ul>
