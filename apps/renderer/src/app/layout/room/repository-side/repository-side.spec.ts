@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import type { Repository } from '@ascua/source-control';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { RepositorySelection } from '../../../core/source-control/repository-selection';
@@ -24,11 +25,12 @@ const repo = (name: string): Repository => ({
 describe('RepositorySide', () => {
   it('lists repos, shows the account and disconnects', async () => {
     const disconnect = vi.fn();
-    const selectRepo = vi.fn();
+    const navigate = vi.fn();
     const account = { login: 'octocat' };
     TestBed.configureTestingModule({
       imports: [RepositorySide, i18nTesting()],
       providers: [
+        { provide: Router, useValue: { navigate } },
         {
           provide: SourceControlStore,
           useValue: {
@@ -50,7 +52,6 @@ describe('RepositorySide', () => {
             selectedPr: signal(undefined),
             nextPage: signal(undefined),
             reposLoading: signal(false),
-            selectRepo,
           },
         },
         provideTranslocoScope('repositories'),
@@ -64,7 +65,7 @@ describe('RepositorySide', () => {
     expect(rows.length).toBe(2);
     expect(rows[0].getAttribute('aria-current')).toBe('true');
     rows[1].click();
-    expect(selectRepo).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/repositorios', 'octo/b']);
     expect(el.querySelector('.as-current')?.textContent).toContain('octocat');
 
     const buttons =

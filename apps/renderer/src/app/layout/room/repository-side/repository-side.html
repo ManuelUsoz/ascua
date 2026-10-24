@@ -14,7 +14,7 @@
         [attr.aria-current]="
           repo.id === selection.selectedRepo()?.id ? 'true' : null
         "
-        (click)="selection.selectRepo(repo)"
+        (click)="openRepo(repo)"
       >
         <app-icon name="repo" />
         <span class="as-tree__name">{{ repo.fullName }}</span>

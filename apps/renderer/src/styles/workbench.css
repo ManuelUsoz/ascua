@@ -3,8 +3,7 @@ app-icon,
 app-rail,
 app-project-side,
 app-repository-side,
-app-room-bar,
-app-room-crumbs {
+app-room-bar {
   display: contents;
 }
 

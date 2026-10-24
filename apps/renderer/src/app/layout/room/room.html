@@ -21,7 +21,9 @@
       }
     }
     <main class="as-workbench__main">
-      <app-room-crumbs />
+      <div class="as-workbench__crumbs">
+        <app-breadcrumb [items]="items()" />
+      </div>
       <router-outlet />
     </main>
   </div>

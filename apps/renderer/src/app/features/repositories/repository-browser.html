@@ -15,9 +15,9 @@
         [commitDiff]="sel.commitDiff()"
         [commitDiffLoading]="sel.commitDiffLoading()"
         [commitDiffError]="sel.commitDiffError()"
-        (openCommit)="sel.selectCommit($event)"
-        (closeCommit)="sel.clearCommit()"
-        (back)="sel.back()"
+        (openCommit)="openCommit($event)"
+        (closeCommit)="closeCommit()"
+        (back)="leavePr()"
       />
     }
   } @else {
@@ -97,7 +97,7 @@
             [diff]="sel.commitDiff()"
             [loading]="sel.commitDiffLoading()"
             [error]="sel.commitDiffError()"
-            (back)="sel.clearCommit()"
+            (back)="closeCommit()"
           />
         } @else {
           <section class="as-repos__section" aria-labelledby="repos-prs-title">
@@ -132,7 +132,7 @@
                     [attr.aria-selected]="
                       pr.number === sel.selectedPr()?.number
                     "
-                    (click)="sel.selectPr(pr)"
+                    (click)="openPr(pr)"
                   >
                     <span class="as-item__kind" [attr.data-tone]="prTone(pr)"
                       ><app-icon name="pull-request"
@@ -198,7 +198,7 @@
                   <li>
                     <app-commit-row
                       [commit]="c"
-                      (chosen)="sel.selectCommit($event)"
+                      (chosen)="openCommit($event)"
                     />
                   </li>
                 }

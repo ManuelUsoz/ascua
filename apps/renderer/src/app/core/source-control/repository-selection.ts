@@ -33,7 +33,11 @@ export class RepositorySelection {
   private prCommitsTicket = 0;
   private commitDiffTicket = 0;
   private prsTicket = 0;
+  private followTicket = 0;
   private branchRepoId: string | undefined;
+
+  /** True when the route names a repo, PR or commit that cannot be found. */
+  readonly missing = signal(false);
 
   readonly repos = signal<Repository[]>([]);
   readonly nextPage = signal<string | undefined>(undefined);
@@ -79,7 +83,7 @@ export class RepositorySelection {
     });
   }
 
-  /** Loads the first page, or the next one; selects the first repo if none. */
+  /** Loads the first page, or the next one. */
   async loadRepos(more = false, refresh = false): Promise<void> {
     this.reposLoading.set(true);
     this.reposError.set(undefined);
@@ -97,8 +101,75 @@ export class RepositorySelection {
     } finally {
       this.reposLoading.set(false);
     }
-    const first = this.repos()[0];
-    if (!this.selectedRepo() && first) await this.selectRepo(first);
+  }
+
+  /** The repo the screen opens when the URL names none. */
+  firstRepoId(): string | undefined {
+    return this.repos()[0]?.id;
+  }
+
+  /** Reconciles the selection to the route; the URL is the source of truth. */
+  async follow(route: {
+    repoId?: string;
+    prNumber?: number;
+    commitSha?: string;
+  }): Promise<void> {
+    const ticket = ++this.followTicket;
+    const stale = () => ticket !== this.followTicket;
+    this.missing.set(false);
+    const { repoId, prNumber, commitSha } = route;
+    if (!repoId) return;
+
+    if (repoId !== this.selectedRepo()?.id) {
+      let repo = this.repos().find((r) => r.id === repoId);
+      while (!repo && this.nextPage()) {
+        await this.loadRepos(true);
+        if (stale()) return;
+        repo = this.repos().find((r) => r.id === repoId);
+      }
+      if (!repo) {
+        this.missing.set(true);
+        return;
+      }
+      await this.selectRepo(repo);
+      if (stale()) return;
+    }
+    const repo = this.selectedRepo();
+    if (!repo) return;
+
+    if (prNumber === undefined) {
+      if (this.selectedPr()) this.back();
+    } else if (prNumber !== this.selectedPr()?.number) {
+      let pr = this.prs().find((p) => p.number === prNumber);
+      if (!pr) {
+        try {
+          const page = await this.store.pullRequests(repo.id, { state: 'all' });
+          pr = page.items.find((p) => p.number === prNumber);
+        } catch {
+          pr = undefined;
+        }
+        if (stale()) return;
+      }
+      if (!pr) {
+        this.missing.set(true);
+        return;
+      }
+      await this.selectPr(pr);
+      if (stale()) return;
+    }
+
+    if (!commitSha) {
+      if (this.selectedCommit()) this.clearCommit();
+      return;
+    }
+    if (commitSha === this.selectedCommit()?.sha) return;
+    const list = this.selectedPr() ? this.prCommits() : this.commits();
+    const found = list.find((c) => c.sha === commitSha);
+    if (!found) {
+      this.missing.set(true);
+      return;
+    }
+    await this.selectCommit(found);
   }
 
   selectRepo(repo: Repository): Promise<void> {
@@ -166,6 +237,8 @@ export class RepositorySelection {
 
   /** Forgets everything (on disconnect). */
   reset(): void {
+    this.followTicket++;
+    this.missing.set(false);
     this.repoTicket++;
     this.diffTicket++;
     this.prCommitsTicket++;
