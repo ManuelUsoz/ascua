@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/ascua-ipc/src",
   "projectType": "library",
+  "implicitDependencies": ["source-control"],
   "tags": ["type:shared", "scope:ipc"],
   "targets": {}
 }

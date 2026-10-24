@@ -26,7 +26,7 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   test the real app.
 - The Vite `__dirname` config warning during renderer test/build is harmless.
 - `node tools/ui-drive.cjs <outDir> [playwright args]` (after `npx nx build
-  desktop`) is a wrapper over the Playwright Test scenarios in
+desktop`) is a wrapper over the Playwright Test scenarios in
   `tools/ui-drive/*.spec.ts` (one Electron launch per spec file, temp user-data
   dir and fixture project): room, projects, pistas, terminals (shells, Levantar
   todo, viewports), files, editor (dirty, Ctrl+S, conflicts, unsaved guard) and
@@ -34,8 +34,9 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   relaunch), with screenshots in `<outDir>`. The driver runs in Spanish
   whatever the OS language (it seeds `settings.json`); `--grep settings` runs
   the language scenario, `--grep editor` (or a spec file name) another area.
-  Close any running Ascua first: the hook pipe
-  is shared.
+  `--grep repositories` runs the offline GitHub scenario (`net.fetch` and
+  `shell.openExternal` stubbed in main). Close any running Ascua first: the
+  hook pipe is shared.
 - `npm run linux:check` proves the Linux build in Docker (needs Docker Desktop
   with Linux containers; the first run is slow). It writes
   `ascua-<version>.AppImage`, `ui-drive/` and `ui-drive-appimage/` to
@@ -68,6 +69,9 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   point (SQLite later); `JsonProjectRepository` writes atomically to
   `userData/projects.json`. `project-input.ts` validates input;
   `project-ipc.ts` registers the IPC and calls a `ProjectListener`.
+- `apps/desktop/src/app/source-control/` - `github/` (device flow + REST
+  provider), `SafeStorageCredentialStore`, `TtlCache`, `SourceControlService`
+  (status, connect, cached queries) and `source-control-ipc.ts`.
 - `apps/desktop/src/app/files/` - `ProjectFiles` (list, filter index, versioned
   read, contained in-place write that refuses with a conflict when the content
   hash changed) and `files-ipc.ts`. `launch-policy.ts` decides `openable`:
@@ -86,7 +90,7 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   (replay) and process-tree kill. The host is an extra webpack entry
   (`additionalEntryPoints` in `apps/desktop/project.json`), packaged through
   `maker.options.json` `files` + `asarUnpack` for node-pty (`npmRebuild:
-  false`, node-pty ships prebuilds). `shell.ts` resolves Git Bash on Windows
+false`, node-pty ships prebuilds). `shell.ts` resolves Git Bash on Windows
   (PowerShell fallback, `$SHELL` on Unix) and sets `CHERE_INVOKING=1` so the
   login shell keeps the terminal cwd instead of `$HOME`. `quit-guard.ts` asks
   for confirmation on quit while terminals run.
@@ -106,7 +110,7 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
     `app.routes.ts`. `projects` (form, project page with tabs) nests
     `terminals` (xterm grid) as a lazy child route, which keeps xterm out of
     the projects chunk. `app.config.ts` uses `paramsInheritanceStrategy:
-    'always'` so `projectId` binds as an input in nested pages.
+'always'` so `projectId` binds as an input in nested pages.
   - `features/files/` - the Archivos tab (`FileBrowser`: lazy tree, filter
     index loaded on first focus, CodeMirror 6 editor with Ctrl+S save and
     conflict banner). Lazy child route of the project page, like `terminals`.
@@ -117,6 +121,10 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
   - `features/terminals/terminal-view.ts` stops Escape at the host so it
     reaches the TUI instead of collapsing the room, and only resizes the PTY
     while the room is open (a compact window must not shrink it).
+  - `core/source-control` (`SourceControlStore`): connection status and
+    pass-through queries; fetched data is not kept in the store.
+  - `features/repositories/` - the Repositorios screen (scope `repositories`):
+    connect with a device code, then repos -> PRs/commits -> PR diff.
   - `shared/character/` - the `[appCharacter]` directive that mounts
     `@ascua/character` into its host element.
 - `apps/renderer/src/styles.css` - imports `styles/*.css` (base, tokens,
@@ -136,10 +144,23 @@ of the old Tauri prototype; keep the single-window model and the Node hook.
 - `libs/ascua-ipc` (Nx project `ascua-ipc`, import `@ascua/ipc`) - IPC channel
   names and shared types. Keep it dependency-free; it is imported by main,
   preload, and renderer.
+- `libs/source-control` (Nx project `source-control`, import
+  `@ascua/source-control`) - provider-agnostic model, ports
+  (`SourceControlProvider`, `DeviceAuthorizer`) and `SourceControlError`.
+  Dependency-free; `@ascua/ipc` only `import type`s from it.
 - Shared libs are source-only (no build target); they resolve through
   `tsconfig.base.json` paths and are wired with `implicitDependencies`.
 
 ## Non-obvious constraints
+
+- The GitHub token never leaves main. It is stored through safeStorage in
+  `userData/source-control.json`, even on Linux `basic_text` (obfuscation
+  only, readable by processes of the same user). Scopes are `repo read:user`.
+  `net.fetch` is read at call time (ui-drive stubs it). "Enable Device Flow"
+  must be ticked on the OAuth App, otherwise `sourceControl.unavailable`.
+  Disconnect only deletes the token locally (revoke at
+  github.com/settings/applications). Fetched data is cached in memory only
+  (60 s TTL), never on disk.
 
 - `maker.options.json` keeps `npmRebuild: false` on purpose: node-pty 1.1.0
   ships N-API prebuilds (`prebuilds/win32-x64`), ABI-stable across Electron

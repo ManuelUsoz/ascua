@@ -12,6 +12,16 @@
   </a>
   <a
     class="as-rail__item"
+    routerLink="/repositorios"
+    routerLinkActive
+    ariaCurrentWhenActive="page"
+  >
+    <app-icon name="branch" [large]="true" />{{
+      'nav.repositories' | transloco
+    }}
+  </a>
+  <a
+    class="as-rail__item"
     routerLink="/ajustes"
     routerLinkActive
     ariaCurrentWhenActive="page"

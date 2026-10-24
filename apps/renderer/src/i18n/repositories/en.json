@@ -1,0 +1,125 @@
+{
+  "title": "Repositories",
+  "loading": "Loading…",
+  "firstLoad": {
+    "title": "Bringing your {{provider}} info",
+    "subtitle": "Can take a second."
+  },
+  "retry": "Retry",
+  "refresh": "Refresh",
+  "soon": "Coming soon",
+  "disconnected": {
+    "title": "Connect your {{provider}} account",
+    "connect": "Connect GitHub"
+  },
+  "connect": {
+    "eyebrow": "Choose where your code lives",
+    "providers": "Provider",
+    "note": "For now Ascua only connects to GitHub; the others are coming soon.",
+    "lead": "I give you a one-time code and you authorize it in the browser. Ascua never sees your password.",
+    "steps": {
+      "one": "Press the button and get a code.",
+      "two": "Paste it on the authorization page.",
+      "three": "Authorize Ascua and come back here."
+    }
+  },
+  "scopes": {
+    "title": "What Ascua can do",
+    "repos": "Your repos",
+    "prs": "Pull requests",
+    "commits": "Commits",
+    "diffs": "Diffs of every file",
+    "review": "Approve, request changes and comment"
+  },
+  "term": {
+    "github": "pull requests",
+    "gitlab": "merge requests",
+    "bitbucket": "pull requests",
+    "azure": "pull requests"
+  },
+  "status": {
+    "disconnected": "{{provider}} not connected",
+    "area": "Repositories",
+    "connected": "GitHub connected",
+    "updated": "Updated {{time}}",
+    "files": "{{count}} files · +{{add}} −{{del}}"
+  },
+  "deviceCode": {
+    "eyebrow": "Your code",
+    "copy": "Copy",
+    "copied": "Copied",
+    "open": "Open {{host}}",
+    "waiting": "Waiting for you to authorize",
+    "expires": "The code expires in {{time}}",
+    "expired": "The code expired",
+    "again": "Get another code",
+    "cancel": "Cancel"
+  },
+  "side": {
+    "title": "Repos",
+    "loadMore": "Load more",
+    "connected": "Connected",
+    "sessionOnly": "This session only: this machine cannot store the token encrypted.",
+    "disconnect": "Disconnect",
+    "disconnectNote": "Disconnecting only forgets the token on this machine. To revoke access, go to github.com/settings/applications."
+  },
+  "browser": {
+    "repo": "Repo",
+    "noRepos": "No repositories.",
+    "private": "Private",
+    "fork": "Fork",
+    "archived": "Archived",
+    "openRepo": "Open on GitHub",
+    "prsTitle": "Open {{term}}",
+    "noPrs": "No open pull requests",
+    "noPrsHint": "All quiet here: nothing is waiting for review.",
+    "commitsTitle": "Latest commits",
+    "branchLabel": "Branch",
+    "noCommits": "No commits.",
+    "draft": "Draft"
+  },
+  "pr": {
+    "state": {
+      "open": "Open",
+      "closed": "Closed",
+      "merged": "Merged"
+    },
+    "back": "Pull requests of {{repo}}",
+    "opened": "{{author}} opened {{time}}",
+    "actions": {
+      "approve": "Approve",
+      "requestChanges": "Request changes",
+      "comment": "Comment"
+    },
+    "composer": {
+      "label": "Review comment",
+      "placeholder": "Write your comment…",
+      "send": "Send",
+      "cancel": "Cancel"
+    },
+    "done": {
+      "approve": "Approved",
+      "requestChanges": "Changes requested",
+      "comment": "Comment sent"
+    },
+    "tabs": {
+      "files": "Files changed"
+    },
+    "side": {
+      "title": "Files"
+    },
+    "summary": {
+      "title": "Summary",
+      "lines": "+{{add}} added −{{del}} deleted",
+      "files": "in {{count}} files"
+    },
+    "newFile": "new file",
+    "binary": "Binary or too large to show.",
+    "truncated": "There are more files than the ones shown.",
+    "file": {
+      "added": "New",
+      "removed": "Removed",
+      "renamed": "Renamed"
+    }
+  }
+}

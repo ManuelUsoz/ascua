@@ -10,6 +10,8 @@ import filesEn from '../../i18n/files/en.json';
 import filesEs from '../../i18n/files/es.json';
 import settingsEn from '../../i18n/settings/en.json';
 import settingsEs from '../../i18n/settings/es.json';
+import repositoriesEn from '../../i18n/repositories/en.json';
+import repositoriesEs from '../../i18n/repositories/es.json';
 
 /** Transloco with every catalog preloaded; add scope catalogs here as they appear. */
 export function i18nTesting(lang: Language = 'es') {
@@ -25,6 +27,8 @@ export function i18nTesting(lang: Language = 'es') {
       'files/en': filesEn,
       'settings/es': settingsEs,
       'settings/en': settingsEn,
+      'repositories/es': repositoriesEs,
+      'repositories/en': repositoriesEn,
     },
     translocoConfig: {
       availableLangs: ['es', 'en'],

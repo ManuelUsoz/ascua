@@ -12,7 +12,14 @@
   <app-room-bar />
   <div class="as-workbench">
     <app-rail />
-    <app-project-side />
+    @switch (crumbs().side) {
+      @case ('repositories') {
+        <app-repository-side />
+      }
+      @default {
+        <app-project-side />
+      }
+    }
     <main class="as-workbench__main">
       <router-outlet />
     </main>

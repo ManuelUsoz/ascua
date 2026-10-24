@@ -18,7 +18,17 @@ import {
   type TerminalOutput,
   type TerminalReplay,
   type TerminalSession,
+  type DeviceCodePrompt,
+  type SourceControlStatus,
 } from '@ascua/ipc';
+import type {
+  Branch,
+  Commit,
+  Page,
+  PullRequest,
+  PullRequestDiff,
+  Repository,
+} from '@ascua/source-control';
 
 function listen<T>(channel: string, callback: (value: T) => void): () => void {
   const listener = (_event: Electron.IpcRendererEvent, value: T) =>
@@ -126,6 +136,73 @@ const api: AscuaApi = {
     ) as Promise<SaveFileResult>,
   revealFile: (projectId, path) =>
     ipcRenderer.invoke(IPC.revealFile, projectId, path) as Promise<
+      AscuaError | undefined
+    >,
+  getSourceControlStatus: (provider) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlStatus,
+      provider,
+    ) as Promise<SourceControlStatus>,
+  connectSourceControl: (provider) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlConnect,
+      provider,
+    ) as Promise<DeviceCodePrompt>,
+  cancelSourceControlConnect: (provider) =>
+    ipcRenderer.invoke(IPC.sourceControlCancel, provider) as Promise<void>,
+  openSourceControlVerification: (provider) =>
+    ipcRenderer.invoke(IPC.sourceControlOpenVerification, provider) as Promise<
+      AscuaError | undefined
+    >,
+  disconnectSourceControl: (provider) =>
+    ipcRenderer.invoke(IPC.sourceControlDisconnect, provider) as Promise<void>,
+  onSourceControlChanged: (callback) =>
+    listen<SourceControlStatus>(IPC.sourceControlChanged, callback),
+  listRepositories: (provider, query) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlRepositories,
+      provider,
+      query,
+    ) as Promise<Page<Repository>>,
+  listPullRequests: (provider, repoId, query) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlPullRequests,
+      provider,
+      repoId,
+      query,
+    ) as Promise<Page<PullRequest>>,
+  listBranches: (provider, repoId, query) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlBranches,
+      provider,
+      repoId,
+      query,
+    ) as Promise<Page<Branch>>,
+  listCommits: (provider, repoId, query) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlCommits,
+      provider,
+      repoId,
+      query,
+    ) as Promise<Page<Commit>>,
+  getPullRequestDiff: (provider, repoId, number, query) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlDiff,
+      provider,
+      repoId,
+      number,
+      query,
+    ) as Promise<PullRequestDiff>,
+  submitPullRequestReview: (provider, repoId, number, review) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlReview,
+      provider,
+      repoId,
+      number,
+      review,
+    ) as Promise<void>,
+  openSourceControlUrl: (provider, url) =>
+    ipcRenderer.invoke(IPC.sourceControlOpenUrl, provider, url) as Promise<
       AscuaError | undefined
     >,
 };
