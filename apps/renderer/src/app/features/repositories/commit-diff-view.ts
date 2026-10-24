@@ -57,8 +57,13 @@ export class CommitDiffView {
 
   protected goTo(i: number): void {
     this.activeFile.set(i);
-    this.host.nativeElement
-      .querySelector(`#commit-file-${i}`)
-      ?.scrollIntoView();
+    const root: HTMLElement = this.host.nativeElement;
+    const wrapper = root.querySelector<HTMLElement>('.as-pr__diffs');
+    const target = root.querySelector<HTMLElement>(`#commit-file-${i}`);
+    if (!wrapper || !target) return;
+    wrapper.scrollTop =
+      target.getBoundingClientRect().top -
+      wrapper.getBoundingClientRect().top +
+      wrapper.scrollTop;
   }
 }

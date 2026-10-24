@@ -216,10 +216,10 @@
   <span>{{ store.account()?.login }}</span>
   <span class="as-statusbar__end">
     @if (sel.selectedPr() && sel.diff(); as d) {
-      {{
-        'repositories.status.files'
-          | transloco: { count: d.files.length, add: add(d), del: del(d) }
-      }}
+      {{ 'repositories.status.files' | transloco: { count: d.files.length } }}
+      ·
+      <span class="as-status__add">+{{ add(d) }}</span>
+      <span class="as-status__del">−{{ del(d) }}</span>
     } @else if (sel.loadedAt(); as at) {
       {{
         'repositories.status.updated'

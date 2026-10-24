@@ -42,7 +42,7 @@
     "area": "Repositorios",
     "connected": "GitHub conectado",
     "updated": "Actualizado {{time}}",
-    "files": "{{count}} archivos · +{{add}} −{{del}}"
+    "files": "{{count}} archivos"
   },
   "deviceCode": {
     "eyebrow": "Tu código",
@@ -114,11 +114,6 @@
     },
     "tree": {
       "label": "Archivos cambiados"
-    },
-    "summary": {
-      "title": "Resumen",
-      "lines": "+{{add}} agregadas −{{del}} borradas",
-      "files": "en {{count}} archivos"
     },
     "viewed": {
       "bar": "Progreso de revisión",

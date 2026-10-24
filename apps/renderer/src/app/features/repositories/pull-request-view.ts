@@ -127,7 +127,14 @@ export class PullRequestView {
 
   protected goTo(i: number): void {
     this.activeFile.set(i);
-    this.host.nativeElement.querySelector(`#pr-file-${i}`)?.scrollIntoView();
+    const root: HTMLElement = this.host.nativeElement;
+    const wrapper = root.querySelector<HTMLElement>('.as-pr__diffs');
+    const target = root.querySelector<HTMLElement>(`#pr-file-${i}`);
+    if (!wrapper || !target) return;
+    wrapper.scrollTop =
+      target.getBoundingClientRect().top -
+      wrapper.getBoundingClientRect().top +
+      wrapper.scrollTop;
   }
 
   protected compose(event: ReviewEvent): void {

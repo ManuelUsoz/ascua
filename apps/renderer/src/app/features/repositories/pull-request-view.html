@@ -157,19 +157,6 @@
           [label]="'repositories.pr.tree.label' | transloco"
           (fileSelect)="goTo($event)"
         />
-        <div class="as-pr__summary">
-          <span class="as-pr__summary-title">{{
-            'repositories.pr.summary.title' | transloco
-          }}</span>
-          <span>{{
-            'repositories.pr.summary.lines'
-              | transloco: { add: totals().add, del: totals().del }
-          }}</span>
-          <span>{{
-            'repositories.pr.summary.files'
-              | transloco: { count: totals().count }
-          }}</span>
-        </div>
       </div>
       <div class="as-pr__diffs">
         @for (item of files(); track item.file.path) {

@@ -305,6 +305,13 @@ app-repository-browser {
 }
 
 /* PR viewer */
+app-pull-request-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
 .as-pr__head {
   padding: 20px 32px 16px;
   display: flex;
@@ -331,6 +338,12 @@ app-repository-browser {
   display: inline-flex;
   gap: 6px;
   font: 500 11.5px/1 var(--font-mono);
+}
+.as-pr__stat.add {
+  color: var(--ok);
+}
+.as-pr__stat.del {
+  color: var(--alert);
 }
 .as-pr__body {
   margin: 0;
@@ -396,20 +409,10 @@ app-repository-browser {
 .as-tree__row[data-viewed] {
   opacity: 0.6;
 }
-.as-pr__summary {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 0 6px;
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--ink-muted);
-}
-.as-pr__summary-title {
-  font: 600 12px/18px var(--font-sans);
-  color: var(--ink);
-}
 .as-pr__diffs {
+  position: relative;
+  max-height: 70vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -467,6 +470,12 @@ button.as-repos__commit:hover {
 }
 .as-diff--viewed .as-diff__file {
   border-bottom: 0;
+}
+.as-status__add {
+  color: var(--ok);
+}
+.as-status__del {
+  color: var(--alert);
 }
 
 /* Diff */
