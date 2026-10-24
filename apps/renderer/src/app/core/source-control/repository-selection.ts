@@ -1,6 +1,14 @@
-import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import {
+  Injectable,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import type { AscuaError } from '@ascua/ipc';
 import type {
+  Branch,
   Commit,
   PullRequest,
   PullRequestDiff,
@@ -20,6 +28,9 @@ export class RepositorySelection {
   // Guards against a slow answer landing after the user moved on.
   private repoTicket = 0;
   private diffTicket = 0;
+  private commitsTicket = 0;
+  private prsTicket = 0;
+  private branchRepoId: string | undefined;
 
   readonly repos = signal<Repository[]>([]);
   readonly nextPage = signal<string | undefined>(undefined);
@@ -33,6 +44,17 @@ export class RepositorySelection {
   readonly commits = signal<Commit[]>([]);
   readonly commitsLoading = signal(false);
   readonly commitsError = signal<Text | undefined>(undefined);
+  readonly branches = signal<Branch[]>([]);
+  readonly branch = signal<string | undefined>(undefined);
+  readonly branchesError = signal<Text | undefined>(undefined);
+  /** Branch names for the switcher; the chosen one is always present. */
+  readonly branchNames = computed(() => {
+    const names = this.branches().map((b) => b.name);
+    const chosen = this.branch();
+    return names.length && chosen && !names.includes(chosen)
+      ? [chosen, ...names]
+      : names;
+  });
 
   readonly selectedPr = signal<PullRequest | undefined>(undefined);
   readonly diff = signal<PullRequestDiff | undefined>(undefined);
@@ -76,6 +98,17 @@ export class RepositorySelection {
     return this.loadRepo(repo, false);
   }
 
+  /** Reloads the pull requests and commits for the chosen branch. */
+  async selectBranch(name: string): Promise<void> {
+    const repo = this.selectedRepo();
+    this.branch.set(name);
+    if (!repo) return;
+    await Promise.all([
+      this.loadPrs(repo, name, false),
+      this.loadCommits(repo, name, false),
+    ]);
+  }
+
   selectPr(pr: PullRequest): Promise<void> {
     const repo = this.selectedRepo();
     this.selectedPr.set(pr);
@@ -104,6 +137,12 @@ export class RepositorySelection {
   reset(): void {
     this.repoTicket++;
     this.diffTicket++;
+    this.commitsTicket++;
+    this.prsTicket++;
+    this.branches.set([]);
+    this.branch.set(undefined);
+    this.branchRepoId = undefined;
+    this.branchesError.set(undefined);
     this.repos.set([]);
     this.nextPage.set(undefined);
     this.reposLoading.set(false);
@@ -132,24 +171,73 @@ export class RepositorySelection {
     const ticket = ++this.repoTicket;
     const current = () => ticket === this.repoTicket;
     const query = refresh ? { refresh } : {};
-    this.prs.set([]);
-    this.commits.set([]);
-    this.prsError.set(undefined);
-    this.commitsError.set(undefined);
-    this.prsLoading.set(true);
-    this.commitsLoading.set(true);
+    // A refresh keeps the chosen branch; a new repo starts on its default.
+    const sameRepo = repo.id === this.branchRepoId;
+    const branch =
+      refresh && sameRepo && this.branch() ? this.branch() : repo.defaultBranch;
+    this.branchRepoId = repo.id;
+    this.branch.set(branch);
+    this.branchesError.set(undefined);
+    if (!refresh) this.branches.set([]);
     await Promise.all([
+      this.loadPrs(repo, branch, refresh, current),
       this.store
-        .pullRequests(repo.id, { state: 'open', ...query })
-        .then((page) => current() && this.prs.set(page.items))
-        .catch((e) => current() && this.prsError.set(errorText(asError(e))))
-        .finally(() => current() && this.prsLoading.set(false)),
-      this.store
-        .commits(repo.id, query)
-        .then((page) => current() && this.commits.set(page.items))
-        .catch((e) => current() && this.commitsError.set(errorText(asError(e))))
-        .finally(() => current() && this.commitsLoading.set(false)),
+        .branches(repo.id, query)
+        .then((page) => current() && this.branches.set(page.items))
+        .catch(
+          (e) => current() && this.branchesError.set(errorText(asError(e))),
+        ),
+      this.loadCommits(repo, branch, refresh, current),
     ]);
+  }
+
+  private async loadPrs(
+    repo: Repository,
+    branch: string | undefined,
+    refresh: boolean,
+    outer: () => boolean = () => true,
+  ): Promise<void> {
+    const ticket = ++this.prsTicket;
+    const current = () => ticket === this.prsTicket && outer();
+    this.prs.set([]);
+    this.prsError.set(undefined);
+    this.prsLoading.set(true);
+    try {
+      const page = await this.store.pullRequests(repo.id, {
+        state: 'open',
+        ...(branch ? { branch } : {}),
+        ...(refresh ? { refresh } : {}),
+      });
+      if (current()) this.prs.set(page.items);
+    } catch (e) {
+      if (current()) this.prsError.set(errorText(asError(e)));
+    } finally {
+      if (current()) this.prsLoading.set(false);
+    }
+  }
+
+  private async loadCommits(
+    repo: Repository,
+    branch: string | undefined,
+    refresh: boolean,
+    outer: () => boolean = () => true,
+  ): Promise<void> {
+    const ticket = ++this.commitsTicket;
+    const current = () => ticket === this.commitsTicket && outer();
+    this.commits.set([]);
+    this.commitsError.set(undefined);
+    this.commitsLoading.set(true);
+    try {
+      const page = await this.store.commits(repo.id, {
+        ...(branch ? { branch } : {}),
+        ...(refresh ? { refresh } : {}),
+      });
+      if (current()) this.commits.set(page.items);
+    } catch (e) {
+      if (current()) this.commitsError.set(errorText(asError(e)));
+    } finally {
+      if (current()) this.commitsLoading.set(false);
+    }
   }
 
   private async loadDiff(

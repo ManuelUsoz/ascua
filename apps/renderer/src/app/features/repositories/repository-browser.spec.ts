@@ -54,6 +54,14 @@ describe('RepositoryBrowser', () => {
           ],
         }),
       ),
+      branches: vi.fn(() =>
+        Promise.resolve({
+          items: [
+            { name: 'main', sha: 'a1', protected: true },
+            { name: 'dev', sha: 'b2', protected: false },
+          ],
+        }),
+      ),
       diff: vi.fn(() =>
         Promise.resolve({
           truncated: false,
@@ -98,8 +106,11 @@ describe('RepositoryBrowser', () => {
 
     expect(store.pullRequests).toHaveBeenCalledWith('octo/hello', {
       state: 'open',
+      branch: 'main',
     });
-    expect(store.commits).toHaveBeenCalledWith('octo/hello', {});
+    expect(store.commits).toHaveBeenCalledWith('octo/hello', {
+      branch: 'main',
+    });
     expect(el.querySelector('.as-repos__h1')?.textContent).toContain('hello');
     expect(el.querySelector('.as-repos__pr')?.textContent).toContain('Fix it');
     expect(el.querySelector('.as-repos__commit')?.textContent).toContain(
@@ -108,6 +119,32 @@ describe('RepositoryBrowser', () => {
     const bar = el.querySelector('.as-statusbar')?.textContent ?? '';
     expect(bar).toContain('GitHub conectado');
     expect(bar).toContain('octocat');
+  });
+
+  it('switches the branch in the header and reloads PRs and commits', async () => {
+    const { store, fixture } = setup([pr]);
+    const el: HTMLElement = fixture.nativeElement;
+    fixture.detectChanges();
+    await settle(fixture);
+
+    const select = el.querySelector<HTMLSelectElement>(
+      '.as-repos__head app-select select',
+    );
+    expect(el.querySelector('.as-repos__section-head select')).toBeNull();
+    expect(select?.getAttribute('aria-label')).toBe('Rama');
+    expect(select?.options.length).toBe(2);
+    expect(select?.value).toBe('main');
+    select!.value = 'dev';
+    select!.dispatchEvent(new Event('change'));
+    await settle(fixture);
+
+    expect(store.commits).toHaveBeenLastCalledWith('octo/hello', {
+      branch: 'dev',
+    });
+    expect(store.pullRequests).toHaveBeenLastCalledWith('octo/hello', {
+      state: 'open',
+      branch: 'dev',
+    });
   });
 
   it('shows the first-load spinner while repositories are pending', async () => {

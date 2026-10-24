@@ -94,10 +94,18 @@ export interface PageQuery {
 
 export interface PullRequestQuery extends PageQuery {
   state?: 'open' | 'closed' | 'all';
+  /** Only pull requests whose source (head) branch is this one. */
+  branch?: string;
 }
 
 export interface CommitQuery extends PageQuery {
   branch?: string;
+}
+
+export interface Branch {
+  name: string;
+  sha: string;
+  protected: boolean;
 }
 
 /** Main only: never crosses the IPC boundary. */

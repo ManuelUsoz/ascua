@@ -141,6 +141,32 @@ describe('GitHubProvider', () => {
     expect(await p.listCommits(cred, 'o/r', {})).toEqual({ items: [] });
   });
 
+  it('maps branches, passes the page and the next cursor; 409 is empty', async () => {
+    const { fn, calls } = fakeFetch([
+      {
+        body: [
+          { name: 'main', commit: { sha: 'a1' }, protected: true },
+          { name: 'dev', commit: { sha: 'b2' } },
+        ],
+        headers: {
+          link: '<https://api.github.com/repositories/1/branches?page=3>; rel="next"',
+        },
+      },
+      { status: 409 },
+    ]);
+    const p = new GitHubProvider(fn);
+    const page = await p.listBranches(cred, 'o/r', { cursor: '2' });
+    expect(page.items).toEqual([
+      { name: 'main', sha: 'a1', protected: true },
+      { name: 'dev', sha: 'b2', protected: false },
+    ]);
+    expect(page.next).toBe('3');
+    expect(calls[0].url).toContain('/repos/o/r/branches');
+    expect(calls[0].url).toContain('per_page=100');
+    expect(calls[0].url).toContain('page=2');
+    expect(await p.listBranches(cred, 'o/r', {})).toEqual({ items: [] });
+  });
+
   it('maps errors', async () => {
     const run = (c: Canned) =>
       kind(new GitHubProvider(fakeFetch([c]).fn).getAccount(cred));
@@ -156,6 +182,15 @@ describe('GitHubProvider', () => {
     expect(await kind(new GitHubProvider(failing).getAccount(cred))).toBe(
       'network',
     );
+  });
+
+  it('filters pull requests by head branch', async () => {
+    const { fn, calls } = fakeFetch([{ body: [] }]);
+    await new GitHubProvider(fn).listPullRequests(cred, 'o/r', {
+      branch: 'feat/x',
+    });
+    const url = new URL(calls[0].url);
+    expect(url.searchParams.get('head')).toBe('o:feat/x');
   });
 
   it('maps the pull request body', async () => {

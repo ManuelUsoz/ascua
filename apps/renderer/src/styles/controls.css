@@ -311,27 +311,42 @@ a.as-btn {
 /* Native select dressed as .as-input, with a drawn chevron. */
 .as-select {
   appearance: none;
-  padding-right: 30px;
+  padding-right: var(--select-padding-end);
   cursor: pointer;
   background-image:
-    linear-gradient(45deg, transparent 50%, var(--ink-faint) 50%),
-    linear-gradient(135deg, var(--ink-faint) 50%, transparent 50%);
+    linear-gradient(
+      var(--select-chevron-left-angle),
+      transparent var(--select-chevron-split),
+      var(--ink-faint) var(--select-chevron-split)
+    ),
+    linear-gradient(
+      var(--select-chevron-right-angle),
+      var(--ink-faint) var(--select-chevron-split),
+      transparent var(--select-chevron-split)
+    );
   background-position:
-    calc(100% - 15px) 50%,
-    calc(100% - 10px) 50%;
-  background-size: 5px 5px;
+    calc(var(--select-chevron-full) - var(--select-chevron-inset))
+      var(--select-chevron-split),
+    calc(var(--select-chevron-full) - var(--select-chevron-offset))
+      var(--select-chevron-split);
+  background-size: var(--select-chevron-size) var(--select-chevron-size);
   background-repeat: no-repeat;
 }
 .as-select:hover {
   border-color: var(--violeta);
 }
 .as-select:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
 }
 .as-select option {
   background: var(--surface-raised);
   color: var(--ink);
+  font: 400 13.5px/21px var(--font-sans);
+}
+.as-select option:checked {
+  background: var(--violeta-wash);
+  color: var(--violeta);
 }
 
 .as-row {

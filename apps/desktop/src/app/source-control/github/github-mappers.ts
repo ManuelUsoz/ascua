@@ -1,5 +1,6 @@
 import type {
   Account,
+  Branch,
   Commit,
   DiffFile,
   PullRequest,
@@ -65,6 +66,14 @@ export function toCommit(c: Json): Commit {
     },
     authoredAt: c.commit?.author?.date ?? '',
     webUrl: c.html_url,
+  };
+}
+
+export function toBranch(b: Json): Branch {
+  return {
+    name: b.name,
+    sha: b.commit?.sha ?? '',
+    protected: !!b.protected,
   };
 }
 

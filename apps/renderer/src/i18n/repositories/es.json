@@ -74,6 +74,7 @@
     "noPrs": "No hay pull requests abiertos",
     "noPrsHint": "Todo tranquilo por aquí: no hay nada esperando revisión.",
     "commitsTitle": "Últimos commits",
+    "branchLabel": "Rama",
     "noCommits": "No hay commits.",
     "draft": "Borrador"
   },

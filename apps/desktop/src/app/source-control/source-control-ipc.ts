@@ -95,6 +95,11 @@ export function registerSourceControlIpc(service: SourceControlService): void {
       ),
   );
   ipcMain.handle(
+    IPC.sourceControlBranches,
+    (_e, p: unknown, id: unknown, q: unknown) =>
+      guarded(() => service.listBranches(provider(p), repoId(id), query(q))),
+  );
+  ipcMain.handle(
     IPC.sourceControlCommits,
     (_e, p: unknown, id: unknown, q: unknown) =>
       guarded(() => service.listCommits(provider(p), repoId(id), query(q))),

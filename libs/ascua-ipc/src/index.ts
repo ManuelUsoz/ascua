@@ -4,6 +4,7 @@
 
 import type {
   Account,
+  Branch,
   Commit,
   CommitQuery,
   Page,
@@ -64,6 +65,7 @@ export const IPC = {
   sourceControlChanged: 'ascua:source-control:changed',
   sourceControlRepositories: 'ascua:source-control:repositories',
   sourceControlPullRequests: 'ascua:source-control:pull-requests',
+  sourceControlBranches: 'ascua:source-control:branches',
   sourceControlCommits: 'ascua:source-control:commits',
   sourceControlDiff: 'ascua:source-control:diff',
   sourceControlReview: 'ascua:source-control:review',
@@ -451,6 +453,11 @@ export interface AscuaApi {
     repoId: string,
     query?: PullRequestQuery & Refreshable,
   ): Promise<Page<PullRequest>>;
+  listBranches(
+    provider: ProviderId,
+    repoId: string,
+    query?: PageQuery & Refreshable,
+  ): Promise<Page<Branch>>;
   listCommits(
     provider: ProviderId,
     repoId: string,

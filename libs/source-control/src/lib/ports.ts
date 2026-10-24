@@ -1,5 +1,6 @@
 import type {
   Account,
+  Branch,
   Commit,
   CommitQuery,
   Credential,
@@ -33,6 +34,11 @@ export interface SourceControlProvider {
     repoId: string,
     query: CommitQuery,
   ): Promise<Page<Commit>>;
+  listBranches(
+    credential: Credential,
+    repoId: string,
+    query: PageQuery,
+  ): Promise<Page<Branch>>;
   getPullRequestDiff(
     credential: Credential,
     repoId: string,

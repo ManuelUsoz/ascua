@@ -8,6 +8,7 @@ import {
 import {
   SourceControlError,
   type Account,
+  type Branch,
   type Commit,
   type CommitQuery,
   type Credential,
@@ -211,6 +212,20 @@ export class SourceControlService {
       key(provider, 'pulls', repoId, q),
       refresh,
       (c) => this.adapter(provider).provider.listPullRequests(c, repoId, q),
+    );
+  }
+
+  listBranches(
+    provider: ProviderId,
+    repoId: string,
+    query: PageQuery & { refresh?: boolean } = {},
+  ): Promise<Page<Branch>> {
+    const { refresh, ...q } = query;
+    return this.cached(
+      provider,
+      key(provider, 'branches', repoId, q),
+      refresh,
+      (c) => this.adapter(provider).provider.listBranches(c, repoId, q),
     );
   }
 

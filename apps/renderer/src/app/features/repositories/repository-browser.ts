@@ -6,6 +6,8 @@ import {
   type OnInit,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { AsSelect } from '../../shared/select/select';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { errorText, toAscuaError } from '../../core/i18n/app-error';
 import type { Text } from '../../core/i18n/text';
@@ -21,7 +23,15 @@ import { PROVIDER_OPTIONS, termKey } from './providers';
 /** Repositories of the account; the selected one lists its PRs and commits. */
 @Component({
   selector: 'app-repository-browser',
-  imports: [TranslocoPipe, PullRequestView, Icon, RelativeTimePipe, Spinner],
+  imports: [
+    FormsModule,
+    TranslocoPipe,
+    PullRequestView,
+    Icon,
+    RelativeTimePipe,
+    Spinner,
+    AsSelect,
+  ],
   templateUrl: './repository-browser.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

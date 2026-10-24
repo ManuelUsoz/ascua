@@ -12,6 +12,7 @@ import type {
   SourceControlStatus,
 } from '@ascua/ipc';
 import type {
+  Branch,
   Commit,
   CommitQuery,
   Page,
@@ -126,6 +127,13 @@ export class SourceControlStore {
     query?: CommitQuery & Refreshable,
   ): Promise<Page<Commit>> {
     return this.call((api) => api.listCommits(this.provider, repoId, query));
+  }
+
+  branches(
+    repoId: string,
+    query?: PageQuery & Refreshable,
+  ): Promise<Page<Branch>> {
+    return this.call((api) => api.listBranches(this.provider, repoId, query));
   }
 
   diff(

@@ -38,9 +38,13 @@
             </p>
             <h1 class="as-repos__h1">{{ repo.name }}</h1>
             <div class="as-row">
-              <span class="as-chip"
-                ><app-icon name="git-branch" />{{ repo.defaultBranch }}</span
-              >
+              <app-icon name="git-branch" />
+              <app-select
+                [options]="sel.branchNames()"
+                [ariaLabel]="'repositories.browser.branchLabel' | transloco"
+                [ngModel]="sel.branch()"
+                (ngModelChange)="sel.selectBranch($event)"
+              />
               @if (repo.private) {
                 <span class="as-chip">{{
                   'repositories.browser.private' | transloco
@@ -157,6 +161,11 @@
               sel.commits().length
             }}</span>
           </div>
+          @if (sel.branchesError(); as e) {
+            <p class="as-form__error" role="alert">
+              {{ e.key | transloco: e.params }}
+            </p>
+          }
           @if (sel.commitsError(); as e) {
             <p class="as-form__error" role="alert">
               {{ e.key | transloco: e.params }}

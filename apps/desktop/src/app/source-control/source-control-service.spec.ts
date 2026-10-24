@@ -45,6 +45,7 @@ function setup(
     getAccount: vi.fn(over.getAccount ?? (async () => account)),
     listRepositories: vi.fn(async () => ({ items: [] })),
     listPullRequests: vi.fn(),
+    listBranches: vi.fn(async () => ({ items: [] })),
     listCommits: vi.fn(),
     getPullRequestDiff: vi.fn(),
     submitReview: vi.fn(),
@@ -214,6 +215,15 @@ describe('SourceControlService', () => {
     expect(provider.listRepositories).toHaveBeenCalledTimes(1);
     await service.listRepositories('github', { refresh: true });
     expect(provider.listRepositories).toHaveBeenCalledTimes(2);
+  });
+
+  it('caches branches until refresh', async () => {
+    const { service, provider } = setup();
+    await service.listBranches('github', 'o/r');
+    await service.listBranches('github', 'o/r');
+    expect(provider.listBranches).toHaveBeenCalledTimes(1);
+    await service.listBranches('github', 'o/r', { refresh: true });
+    expect(provider.listBranches).toHaveBeenCalledTimes(2);
   });
 
   it('disconnect removes the credential and clears the cache', async () => {

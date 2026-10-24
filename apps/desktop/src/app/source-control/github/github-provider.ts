@@ -1,6 +1,7 @@
 import { SourceControlError } from '@ascua/source-control';
 import type {
   Account,
+  Branch,
   Commit,
   CommitQuery,
   Credential,
@@ -24,6 +25,7 @@ import {
 } from './github-http';
 import {
   toAccount,
+  toBranch,
   toCommit,
   toDiffFile,
   toPullRequest,
@@ -103,6 +105,9 @@ export class GitHubProvider implements SourceControlProvider {
       sort: 'updated',
       direction: 'desc',
       per_page: 30,
+      head: query.branch
+        ? `${repoId.split('/')[0]}:${query.branch}`
+        : undefined,
       page,
     });
     const items = (await response.json()) as unknown[];
@@ -130,6 +135,28 @@ export class GitHubProvider implements SourceControlProvider {
     const items = (await response.json()) as unknown[];
     return {
       items: items.map(toCommit),
+      next: nextCursor(response.headers.get('link')),
+    };
+  }
+
+  async listBranches(
+    credential: Credential,
+    repoId: string,
+    query: PageQuery,
+  ): Promise<Page<Branch>> {
+    const base = parseRepoId(repoId);
+    const page = validCursor(query.cursor);
+    const response = await githubFetch(
+      this.fetchFn,
+      credential,
+      `${base}/branches`,
+      { per_page: 100, page },
+    );
+    if (response.status === 409) return { items: [] }; // empty repository
+    if (!response.ok) throw toSourceControlError(response);
+    const items = (await response.json()) as unknown[];
+    return {
+      items: items.map(toBranch),
       next: nextCursor(response.headers.get('link')),
     };
   }

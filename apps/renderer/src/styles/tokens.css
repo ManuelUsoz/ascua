@@ -46,6 +46,16 @@
   --shadow-oro:
     inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(255, 190, 60, 0.25);
   --shadow-ask: 0 0 0 3px rgba(92, 217, 242, 0.1);
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --select-padding-end: 30px;
+  --select-chevron-size: 5px;
+  --select-chevron-inset: 15px;
+  --select-chevron-offset: 10px;
+  --select-chevron-left-angle: 45deg;
+  --select-chevron-right-angle: 135deg;
+  --select-chevron-split: 50%;
+  --select-chevron-full: 100%;
   --rail-w: 64px;
   --side-w: 220px;
   --bar-h: 44px;

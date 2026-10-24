@@ -26,6 +26,14 @@ describe('RepositorySelection', () => {
     ),
     pullRequests: vi.fn(() => Promise.resolve({ items: [] })),
     commits: vi.fn(() => Promise.resolve({ items: [] })),
+    branches: vi.fn(() =>
+      Promise.resolve({
+        items: [
+          { name: 'main', sha: 'a1', protected: true },
+          { name: 'dev', sha: 'b2', protected: false },
+        ],
+      }),
+    ),
     diff: vi.fn(() => Promise.resolve({ truncated: false, files: [] })),
   };
   const pr = { number: 7 } as never;
@@ -43,6 +51,7 @@ describe('RepositorySelection', () => {
     expect(sel.selectedRepo()?.id).toBe('octo/a');
     expect(store.pullRequests).toHaveBeenCalledWith('octo/a', {
       state: 'open',
+      branch: 'main',
     });
     expect(sel.nextPage()).toBe('c2');
     expect(sel.loadedAt()).toBeDefined();
@@ -57,6 +66,35 @@ describe('RepositorySelection', () => {
     sel.back();
     expect(sel.selectedPr()).toBeUndefined();
     expect(sel.diff()).toBeUndefined();
+  });
+
+  it('preselects the default branch and reloads only commits on select', async () => {
+    const sel = service();
+    await sel.loadRepos();
+    expect(sel.branch()).toBe('main');
+    expect(sel.branches().length).toBe(2);
+    expect(store.commits).toHaveBeenLastCalledWith('octo/a', {
+      branch: 'main',
+    });
+    store.pullRequests.mockClear();
+    await sel.selectBranch('dev');
+    expect(sel.branch()).toBe('dev');
+    expect(store.commits).toHaveBeenLastCalledWith('octo/a', { branch: 'dev' });
+    expect(store.pullRequests).toHaveBeenLastCalledWith('octo/a', {
+      state: 'open',
+      branch: 'dev',
+    });
+  });
+
+  it('resets the branch when the repo changes', async () => {
+    const sel = service();
+    await sel.loadRepos();
+    await sel.selectBranch('dev');
+    await sel.selectRepo(repo('b'));
+    expect(sel.branch()).toBe('main');
+    expect(store.commits).toHaveBeenLastCalledWith('octo/b', {
+      branch: 'main',
+    });
   });
 
   it('forgets everything on reset', async () => {

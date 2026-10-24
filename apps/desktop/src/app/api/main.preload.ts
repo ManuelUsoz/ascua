@@ -22,6 +22,7 @@ import {
   type SourceControlStatus,
 } from '@ascua/ipc';
 import type {
+  Branch,
   Commit,
   Page,
   PullRequest,
@@ -170,6 +171,13 @@ const api: AscuaApi = {
       repoId,
       query,
     ) as Promise<Page<PullRequest>>,
+  listBranches: (provider, repoId, query) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlBranches,
+      provider,
+      repoId,
+      query,
+    ) as Promise<Page<Branch>>,
   listCommits: (provider, repoId, query) =>
     ipcRenderer.invoke(
       IPC.sourceControlCommits,
