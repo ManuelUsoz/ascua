@@ -23,6 +23,11 @@
     "inTerminal": "En la terminal",
     "queued": "+{{count}} en espera"
   },
+  "notice": {
+    "error": "Error",
+    "warning": "Advertencia",
+    "info": "Información"
+  },
   "side": {
     "heading": "PROYECTOS",
     "newProject": "Nuevo proyecto",
