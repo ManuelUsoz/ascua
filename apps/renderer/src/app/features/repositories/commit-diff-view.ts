@@ -12,6 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import type { Commit, CommitDiff } from '@ascua/source-control';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { Text } from '../../core/i18n/text';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { Spinner } from '../../shared/spinner/spinner';
 import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
@@ -24,6 +25,7 @@ import { PROVIDER_OPTIONS } from './providers';
   selector: 'app-commit-diff-view',
   imports: [
     TranslocoPipe,
+    Button,
     Icon,
     RelativeTimePipe,
     Spinner,

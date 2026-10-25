@@ -47,6 +47,14 @@ export class RoomState {
       offLayout();
     });
     api.getLayout().then((layout) => this.applyLayout(layout));
+    // Main opens the room on launch, before the renderer exists: land on the
+    // open frame instead of blooming out of an avatar that was never shown.
+    void api
+      .getWindowState()
+      .then((state) => {
+        if (state.fullscreen) this.openOnStart(state.origin);
+      })
+      .catch(() => undefined);
   }
 
   /** The avatar rests in the compact window: no room, no bloom in flight. */
@@ -122,6 +130,15 @@ export class RoomState {
 
   private get classes(): DOMTokenList {
     return this.document.body.classList;
+  }
+
+  /** Main opened the room on launch: no bloom, no wake animation. */
+  private openOnStart(origin?: BloomOrigin): void {
+    if (this.isOpen()) return;
+    if (origin) this.applyOrigin(origin);
+    this.classes.remove('is-waking', 'is-closing');
+    this.classes.add('is-open');
+    this.isOpen.set(true);
   }
 
   private enterFullscreen(origin?: BloomOrigin): void {

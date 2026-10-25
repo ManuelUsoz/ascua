@@ -55,14 +55,49 @@
           ></span>
         </a>
       }
+      @for (c of chats.sessions(p.id); track c.id) {
+        <a
+          class="as-tree__row as-tree__row--pista"
+          [routerLink]="['/proyectos', p.id, 'chats', c.id]"
+          routerLinkActive
+          [ariaCurrentWhenActive]="true"
+          (contextmenu)="openChatMenu($event, p.id, c)"
+          (keydown)="onChatKey($event, p.id, c)"
+        >
+          <app-icon name="chat" />
+          <span class="as-tree__name">{{
+            c.title || ('side.untitledChat' | transloco)
+          }}</span>
+          <span class="as-dot" [attr.data-tone]="chatTone(c.id)"></span>
+        </a>
+      }
       <button
         type="button"
-        class="as-btn as-btn--primary as-btn--block as-side__start"
+        appButton
+        variant="primary"
+        block
+        class="as-side__start"
         [disabled]="p.terminals.length === 0"
-        (click)="sessions.startAll(p)"
+        (clicked)="sessions.startAll(p)"
       >
         <app-icon name="play" />{{ 'side.startAll' | transloco }}
       </button>
     }
   }
+  @if (deleteError(); as code) {
+    <p class="as-side__error" role="alert">
+      {{ 'errors.' + code | transloco }}
+    </p>
+  }
+  <app-context-menu [items]="menuItems" />
+  <app-confirm-modal
+    [open]="pending() !== null"
+    [title]="'side.deleteChatTitle'"
+    [body]="'side.deleteChatBody'"
+    [bodyParams]="{ name: pending()?.name }"
+    [confirmLabel]="'side.deleteChatConfirm'"
+    tone="danger"
+    (confirmed)="confirmDelete()"
+    (cancelled)="pending.set(null)"
+  />
 </aside>

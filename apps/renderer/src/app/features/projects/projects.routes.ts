@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { scopeResolver } from '../../core/i18n/provide-i18n';
+import { ProjectClonePage } from './project-clone-page';
 import { ProjectFormPage } from './project-form-page';
 import { ProjectPage } from './project-page';
 import { ProjectsIndexPage } from './projects-index-page';
@@ -26,6 +27,11 @@ export default [
         data: { section: 'nav.newProject' },
       },
       {
+        path: 'clonar',
+        component: ProjectClonePage,
+        data: { section: 'nav.cloneProject' },
+      },
+      {
         path: ':projectId/editar',
         component: ProjectFormPage,
         data: { section: 'nav.edit' },
@@ -44,6 +50,11 @@ export default [
             path: 'archivos',
             loadChildren: () => import('../files/files.routes'),
             data: { section: 'nav.files' },
+          },
+          {
+            path: 'chats',
+            loadChildren: () => import('../chats/chats.routes'),
+            data: { section: 'nav.chats' },
           },
         ],
       },

@@ -1,4 +1,9 @@
 {
+  "common": {
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar"
+  },
   "breadcrumb": {
     "label": "Ruta",
     "showHidden": "Mostrar niveles ocultos"
@@ -7,7 +12,9 @@
     "projects": "Proyectos",
     "terminals": "Terminales",
     "files": "Archivos",
+    "chats": "Chats",
     "newProject": "Nuevo proyecto",
+    "cloneProject": "Clonar repositorio",
     "edit": "Editar",
     "settings": "Ajustes",
     "repositories": "Repositorios",
@@ -23,20 +30,49 @@
     "inTerminal": "En la terminal",
     "queued": "+{{count}} en espera"
   },
+  "notice": {
+    "error": "Error",
+    "warning": "Advertencia",
+    "info": "Información",
+    "dismiss": "Descartar"
+  },
   "side": {
     "heading": "PROYECTOS",
     "newProject": "Nuevo proyecto",
-    "startAll": "Levantar todo"
+    "startAll": "Levantar todo",
+    "untitledChat": "Chat sin título",
+    "deleteChatTitle": "Eliminar chat",
+    "deleteChatBody": "Se eliminará \"{{name}}\" y su historial. No se puede deshacer.",
+    "deleteChatConfirm": "Eliminar chat"
+  },
+  "status": {
+    "working": "Trabajando",
+    "running": "Corriendo",
+    "waiting": "Espera tu respuesta",
+    "stuck": "Trabado",
+    "crashed": "Se cayó",
+    "stopped": "Detenido"
   },
   "state": {
-    "running": "Corriendo",
-    "stopped": "Detenida",
-    "failed": "Falló",
     "failedCode": "Falló (código {{code}})"
   },
   "errors": {
     "unknown": "Error inesperado: {{detail}}",
     "noDesktop": "Solo disponible en la app de escritorio.",
+    "chat": {
+      "providerNotConfigured": "No hay un proveedor de chat configurado.",
+      "providerDisabled": "Este proveedor aún no está disponible.",
+      "authRequired": "Inicia sesión en el proveedor para continuar.",
+      "agentMissing": "No se encontró el agente del proveedor.",
+      "notFound": "El chat o la solicitud ya no existe.",
+      "invalidInput": "Ese modelo, esfuerzo o modo no es válido.",
+      "busy": "El chat está ocupado. Espera a que termine.",
+      "startFailed": "No se pudo iniciar el chat.",
+      "promptFailed": "No se pudo enviar el mensaje.",
+      "exited": "El agente se cerró inesperadamente.",
+      "saveFailed": "No se pudo guardar el chat.",
+      "unknown": "Error inesperado en el chat."
+    },
     "sourceControl": {
       "notConnected": "No estás conectado al proveedor.",
       "authExpired": "La sesión expiró o fue revocada. Conéctate de nuevo.",
@@ -48,6 +84,15 @@
       "forbidden": "Acceso prohibido (política de la organización o SSO).",
       "unavailable": "El flujo de dispositivo está desactivado en la app del proveedor.",
       "rejected": "GitHub rechazó la revisión (no puedes aprobar ni pedir cambios en tu propio pull request)."
+    },
+    "clone": {
+      "gitMissing": "Git no está instalado o no está en el PATH.",
+      "authFailed": "Git no pudo autenticarse. Vuelve a conectar el proveedor.",
+      "failed": "Falló la clonación.",
+      "targetExists": "La carpeta de destino ya existe y no está vacía.",
+      "folderNameInvalid": "El nombre de la carpeta no es válido.",
+      "parentMissing": "La carpeta padre no existe.",
+      "busy": "Este repositorio ya se está clonando ahí."
     },
     "project": {
       "notFound": "No existe el proyecto.",
@@ -64,6 +109,7 @@
       "terminalPortInvalid": "El puerto de \"{{name}}\" debe ser un entero entre 1 y 65535.",
       "idMissing": "Falta un id",
       "folderOutside": "La carpeta tiene que estar dentro del proyecto.",
+      "repositoryInvalid": "Vínculo de repositorio inválido.",
       "saveFailed": "No se pudo guardar el proyecto",
       "deleteFailed": "No se pudo eliminar el proyecto"
     },

@@ -1,0 +1,16 @@
+{
+  "name": "chat",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/chat/src",
+  "projectType": "library",
+  "tags": ["type:shared", "scope:chat"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "configFile": "libs/chat/vite.config.mts"
+      }
+    }
+  }
+}

@@ -53,6 +53,45 @@ describe('JsonSettingsRepository', () => {
     expect(await make('en').get()).toEqual({ language: 'en' });
   });
 
+  it('persists chatProvider and drops an invalid one', async () => {
+    await make('en').update({ chatProvider: 'claude' });
+    expect(await make('en').get()).toEqual({
+      language: 'en',
+      chatProvider: 'claude',
+    });
+    const result = await make('en').update({
+      chatProvider: 'nope' as 'claude',
+    });
+    expect(result.chatProvider).toBe('claude');
+    await writeFile(file, JSON.stringify({ version: 1, chatProvider: 'x' }));
+    expect(await make('en').get()).toEqual({ language: 'en' });
+  });
+
+  it('round-trips chatDefaults and drops invalid entries', async () => {
+    await make('en').update({
+      chatDefaults: {
+        claude: { permissionMode: 'auto', model: 'opus', effort: 'high' },
+      },
+    });
+    expect((await make('en').get()).chatDefaults).toEqual({
+      claude: { permissionMode: 'auto', model: 'opus', effort: 'high' },
+    });
+    await writeFile(
+      file,
+      JSON.stringify({
+        version: 1,
+        chatDefaults: {
+          claude: { permissionMode: 'manual', model: 3, effort: 'huge' },
+          nope: { model: 'x' },
+          gemini: { model: 'g', effort: 'low' },
+        },
+      }),
+    );
+    expect((await make('en').get()).chatDefaults).toEqual({
+      gemini: { model: 'g', effort: 'low' },
+    });
+  });
+
   it('gives the default for an unknown stored language', async () => {
     await writeFile(file, JSON.stringify({ version: 1, language: 'fr' }));
     expect(await make('es').get()).toEqual({ language: 'es' });

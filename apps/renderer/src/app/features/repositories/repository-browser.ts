@@ -13,6 +13,7 @@ import { errorText, toAscuaError } from '../../core/i18n/app-error';
 import type { Text } from '../../core/i18n/text';
 import { RepositorySelection } from '../../core/source-control/repository-selection';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { Spinner } from '../../shared/spinner/spinner';
 import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
@@ -24,6 +25,7 @@ import type {
 } from '@ascua/source-control';
 import { CommitDiffView } from './commit-diff-view';
 import { CommitRow } from './commit-row';
+import { RepositoryLinkNotice } from './repository-link-notice';
 import { PullRequestView } from './pull-request-view';
 import { PROVIDER_OPTIONS, termKey } from './providers';
 import { prStateKey, prTone } from './pr-state';
@@ -40,8 +42,10 @@ import { repositoryUrl } from './repository-path';
     RelativeTimePipe,
     Spinner,
     AsSelect,
+    Button,
     CommitRow,
     CommitDiffView,
+    RepositoryLinkNotice,
   ],
   templateUrl: './repository-browser.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

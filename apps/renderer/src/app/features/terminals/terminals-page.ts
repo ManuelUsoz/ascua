@@ -8,6 +8,7 @@ import {
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ProjectStore } from '../../core/projects/project-store';
 import { TerminalSessions } from '../../core/terminals/terminal-sessions';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { PistaEditor } from './pista-editor';
 import { TerminalPane } from './terminal-pane';
@@ -15,7 +16,7 @@ import { TerminalPane } from './terminal-pane';
 /** The project's terminals grid: saved pistas first, then the open ad-hoc shells. */
 @Component({
   selector: 'app-terminals-page',
-  imports: [TerminalPane, TranslocoPipe, Icon],
+  imports: [TerminalPane, TranslocoPipe, Icon, Button],
   templateUrl: './terminals-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

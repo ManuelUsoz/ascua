@@ -3,6 +3,7 @@
   "addPista": "Pista",
   "addTerminal": "Terminal",
   "shellName": "shell",
+  "loginName": "iniciar sesión",
   "pane": {
     "stop": "Detener {{name}}",
     "start": "Iniciar {{name}}",

@@ -5,7 +5,7 @@
     }}</span>
     <p class="as-repos__code">{{ prompt().userCode }}</p>
   </div>
-  <button type="button" class="as-btn as-btn--quiet" (click)="copy()">
+  <button type="button" appButton variant="quiet" (clicked)="copy()">
     <app-icon name="copy" /><span aria-live="polite">{{
       (copied()
         ? 'repositories.deviceCode.copied'
@@ -16,8 +16,10 @@
 </div>
 <button
   type="button"
-  class="as-btn as-btn--primary as-btn--block"
-  (click)="store.openVerification()"
+  appButton
+  variant="primary"
+  block
+  (clicked)="store.openVerification()"
 >
   <app-icon name="external" />{{
     'repositories.deviceCode.open' | transloco: { host: provider.verifyHost }
@@ -37,10 +39,10 @@
   </span>
 </div>
 <div class="as-connect__actions">
-  <button type="button" class="as-btn as-btn--ghost" (click)="store.connect()">
+  <button type="button" appButton variant="ghost" (clicked)="store.connect()">
     {{ 'repositories.deviceCode.again' | transloco }}
   </button>
-  <button type="button" class="as-btn as-btn--ghost" (click)="store.cancel()">
+  <button type="button" appButton variant="ghost" (clicked)="store.cancel()">
     {{ 'repositories.deviceCode.cancel' | transloco }}
   </button>
 </div>

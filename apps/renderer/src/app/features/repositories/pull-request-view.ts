@@ -22,6 +22,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { errorText, toAscuaError } from '../../core/i18n/app-error';
 import type { Text } from '../../core/i18n/text';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { Spinner } from '../../shared/spinner/spinner';
 import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
@@ -43,6 +44,7 @@ type PrTab = 'files' | 'commits';
     Icon,
     RelativeTimePipe,
     Spinner,
+    Button,
     FileDiff,
     DiffFileList,
     CommitDiffView,

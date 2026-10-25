@@ -1,0 +1,97 @@
+{
+  "onboarding": {
+    "title": "Elegí un proveedor",
+    "hint": "Los chats de este proyecto usan un agente de código. Elegí con cuál trabajar.",
+    "comingSoon": "Próximamente",
+    "checking": "Comprobando la sesión",
+    "loggedIn": "Sesión iniciada",
+    "loggedInAs": "Sesión iniciada como {{email}}",
+    "loggedOut": "Sin sesión",
+    "unavailable": "No disponible",
+    "signIn": "Iniciar sesión",
+    "signInHint": "Se abre una terminal para completar el inicio de sesión. Después, comprobá de nuevo.",
+    "checkAgain": "Comprobar de nuevo",
+    "use": "Usar {{provider}}"
+  },
+  "provider": {
+    "claude": "Claude",
+    "codex": "Codex",
+    "gemini": "Gemini"
+  },
+  "newChat": {
+    "title": "Nuevo chat",
+    "hint": "Escribí un mensaje para empezar una conversación en este proyecto."
+  },
+  "composer": {
+    "label": "Mensaje",
+    "placeholder": "Escribí tu mensaje. Enter envía, Shift+Enter agrega una línea.",
+    "stop": "Detener",
+    "send": "Enviar",
+    "attach": "Adjuntar archivo",
+    "attachSoon": "Adjuntar archivos llegará pronto",
+    "permission": {
+      "label": "Permisos",
+      "supervised": "Supervisado",
+      "supervisedHint": "Pregunta antes de ejecutar comandos o cambiar archivos.",
+      "acceptEdits": "Aceptar ediciones",
+      "acceptEditsHint": "Aprueba las ediciones solo; pregunta por lo demás.",
+      "auto": "Automático",
+      "autoHint": "Un clasificador aprueba lo rutinario; el resto pregunta.",
+      "fullAccess": "Acceso total",
+      "fullAccessHint": "Permite comandos y ediciones sin preguntar."
+    },
+    "model": {
+      "label": "Modelo",
+      "default": "Predeterminado del proveedor"
+    },
+    "effort": {
+      "label": "Esfuerzo de razonamiento",
+      "default": "Esfuerzo predeterminado",
+      "minimal": "Mínimo",
+      "low": "Bajo",
+      "medium": "Medio",
+      "high": "Alto",
+      "xhigh": "Muy alto",
+      "max": "Máximo"
+    },
+    "mode": {
+      "locate": "Ubicar",
+      "make": "Construir",
+      "review": "Revisar"
+    },
+    "exitMode": "Salir del modo"
+  },
+  "commands": {
+    "label": "Comandos",
+    "clear": "Borra la conversación y empieza de cero",
+    "locate": "Ubica algo y reporta path:line, sin editar",
+    "make": "Planifica por lotes, después implementa y verifica",
+    "review": "Revisa archivos o un PR y reporta hallazgos, sin editar",
+    "group": {
+      "builtin": "Integrados",
+      "nxy": "Modos nxy",
+      "custom": "Del proyecto"
+    }
+  },
+  "session": {
+    "loading": "Cargando el chat",
+    "responding": "Respondiendo…"
+  },
+  "part": {
+    "thinking": "Pensando",
+    "toolRunning": "En curso",
+    "toolDone": "Listo",
+    "toolFailed": "Falló"
+  },
+  "permission": {
+    "title": "Permiso solicitado",
+    "allow": "Permitir",
+    "deny": "Denegar",
+    "allowed": "Permitido",
+    "denied": "Denegado"
+  },
+  "usage": {
+    "tokens": "{{count}} tokens",
+    "cost": "US$ {{cost}}"
+  }
+}

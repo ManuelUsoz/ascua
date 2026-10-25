@@ -200,6 +200,11 @@ export class TerminalSessions {
     this.api?.resizeTerminal(id, size);
   }
 
+  /** Track a session opened outside this service (e.g. a login terminal). */
+  adopt(session: TerminalSession): void {
+    this.upsert(session);
+  }
+
   private upsert(session: TerminalSession): void {
     this.all.update((current) => ({ ...current, [session.id]: session }));
   }

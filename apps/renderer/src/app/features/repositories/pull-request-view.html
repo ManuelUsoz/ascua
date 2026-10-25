@@ -34,9 +34,10 @@
     @if (!own() && isOpen()) {
       <button
         type="button"
-        class="as-btn as-btn--primary"
+        appButton
+        variant="primary"
         [disabled]="submitting()"
-        (click)="submit('approve')"
+        (clicked)="submit('approve')"
       >
         <app-icon name="check" />{{
           'repositories.pr.actions.approve' | transloco
@@ -44,9 +45,10 @@
       </button>
       <button
         type="button"
-        class="as-btn as-btn--quiet"
+        appButton
+        variant="quiet"
         [disabled]="submitting()"
-        (click)="compose('requestChanges')"
+        (clicked)="compose('requestChanges')"
       >
         {{ 'repositories.pr.actions.requestChanges' | transloco }}
       </button>
@@ -73,13 +75,14 @@
       <div class="as-row">
         <button
           type="button"
-          class="as-btn as-btn--primary"
+          appButton
+          variant="primary"
           [disabled]="submitting() || !comment().trim()"
-          (click)="submit(event)"
+          (clicked)="submit(event)"
         >
           {{ 'repositories.pr.composer.send' | transloco }}
         </button>
-        <button type="button" class="as-btn as-btn--ghost" (click)="cancel()">
+        <button type="button" appButton variant="ghost" (clicked)="cancel()">
           {{ 'repositories.pr.composer.cancel' | transloco }}
         </button>
       </div>

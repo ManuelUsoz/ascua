@@ -4,16 +4,20 @@
       <p>{{ 'terminals.empty' | transloco }}</p>
       <div class="as-term-empty__actions">
         <button
+          appButton
           type="button"
-          class="as-btn as-btn--quiet as-btn--s"
-          (click)="editor.create()"
+          variant="quiet"
+          size="s"
+          (clicked)="editor.create()"
         >
           <app-icon name="plus" />{{ 'terminals.addPista' | transloco }}
         </button>
         <button
+          appButton
           type="button"
-          class="as-btn as-btn--quiet as-btn--s"
-          (click)="sessions.openShell(project.id)"
+          variant="quiet"
+          size="s"
+          (clicked)="sessions.openShell(project.id)"
         >
           <app-icon name="plus" />{{ 'terminals.addTerminal' | transloco }}
         </button>
@@ -33,7 +37,11 @@
         <app-terminal-pane
           [projectId]="project.id"
           [terminalId]="shell.terminalId"
-          [name]="shell.name ?? ('terminals.shellName' | transloco)"
+          [name]="
+            shell.name === 'login'
+              ? ('terminals.loginName' | transloco)
+              : (shell.name ?? ('terminals.shellName' | transloco))
+          "
         />
       }
     </div>

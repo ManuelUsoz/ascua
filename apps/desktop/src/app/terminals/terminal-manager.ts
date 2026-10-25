@@ -24,6 +24,10 @@ const STOP_TIMEOUT_MS = 3000;
 export class TerminalManager implements ProjectListener {
   private readonly sessions = new Map<string, Session>();
   private readonly exitWaiters = new Set<() => void>();
+  private readonly commands = new Map<
+    string,
+    { file: string; args: string[] }
+  >();
   private shellSeq = 0;
 
   constructor(
@@ -76,7 +80,7 @@ export class TerminalManager implements ProjectListener {
           stopping: false,
         },
         project.path,
-        undefined,
+        this.commands.get(id),
         size,
       );
     }
@@ -166,6 +170,54 @@ export class TerminalManager implements ProjectListener {
     );
   }
 
+  /** Closable shell-kind session that spawns the argv directly (no quoting). */
+  async openCommand(
+    projectId: string,
+    command: { name: string; file: string; args: string[] },
+    size: TerminalSize = DEFAULT_SIZE,
+  ): Promise<TerminalSession> {
+    const terminalId = `shell-${++this.shellSeq}`;
+    const id = terminalKey(projectId, terminalId);
+    const project = await this.repository.get(projectId);
+    if (!project) {
+      return this.view({
+        id,
+        projectId,
+        terminalId,
+        kind: 'shell',
+        name: command.name,
+        status: 'failed',
+        error: { code: 'project.notFound' },
+        stopping: false,
+      });
+    }
+    if (!this.exists(project.path)) {
+      return this.fail(
+        id,
+        projectId,
+        terminalId,
+        { code: 'terminal.folderMissing', params: { path: project.path } },
+        { kind: 'shell', name: command.name },
+      );
+    }
+    const argv = { file: command.file, args: command.args };
+    this.commands.set(id, argv);
+    return this.spawn(
+      {
+        id,
+        projectId,
+        terminalId,
+        kind: 'shell',
+        name: command.name,
+        status: 'running',
+        stopping: false,
+      },
+      project.path,
+      argv,
+      size,
+    );
+  }
+
   closeShell(projectId: string, terminalId: string): void {
     const session = this.sessions.get(terminalKey(projectId, terminalId));
     if (session?.kind !== 'shell') return;
@@ -176,11 +228,14 @@ export class TerminalManager implements ProjectListener {
   private spawn(
     session: Session,
     cwd: string,
-    command: string | undefined,
+    command: string | { file: string; args: string[] } | undefined,
     size: TerminalSize,
   ): TerminalSession {
     const { id } = session;
-    const { file, args, env } = shellCommand(this.shell, command);
+    const { file, args, env } =
+      typeof command === 'object'
+        ? { ...command, env: {} as Record<string, string> }
+        : shellCommand(this.shell, command);
     this.sessions.set(id, session);
     this.backend.request({
       type: 'spawn',
@@ -284,6 +339,7 @@ export class TerminalManager implements ProjectListener {
   /** Forget a session and ask the host to free its buffer. */
   private drop(session: Session): void {
     this.sessions.delete(session.id);
+    this.commands.delete(session.id);
     this.backend.request({ type: 'dispose', id: session.id });
     this.notify(IPC.terminalRemoved, session.id);
   }

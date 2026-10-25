@@ -22,7 +22,7 @@ export const nativeMode: FullscreenMode = {
 };
 
 /**
- * Linux only (see the AGENTS.md note on Linux fullscreen). X11 WMs often
+ * Linux only (see the Linux note in apps/desktop/CLAUDE.md). X11 WMs often
  * ignore or undo fullscreen for a window created non-focusable, and Electron
  * then drops setBounds while it believes it is fullscreen. Cover the display
  * with plain bounds instead. A non-resizable X11 window has fixed size

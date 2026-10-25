@@ -15,6 +15,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { errorText } from '../../core/i18n/app-error';
 import { text, type Text } from '../../core/i18n/text';
 import { ProjectStore } from '../../core/projects/project-store';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { PistaEditor } from './pista-editor';
 import {
@@ -27,7 +28,7 @@ import {
 /** Inline popover to create or edit one pista of a project. */
 @Component({
   selector: 'app-pista-form',
-  imports: [ReactiveFormsModule, TranslocoPipe, Icon],
+  imports: [ReactiveFormsModule, TranslocoPipe, Icon, Button],
   templateUrl: './pista-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

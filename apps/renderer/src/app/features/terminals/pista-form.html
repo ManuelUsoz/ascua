@@ -50,9 +50,11 @@
   <div class="as-form__field">
     <span class="as-label">{{ 'terminals.pista.folder' | transloco }}</span>
     <button
+      appButton
       type="button"
-      class="as-btn as-btn--quiet as-pista-form__folder"
-      (click)="pickFolder()"
+      variant="quiet"
+      class="as-pista-form__folder"
+      (clicked)="pickFolder()"
     >
       <app-icon name="folder" />{{
         folderText().key | transloco: folderText().params
@@ -65,17 +67,19 @@
     </p>
   }
   <div class="as-form__actions">
-    <button type="submit" class="as-btn as-btn--primary" [disabled]="saving()">
+    <button appButton type="submit" variant="primary" [disabled]="saving()">
       {{ 'terminals.pista.save' | transloco }}
     </button>
-    <button type="button" class="as-btn as-btn--ghost" (click)="cancel()">
+    <button appButton type="button" variant="ghost" (clicked)="cancel()">
       {{ 'terminals.pista.cancel' | transloco }}
     </button>
     @if (spec()) {
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--danger as-form__delete"
-        (click)="remove()"
+        variant="danger"
+        class="as-form__delete"
+        (clicked)="remove()"
       >
         {{
           (confirmingRemove()

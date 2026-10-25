@@ -80,6 +80,25 @@ describe('FullscreenController', () => {
     expect(send).toHaveBeenCalledTimes(1);
   });
 
+  it('starts expanded without announcing a bloom', () => {
+    const { controller, send, win } = setup();
+    expect(controller.state()).toEqual({ fullscreen: false });
+
+    controller.startExpanded();
+    expect(controller.expanded).toBe(true);
+    expect(win.setFocusable).toHaveBeenCalledWith(true);
+    expect(win.setMinimizable).toHaveBeenCalledWith(true);
+    expect(controller.state()).toEqual({
+      fullscreen: true,
+      origin: { x: 1800, y: 960, size: 120, width: 1920, height: 1080 },
+    });
+
+    // The native event arrives before any renderer can listen: stay silent.
+    controller.onEnterFullScreen();
+    vi.advanceTimersByTime(1300);
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it('exit restores the compact bounds and announces later', () => {
     const { controller, send, win, setBounds } = setup();
     controller.toggle();

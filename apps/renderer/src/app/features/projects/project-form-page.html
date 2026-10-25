@@ -43,9 +43,10 @@
             readonly
           />
           <button
+            appButton
             type="button"
-            class="as-btn as-btn--quiet"
-            (click)="pickFolder()"
+            variant="quiet"
+            (clicked)="pickFolder()"
           >
             <app-icon name="folder" />{{
               'projects.form.pickFolder' | transloco
@@ -66,9 +67,10 @@
             formControlName="color"
           />
           <button
+            appButton
             type="button"
-            class="as-btn as-btn--ghost"
-            (click)="clearColor()"
+            variant="ghost"
+            (clicked)="clearColor()"
           >
             {{ 'projects.form.noColor' | transloco }}
           </button>
@@ -83,11 +85,7 @@
     }
 
     <div class="as-form__actions">
-      <button
-        type="submit"
-        class="as-btn as-btn--primary"
-        [disabled]="saving()"
-      >
+      <button appButton type="submit" variant="primary" [disabled]="saving()">
         {{ 'projects.form.save' | transloco }}
       </button>
       <a
@@ -99,9 +97,11 @@
       >
       @if (projectId()) {
         <button
+          appButton
           type="button"
-          class="as-btn as-btn--danger as-form__delete"
-          (click)="remove()"
+          variant="danger"
+          class="as-form__delete"
+          (clicked)="remove()"
         >
           {{
             (confirmingDelete()

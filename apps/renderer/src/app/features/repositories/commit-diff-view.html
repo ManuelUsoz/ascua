@@ -1,5 +1,5 @@
 <div class="as-commit__head">
-  <button type="button" class="as-btn as-btn--ghost" (click)="back.emit()">
+  <button type="button" appButton variant="ghost" (clicked)="back.emit()">
     <app-icon name="chevron-left" />{{
       'repositories.pr.commit.back' | transloco
     }}

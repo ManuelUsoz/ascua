@@ -6,6 +6,7 @@ import { RepositorySelection } from '../../../core/source-control/repository-sel
 import { SourceControlStore } from '../../../core/source-control/source-control-store';
 import { PROVIDER_OPTIONS } from '../../../features/repositories/providers';
 import { repositoryUrl } from '../../../features/repositories/repository-path';
+import { Button } from '../../../shared/button/button';
 import { Icon } from '../../../shared/icon/icon';
 import { Spinner } from '../../../shared/spinner/spinner';
 
@@ -16,7 +17,7 @@ import { Spinner } from '../../../shared/spinner/spinner';
  */
 @Component({
   selector: 'app-repository-side',
-  imports: [TranslocoPipe, Icon, Spinner],
+  imports: [TranslocoPipe, Button, Icon, Spinner],
   templateUrl: './repository-side.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -77,14 +77,16 @@
           </div>
           <button
             type="button"
-            class="as-btn as-btn--quiet"
-            (click)="openRepo(repo.webUrl)"
+            appButton
+            variant="quiet"
+            (clicked)="openRepo(repo.webUrl)"
           >
             <app-icon name="external" />{{
               'repositories.browser.openRepo' | transloco
             }}
           </button>
         </header>
+        <app-repository-link-notice [repo]="repo" />
         @if (openError(); as e) {
           <p class="as-form__error" role="alert">
             {{ e.key | transloco: e.params }}
@@ -237,9 +239,12 @@
     }
     <button
       type="button"
-      class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+      appButton
+      variant="ghost"
+      size="s"
+      icon
       [attr.aria-label]="'repositories.refresh' | transloco"
-      (click)="sel.refresh()"
+      (clicked)="sel.refresh()"
     >
       <app-icon name="refresh" />
     </button>

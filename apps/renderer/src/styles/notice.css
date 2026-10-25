@@ -1,0 +1,103 @@
+.as-notice[data-tone='alert'] {
+  --tone: var(--alert);
+}
+.as-notice[data-tone='warn'] {
+  --tone: var(--warn);
+}
+.as-notice[data-tone='ask'] {
+  --tone: var(--ask);
+}
+.as-notice {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 280px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  box-sizing: border-box;
+  border-radius: var(--radius-l);
+  background: var(--surface-raised);
+  border: 1px solid var(--line-mid);
+  box-shadow: var(--shadow-pop), var(--shadow-highlight);
+  color: var(--ink);
+}
+.as-notice__chip {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-m);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  color: var(--tone, var(--ink-muted));
+}
+.as-notice:has(.as-notice__close) {
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+}
+.as-notice__close {
+  align-self: start;
+  padding: 4px;
+}
+.as-notice__main {
+  min-width: 0;
+}
+.as-notice__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 32px;
+}
+.as-notice__title {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+}
+.as-notice__status:empty {
+  display: none;
+}
+.as-notice__body {
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 19px;
+  margin-top: 6px;
+}
+.as-notice__body p {
+  margin: 0;
+}
+.as-notice__meta {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin-top: var(--space-3);
+  padding: 8px 10px;
+  border-radius: var(--radius-m);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+}
+.as-notice__meta-label {
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.as-notice__meta-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 18px;
+}
+.as-notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-3);
+}
+.as-notice__actions:empty {
+  display: none;
+}

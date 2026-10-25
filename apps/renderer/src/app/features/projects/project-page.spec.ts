@@ -88,6 +88,14 @@ describe('ProjectPage', () => {
     );
   });
 
+  it('links the header New chat action to chats/nuevo', () => {
+    const { el } = render();
+    const link = Array.from(el.querySelectorAll('a')).find((a) =>
+      a.textContent?.includes('Nuevo chat'),
+    );
+    expect(link?.getAttribute('href')).toMatch(/chats\/nuevo$/);
+  });
+
   it('navigates to terminales only when the shell opened', async () => {
     const { fixture, buttonText } = render();
     const navigate = vi

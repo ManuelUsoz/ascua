@@ -192,6 +192,28 @@ export class SourceControlService {
     this.emit({ provider, state: 'disconnected' });
   }
 
+  /** Clone url plus the git env that carries the token; stays in main. */
+  async cloneSource(
+    provider: ProviderId,
+    repoId: string,
+  ): Promise<{ url: string; env: Record<string, string> }> {
+    const credential = await this.options.store.load(provider);
+    if (!credential) throw new SourceControlError('notConnected');
+    const { provider: api } = this.adapter(provider);
+    const url = api.cloneUrl(repoId);
+    const basic = Buffer.from(
+      `x-access-token:${credential.accessToken}`,
+    ).toString('base64');
+    return {
+      url,
+      env: {
+        GIT_CONFIG_COUNT: '1',
+        GIT_CONFIG_KEY_0: `http.${api.webOrigin}/.extraheader`,
+        GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${basic}`,
+      },
+    };
+  }
+
   listRepositories(
     provider: ProviderId,
     query: PageQuery & { refresh?: boolean } = {},

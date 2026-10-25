@@ -5,6 +5,8 @@ import { rendererAppName, rendererAppPort } from '../constants';
 export function loadRenderer(win: BrowserWindow): void {
   if (!app.isPackaged && process.env['ASCUA_RENDERER'] !== 'dist') {
     win.loadURL(`http://localhost:${rendererAppPort}`);
+    // Dev server only (`nx serve desktop`); detached, the window is frameless.
+    win.webContents.openDevTools({ mode: 'detach' });
   } else {
     win.loadFile(join(__dirname, '..', rendererAppName, 'index.html'));
   }
