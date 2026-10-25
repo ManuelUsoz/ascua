@@ -1,0 +1,51 @@
+{
+  "onboarding": {
+    "title": "Pick a provider",
+    "hint": "This project's chats use a coding agent. Choose which one to work with.",
+    "comingSoon": "Coming soon",
+    "checking": "Checking the login",
+    "loggedIn": "Signed in",
+    "loggedInAs": "Signed in as {{email}}",
+    "loggedOut": "Signed out",
+    "unavailable": "Unavailable",
+    "signIn": "Sign in",
+    "signInHint": "A terminal opens to finish signing in. Then check again.",
+    "checkAgain": "Check again",
+    "use": "Use {{provider}}"
+  },
+  "provider": {
+    "claude": "Claude",
+    "codex": "Codex",
+    "gemini": "Gemini"
+  },
+  "newChat": {
+    "title": "New chat",
+    "hint": "Write a message to start a conversation in this project."
+  },
+  "composer": {
+    "label": "Message",
+    "placeholder": "Write your message. Enter sends, Shift+Enter adds a line.",
+    "stop": "Stop"
+  },
+  "session": {
+    "loading": "Loading the chat",
+    "responding": "Responding…"
+  },
+  "part": {
+    "thinking": "Thinking",
+    "toolRunning": "Running",
+    "toolDone": "Done",
+    "toolFailed": "Failed"
+  },
+  "permission": {
+    "title": "Permission requested",
+    "allow": "Allow",
+    "deny": "Deny",
+    "allowed": "Allowed",
+    "denied": "Denied"
+  },
+  "usage": {
+    "tokens": "{{count}} tokens",
+    "cost": "US$ {{cost}}"
+  }
+}

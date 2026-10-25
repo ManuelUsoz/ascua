@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
+import { isAgentProviderId, type AgentProviderId } from '@ascua/chat';
 import {
   LANGUAGES,
   type Language,
@@ -12,6 +13,7 @@ interface SettingsFile {
   version: 1;
   language?: Language;
   cloneDir?: string;
+  chatProvider?: AgentProviderId;
 }
 
 const isCloneDir = (value: unknown): value is string =>
@@ -38,6 +40,7 @@ export class JsonSettingsRepository {
       language: stored.language ?? this.osLanguage(),
     };
     if (stored.cloneDir) settings.cloneDir = stored.cloneDir;
+    if (stored.chatProvider) settings.chatProvider = stored.chatProvider;
     return settings;
   }
 
@@ -58,16 +61,21 @@ export class JsonSettingsRepository {
     const cloneDir = isCloneDir(patch.cloneDir)
       ? patch.cloneDir
       : stored.cloneDir;
+    const chatProvider = isAgentProviderId(patch.chatProvider)
+      ? patch.chatProvider
+      : stored.chatProvider;
     if (
       (language && language !== stored.language) ||
-      cloneDir !== stored.cloneDir
+      cloneDir !== stored.cloneDir ||
+      chatProvider !== stored.chatProvider
     ) {
       const file: SettingsFile = { version: 1 };
       if (language) file.language = language;
       if (cloneDir) file.cloneDir = cloneDir;
+      if (chatProvider) file.chatProvider = chatProvider;
       await writeJsonAtomic(this.file, file);
     }
-    return this.view({ language, cloneDir });
+    return this.view({ language, cloneDir, chatProvider });
   }
 
   private async read(): Promise<Partial<SettingsFile>> {
@@ -77,6 +85,9 @@ export class JsonSettingsRepository {
       const stored: Partial<SettingsFile> = {};
       if (isLanguage(file?.language)) stored.language = file.language;
       if (isCloneDir(file?.cloneDir)) stored.cloneDir = file.cloneDir;
+      if (isAgentProviderId(file?.chatProvider)) {
+        stored.chatProvider = file.chatProvider;
+      }
       return stored;
     } catch {
       return {};

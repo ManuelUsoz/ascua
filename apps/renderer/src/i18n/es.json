@@ -7,6 +7,7 @@
     "projects": "Proyectos",
     "terminals": "Terminales",
     "files": "Archivos",
+    "chats": "Chats",
     "newProject": "Nuevo proyecto",
     "cloneProject": "Clonar repositorio",
     "edit": "Editar",
@@ -33,7 +34,8 @@
   "side": {
     "heading": "PROYECTOS",
     "newProject": "Nuevo proyecto",
-    "startAll": "Levantar todo"
+    "startAll": "Levantar todo",
+    "untitledChat": "Chat sin título"
   },
   "status": {
     "working": "Trabajando",
@@ -49,6 +51,19 @@
   "errors": {
     "unknown": "Error inesperado: {{detail}}",
     "noDesktop": "Solo disponible en la app de escritorio.",
+    "chat": {
+      "providerNotConfigured": "No hay un proveedor de chat configurado.",
+      "providerDisabled": "Este proveedor aún no está disponible.",
+      "authRequired": "Inicia sesión en el proveedor para continuar.",
+      "agentMissing": "No se encontró el agente del proveedor.",
+      "notFound": "El chat o la solicitud ya no existe.",
+      "busy": "El chat está ocupado. Espera a que termine.",
+      "startFailed": "No se pudo iniciar el chat.",
+      "promptFailed": "No se pudo enviar el mensaje.",
+      "exited": "El agente se cerró inesperadamente.",
+      "saveFailed": "No se pudo guardar el chat.",
+      "unknown": "Error inesperado en el chat."
+    },
     "sourceControl": {
       "notConnected": "No estás conectado al proveedor.",
       "authExpired": "La sesión expiró o fue revocada. Conéctate de nuevo.",

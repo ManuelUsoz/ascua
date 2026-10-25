@@ -3,6 +3,15 @@
 // three worlds.
 
 import type {
+  AgentProviderId,
+  ChatErrorKind,
+  ChatEvent,
+  ChatSession,
+  ChatTranscript,
+  ProviderAuth,
+  ProviderInfo,
+} from '@ascua/chat';
+import type {
   Account,
   Branch,
   Commit,
@@ -75,6 +84,17 @@ export const IPC = {
   sourceControlCommitDiff: 'ascua:source-control:commit-diff',
   sourceControlReview: 'ascua:source-control:review',
   sourceControlOpenUrl: 'ascua:source-control:open-url',
+  chatProviders: 'ascua:chats:providers',
+  chatProviderAuth: 'ascua:chats:provider-auth',
+  chatProviderLogin: 'ascua:chats:provider-login',
+  chatSelectProvider: 'ascua:chats:select-provider',
+  listChatSessions: 'ascua:chats:list',
+  startChat: 'ascua:chats:start',
+  chatTranscript: 'ascua:chats:transcript',
+  sendChatPrompt: 'ascua:chats:send',
+  abortChat: 'ascua:chats:abort',
+  resolveChatPermission: 'ascua:chats:resolve-permission',
+  chatEvent: 'ascua:chats:event',
 } as const;
 
 export const LANGUAGES = ['es', 'en'] as const;
@@ -84,6 +104,8 @@ export interface Settings {
   language: Language;
   /** Last parent folder used to clone a repository. */
   cloneDir?: string;
+  /** Agent provider chosen for project chats. */
+  chatProvider?: AgentProviderId;
 }
 
 export type SettingsPatch = Partial<Settings>;
@@ -157,6 +179,20 @@ export const SOURCE_CONTROL_ERROR_CODES = [
   'sourceControl.rejected',
 ] as const;
 
+export const CHAT_ERROR_CODES = [
+  'chat.providerNotConfigured',
+  'chat.providerDisabled',
+  'chat.authRequired',
+  'chat.agentMissing',
+  'chat.notFound',
+  'chat.busy',
+  'chat.startFailed',
+  'chat.promptFailed',
+  'chat.exited',
+  'chat.saveFailed',
+  'chat.unknown',
+] as const satisfies readonly `chat.${ChatErrorKind}`[];
+
 /** Every error code the renderer translates as `errors.<code>`. */
 export type ErrorCode =
   | (typeof COMMON_ERROR_CODES)[number]
@@ -164,7 +200,8 @@ export type ErrorCode =
   | (typeof CLONE_ERROR_CODES)[number]
   | (typeof TERMINAL_ERROR_CODES)[number]
   | (typeof FILE_ERROR_CODES)[number]
-  | (typeof SOURCE_CONTROL_ERROR_CODES)[number];
+  | (typeof SOURCE_CONTROL_ERROR_CODES)[number]
+  | (typeof CHAT_ERROR_CODES)[number];
 
 /** A failure main (or the renderer) reports as a code plus parameters. */
 export interface AscuaError {
@@ -386,6 +423,10 @@ export type SourceControlStatus =
       persisted: boolean;
     };
 
+export type StartChatResult =
+  | { ok: true; session: ChatSession }
+  | { ok: false; error: AscuaError };
+
 /** `refresh` bypasses main's in-memory cache. */
 export interface Refreshable {
   refresh?: boolean;
@@ -533,4 +574,34 @@ export interface AscuaApi {
     provider: ProviderId,
     url: string,
   ): Promise<AscuaError | undefined>;
+  listChatProviders(): Promise<ProviderInfo[]>;
+  getChatProviderAuth(id: AgentProviderId): Promise<ProviderAuth>;
+  /** Opens a terminal running the provider's login command. */
+  loginChatProvider(
+    projectId: string,
+    id: AgentProviderId,
+  ): Promise<TerminalSession | AscuaError>;
+  selectChatProvider(id: AgentProviderId): Promise<Settings>;
+  listChatSessions(projectId: string): Promise<ChatSession[]>;
+  /** Creates the session and sends the first prompt; the reply streams. */
+  startChat(projectId: string, prompt: string): Promise<StartChatResult>;
+  getChatTranscript(
+    projectId: string,
+    sessionId: string,
+  ): Promise<ChatTranscript | undefined>;
+  /** Resolves once accepted; the reply streams through `onChatEvent`. */
+  sendChatPrompt(
+    projectId: string,
+    sessionId: string,
+    text: string,
+  ): Promise<AscuaError | undefined>;
+  abortChat(projectId: string, sessionId: string): Promise<void>;
+  /** `chat.notFound` when the request is no longer pending. */
+  resolveChatPermission(
+    projectId: string,
+    sessionId: string,
+    requestId: string,
+    allow: boolean,
+  ): Promise<AscuaError | undefined>;
+  onChatEvent(callback: (event: ChatEvent) => void): () => void;
 }

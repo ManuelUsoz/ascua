@@ -7,6 +7,7 @@
     "projects": "Projects",
     "terminals": "Terminals",
     "files": "Files",
+    "chats": "Chats",
     "newProject": "New project",
     "cloneProject": "Clone repository",
     "edit": "Edit",
@@ -33,7 +34,8 @@
   "side": {
     "heading": "PROJECTS",
     "newProject": "New project",
-    "startAll": "Start all"
+    "startAll": "Start all",
+    "untitledChat": "Untitled chat"
   },
   "status": {
     "working": "Working",
@@ -49,6 +51,19 @@
   "errors": {
     "unknown": "Unexpected error: {{detail}}",
     "noDesktop": "Only available in the desktop app.",
+    "chat": {
+      "providerNotConfigured": "No chat provider is configured.",
+      "providerDisabled": "This provider is not available yet.",
+      "authRequired": "Sign in to the provider to continue.",
+      "agentMissing": "The provider's agent was not found.",
+      "notFound": "The chat or request no longer exists.",
+      "busy": "The chat is busy. Wait for it to finish.",
+      "startFailed": "Could not start the chat.",
+      "promptFailed": "Could not send the message.",
+      "exited": "The agent exited unexpectedly.",
+      "saveFailed": "Could not save the chat.",
+      "unknown": "Unexpected chat error."
+    },
     "sourceControl": {
       "notConnected": "You are not connected to the provider.",
       "authExpired": "The session expired or was revoked. Connect again.",

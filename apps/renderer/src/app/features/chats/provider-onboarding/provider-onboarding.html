@@ -1,0 +1,76 @@
+<div class="as-empty">
+  <h1>{{ 'chats.onboarding.title' | transloco }}</h1>
+  <p>{{ 'chats.onboarding.hint' | transloco }}</p>
+</div>
+
+<ul class="chat-providers">
+  @for (p of store.providers(); track p.id) {
+    <li>
+      <button
+        type="button"
+        class="chat-provider"
+        [disabled]="!p.enabled"
+        [attr.aria-pressed]="chosen() === p.id"
+        (click)="pick(p.id)"
+      >
+        <span>{{ 'chats.provider.' + p.id | transloco }}</span>
+        @if (!p.enabled) {
+          <span class="as-chip">{{
+            'chats.onboarding.comingSoon' | transloco
+          }}</span>
+        }
+      </button>
+    </li>
+  }
+</ul>
+
+@if (chosen(); as id) {
+  <section class="chat-onboarding__auth">
+    @if (auth(); as a) {
+      @switch (a.state) {
+        @case ('loggedIn') {
+          <app-status state="running" [label]="loggedInLabel()" />
+          <button appButton type="button" variant="primary" (clicked)="use()">
+            {{
+              'chats.onboarding.use'
+                | transloco: { provider: 'chats.provider.' + id | transloco }
+            }}
+          </button>
+        }
+        @case ('loggedOut') {
+          <app-status state="stopped" [label]="loggedOutLabel" />
+          <p>{{ 'chats.onboarding.signInHint' | transloco }}</p>
+          <div class="chat-onboarding__actions">
+            <button
+              appButton
+              type="button"
+              variant="primary"
+              (clicked)="signIn()"
+            >
+              {{ 'chats.onboarding.signIn' | transloco }}
+            </button>
+            <button appButton type="button" (clicked)="checkAgain()">
+              {{ 'chats.onboarding.checkAgain' | transloco }}
+            </button>
+          </div>
+        }
+        @default {
+          @if (unavailableError(); as u) {
+            <app-notice type="error" [title]="u" />
+          }
+          <button appButton type="button" (clicked)="checkAgain()">
+            {{ 'chats.onboarding.checkAgain' | transloco }}
+          </button>
+        }
+      }
+    } @else {
+      <app-spinner
+        mode="withHorizText"
+        [label]="'chats.onboarding.checking' | transloco"
+      />
+    }
+    @if (error(); as e) {
+      <app-notice type="error" [title]="e" />
+    }
+  </section>
+}

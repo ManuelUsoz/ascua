@@ -63,6 +63,22 @@ describe('TerminalManager', () => {
     expect(spawn.type === 'spawn' && spawn.env['CHERE_INVOKING']).toBe('1');
   });
 
+  it('openCommand spawns the given argv directly', async () => {
+    const { manager, requests } = setup();
+    const session = await manager.openCommand('p1', {
+      name: 'claude login',
+      file: '/bin/claude',
+      args: ['/login'],
+    });
+    expect(session).toMatchObject({ kind: 'shell', name: 'claude login' });
+    expect(requests[0]).toMatchObject({
+      type: 'spawn',
+      file: '/bin/claude',
+      args: ['/login'],
+      cwd: project.path,
+    });
+  });
+
   it('does not respawn a running terminal', async () => {
     const { manager, requests } = setup();
     await manager.start('p1', 't1');
@@ -144,6 +160,27 @@ describe('TerminalManager', () => {
     });
     expect(requests.filter((r) => r.type === 'spawn')).toHaveLength(2);
     expect(requests.at(-1)).toMatchObject({ cwd: project.path });
+  });
+
+  it('openCommand inherits the environment and restarts the same argv', async () => {
+    const { manager, requests, emit } = setup();
+    const s = await manager.openCommand('p1', {
+      name: 'login',
+      file: '/bin/claude',
+      args: ['/login'],
+    });
+    const first = requests[0];
+    expect(
+      first.type === 'spawn' && Object.keys(first.env).length,
+    ).toBeGreaterThan(2);
+    expect(first.type === 'spawn' && first.env['TERM']).toBe('xterm-256color');
+    emit({ type: 'exit', id: s.id, exitCode: 0 });
+    await manager.start('p1', s.terminalId);
+    expect(requests.at(-1)).toMatchObject({
+      type: 'spawn',
+      file: '/bin/claude',
+      args: ['/login'],
+    });
   });
 
   it('drops the shells of a removed project', async () => {

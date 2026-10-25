@@ -30,6 +30,9 @@
       >
         <app-icon name="plus" />{{ 'projects.page.addTerminal' | transloco }}
       </button>
+      <a class="as-btn as-btn--quiet as-btn--s" routerLink="chats/nuevo">
+        <app-icon name="chat" />{{ 'projects.page.newChat' | transloco }}
+      </a>
       <button
         appButton
         type="button"
@@ -97,6 +100,18 @@
     >
       <app-icon name="file" />{{ 'nav.files' | transloco }}
     </a>
+    <a
+      id="tab-chats"
+      class="as-tab"
+      role="tab"
+      aria-controls="tabpanel-project"
+      routerLink="chats"
+      routerLinkActive
+      #rlaChats="routerLinkActive"
+      [attr.aria-selected]="rlaChats.isActive"
+    >
+      <app-icon name="chat" />{{ 'nav.chats' | transloco }}
+    </a>
   </nav>
 
   <div
@@ -104,7 +119,11 @@
     class="as-tabpanel"
     role="tabpanel"
     [attr.aria-labelledby]="
-      rlaFiles.isActive ? 'tab-archivos' : 'tab-terminales'
+      rlaChats.isActive
+        ? 'tab-chats'
+        : rlaFiles.isActive
+          ? 'tab-archivos'
+          : 'tab-terminales'
     "
   >
     <router-outlet />

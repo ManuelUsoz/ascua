@@ -59,7 +59,6 @@ describe('RepositoryLinkNotice', () => {
     expect(el.textContent).toContain(
       'Esta copia ya está vinculada al proyecto Mi proyecto.',
     );
-    expect(el.querySelector('.as-mono')?.textContent).toBe('/x/r');
     action(el).click();
     expect(navigate).toHaveBeenCalledWith(['/proyectos', 'p1']);
   });

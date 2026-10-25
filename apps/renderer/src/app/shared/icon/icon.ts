@@ -40,6 +40,7 @@ export const ICONS = {
   'chevron-left': ['M15 5l-7 7 7 7'],
   check: ['M5 12l4.5 4.5L19 7'],
   refresh: ['M20 11a8 8 0 0 0-14-4M4 4v4h4M4 13a8 8 0 0 0 14 4M20 20v-4h-4'],
+  chat: ['M4 5h16v11H9l-5 4z'],
   minimize: ['M5 18h14'],
   close: ['M6 6l12 12M18 6L6 18'],
 } as const satisfies Record<string, readonly string[]>;

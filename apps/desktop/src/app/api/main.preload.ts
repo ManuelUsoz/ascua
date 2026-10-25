@@ -21,7 +21,15 @@ import {
   type TerminalSession,
   type DeviceCodePrompt,
   type SourceControlStatus,
+  type StartChatResult,
 } from '@ascua/ipc';
+import type {
+  ChatEvent,
+  ChatSession,
+  ChatTranscript,
+  ProviderAuth,
+  ProviderInfo,
+} from '@ascua/chat';
 import type {
   Branch,
   Commit,
@@ -227,6 +235,48 @@ const api: AscuaApi = {
     ipcRenderer.invoke(IPC.sourceControlOpenUrl, provider, url) as Promise<
       AscuaError | undefined
     >,
+  listChatProviders: () =>
+    ipcRenderer.invoke(IPC.chatProviders) as Promise<ProviderInfo[]>,
+  getChatProviderAuth: (id) =>
+    ipcRenderer.invoke(IPC.chatProviderAuth, id) as Promise<ProviderAuth>,
+  loginChatProvider: (projectId, id) =>
+    ipcRenderer.invoke(IPC.chatProviderLogin, projectId, id) as Promise<
+      TerminalSession | AscuaError
+    >,
+  selectChatProvider: (id) =>
+    ipcRenderer.invoke(IPC.chatSelectProvider, id) as Promise<Settings>,
+  listChatSessions: (projectId) =>
+    ipcRenderer.invoke(IPC.listChatSessions, projectId) as Promise<
+      ChatSession[]
+    >,
+  startChat: (projectId, prompt) =>
+    ipcRenderer.invoke(
+      IPC.startChat,
+      projectId,
+      prompt,
+    ) as Promise<StartChatResult>,
+  getChatTranscript: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.chatTranscript, projectId, sessionId) as Promise<
+      ChatTranscript | undefined
+    >,
+  sendChatPrompt: (projectId, sessionId, text) =>
+    ipcRenderer.invoke(
+      IPC.sendChatPrompt,
+      projectId,
+      sessionId,
+      text,
+    ) as Promise<AscuaError | undefined>,
+  abortChat: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.abortChat, projectId, sessionId) as Promise<void>,
+  resolveChatPermission: (projectId, sessionId, requestId, allow) =>
+    ipcRenderer.invoke(
+      IPC.resolveChatPermission,
+      projectId,
+      sessionId,
+      requestId,
+      allow,
+    ) as Promise<AscuaError | undefined>,
+  onChatEvent: (callback) => listen<ChatEvent>(IPC.chatEvent, callback),
 };
 
 contextBridge.exposeInMainWorld('ascua', api);

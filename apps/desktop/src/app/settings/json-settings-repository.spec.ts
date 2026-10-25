@@ -53,6 +53,20 @@ describe('JsonSettingsRepository', () => {
     expect(await make('en').get()).toEqual({ language: 'en' });
   });
 
+  it('persists chatProvider and drops an invalid one', async () => {
+    await make('en').update({ chatProvider: 'claude' });
+    expect(await make('en').get()).toEqual({
+      language: 'en',
+      chatProvider: 'claude',
+    });
+    const result = await make('en').update({
+      chatProvider: 'nope' as 'claude',
+    });
+    expect(result.chatProvider).toBe('claude');
+    await writeFile(file, JSON.stringify({ version: 1, chatProvider: 'x' }));
+    expect(await make('en').get()).toEqual({ language: 'en' });
+  });
+
   it('gives the default for an unknown stored language', async () => {
     await writeFile(file, JSON.stringify({ version: 1, language: 'fr' }));
     expect(await make('es').get()).toEqual({ language: 'es' });

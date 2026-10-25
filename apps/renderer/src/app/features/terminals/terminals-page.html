@@ -37,7 +37,11 @@
         <app-terminal-pane
           [projectId]="project.id"
           [terminalId]="shell.terminalId"
-          [name]="shell.name ?? ('terminals.shellName' | transloco)"
+          [name]="
+            shell.name === 'login'
+              ? ('terminals.loginName' | transloco)
+              : (shell.name ?? ('terminals.shellName' | transloco))
+          "
         />
       }
     </div>

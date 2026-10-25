@@ -51,6 +51,11 @@ export default [
             loadChildren: () => import('../files/files.routes'),
             data: { section: 'nav.files' },
           },
+          {
+            path: 'chats',
+            loadChildren: () => import('../chats/chats.routes'),
+            data: { section: 'nav.chats' },
+          },
         ],
       },
     ],

@@ -55,6 +55,20 @@
           ></span>
         </a>
       }
+      @for (c of chats.sessions(p.id); track c.id) {
+        <a
+          class="as-tree__row as-tree__row--pista"
+          [routerLink]="['/proyectos', p.id, 'chats', c.id]"
+          routerLinkActive
+          [ariaCurrentWhenActive]="true"
+        >
+          <app-icon name="chat" />
+          <span class="as-tree__name">{{
+            c.title || ('side.untitledChat' | transloco)
+          }}</span>
+          <span class="as-dot" [attr.data-tone]="chatTone(c.id)"></span>
+        </a>
+      }
       <button
         type="button"
         appButton

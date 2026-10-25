@@ -36,6 +36,7 @@
     "running": "{{running}} de {{total}} corriendo",
     "addPista": "Pista",
     "addTerminal": "Terminal",
+    "newChat": "Nuevo chat",
     "stopAll": "Detener todo",
     "edit": "Editar proyecto",
     "sections": "Secciones del proyecto"

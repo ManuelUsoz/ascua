@@ -1,6 +1,17 @@
 import { BrowserWindow, net, safeStorage, shell } from 'electron';
+import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { DIRECT_MODE } from '@ascua/chat';
+import { IPC } from '@ascua/ipc';
+import { bridgeToRenderer, ChatEventBus } from './chats/chat-event-bus';
+import { ChatService } from './chats/chat-service';
+import { registerChatIpc } from './chats/chats-ipc';
+import { ClaudeProvider } from './chats/claude/claude-provider';
+import { HarnessHost } from './chats/harness/harness-host';
+import { JsonChatSessionStore } from './chats/json-chat-session-store';
+import { JsonUsageLedger } from './chats/json-usage-ledger';
+import { ProviderRegistry } from './chats/provider-registry';
 import { environment } from '../environments/environment';
 import { registerFileIpc } from './files/files-ipc';
 import { ProjectFiles } from './files/project-files';
@@ -101,10 +112,6 @@ export default class App {
         (channel, payload) => App.controller.send(channel, payload),
         resolveShell(process.platform, process.env, existsSync),
       );
-      registerProjectIpc(repository, {
-        window: () => App.controller.window,
-        listener: manager,
-      });
       registerTerminalIpc(manager);
       registerFileIpc(new ProjectFiles(repository));
       const settings = new JsonSettingsRepository(
@@ -149,6 +156,45 @@ export default class App {
         ),
         manager,
       );
+      const userData = App.application.getPath('userData');
+      const chatBus = new ChatEventBus();
+      bridgeToRenderer(
+        chatBus,
+        (channel, payload) => App.controller.send(channel, payload),
+        IPC.chatEvent,
+      );
+      const chatRegistry = new ProviderRegistry({
+        providers: { claude: new ClaudeProvider() },
+        settings,
+      });
+      const chats = new ChatService({
+        store: new JsonChatSessionStore(join(userData, 'chats')),
+        ledger: new JsonUsageLedger(join(userData, 'usage')),
+        registry: chatRegistry,
+        harness: new HarnessHost([DIRECT_MODE]),
+        projects: repository,
+        bus: chatBus,
+        ids: randomUUID,
+        now: Date.now,
+      });
+      registerChatIpc(
+        chats,
+        chatRegistry,
+        manager,
+        (channel, payload) => App.controller.send(channel, payload),
+        () => settings.get(),
+      );
+      registerProjectIpc(repository, {
+        window: () => App.controller.window,
+        listener: {
+          saved: (project) => manager.saved(project),
+          removed: async (id) => {
+            await manager.removed(id);
+            await chats.removedProject(id);
+          },
+        },
+      });
+      App.application.on('will-quit', () => chats.dispose());
       guardQuit({
         text,
         manager,

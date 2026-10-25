@@ -1,0 +1,197 @@
+import { TestBed } from '@angular/core/testing';
+import type { ChatEvent, ChatSession, Message } from '@ascua/chat';
+import { EMPTY_USAGE } from '@ascua/chat';
+import { ASCUA_API } from '../bridge/ascua-api';
+import { ChatStore } from './chat-store';
+
+const session: ChatSession = {
+  id: 's1',
+  projectId: 'p1',
+  provider: 'claude',
+  mode: 'chat',
+  createdAt: 1,
+  updatedAt: 1,
+  status: 'idle',
+  usage: EMPTY_USAGE,
+};
+const assistant: Message = {
+  id: 'm1',
+  sessionId: 's1',
+  role: 'assistant',
+  parts: [],
+  createdAt: 2,
+};
+const ids = { sessionId: 's1', projectId: 'p1' };
+
+describe('ChatStore', () => {
+  let push: (e: ChatEvent) => void;
+  let settingsChanged: (s: { chatProvider?: string }) => void;
+  let api: Record<string, ReturnType<typeof vi.fn>>;
+
+  function setup(): ChatStore {
+    TestBed.configureTestingModule({
+      providers: [{ provide: ASCUA_API, useValue: api }],
+    });
+    return TestBed.inject(ChatStore);
+  }
+
+  beforeEach(() => {
+    api = {
+      listChatProviders: vi.fn(async () => [
+        { id: 'claude', enabled: true, selected: false },
+      ]),
+      getSettings: vi.fn(async () => ({})),
+      getChatProviderAuth: vi.fn(async () => ({
+        provider: 'claude',
+        state: 'loggedOut',
+      })),
+      selectChatProvider: vi.fn(async () => ({ chatProvider: 'claude' })),
+      listChatSessions: vi.fn(async () => [session]),
+      getChatTranscript: vi.fn(async () => ({ session, messages: [] })),
+      startChat: vi.fn(async () => ({ ok: true, session })),
+      onChatEvent: vi.fn((cb) => {
+        push = cb;
+        return () => undefined;
+      }),
+      onSettingsChanged: vi.fn((cb) => {
+        settingsChanged = cb;
+        return () => undefined;
+      }),
+    };
+  });
+
+  it('loads sessions and follows status events', async () => {
+    const store = setup();
+    await store.load('p1');
+    expect(store.sessions('p1')).toEqual([session]);
+    push({ ...ids, type: 'statusChanged', status: 'running' });
+    expect(store.status('s1')).toBe('running');
+  });
+
+  it('folds events into the transcript and tracks permissions', async () => {
+    const store = setup();
+    await store.loadTranscript('p1', 's1');
+    expect(store.transcript('s1')).toEqual([]);
+    push({ ...ids, type: 'messageStarted', message: assistant });
+    push({
+      ...ids,
+      type: 'messageDelta',
+      messageId: 'm1',
+      part: 'text',
+      text: 'hola',
+    });
+    expect(store.transcript('s1')?.[0]?.parts).toEqual([
+      { kind: 'text', text: 'hola' },
+    ]);
+    push({
+      ...ids,
+      type: 'permissionRequested',
+      messageId: 'm1',
+      request: { requestId: 'r1', tool: 'execute', title: 'ls' },
+    });
+    expect(store.pendingPermissions('s1').map((r) => r.requestId)).toEqual([
+      'r1',
+    ]);
+    push({
+      ...ids,
+      type: 'permissionSettled',
+      messageId: 'm1',
+      requestId: 'r1',
+      allowed: true,
+    });
+    expect(store.pendingPermissions('s1')).toEqual([]);
+  });
+
+  it('start returns the session or the error', async () => {
+    const store = setup();
+    expect(await store.start('p1', 'hi')).toEqual(session);
+    expect(store.sessions('p1')).toEqual([session]);
+    api['startChat'].mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'chat.authRequired' },
+    });
+    expect(await store.start('p1', 'hi')).toEqual({
+      code: 'chat.authRequired',
+    });
+  });
+
+  it('applies events from an in-flight fetch without doubling text', async () => {
+    const store = setup();
+    let resolve!: (v: unknown) => void;
+    api['getChatTranscript'].mockReturnValueOnce(
+      new Promise((r) => (resolve = r)),
+    );
+    const loading = store.loadTranscript('p1', 's1');
+    const delta = (text: string): ChatEvent => ({
+      ...ids,
+      type: 'messageDelta',
+      messageId: 'm1',
+      part: 'text',
+      text,
+    });
+    push(delta('ho'));
+    push({
+      ...ids,
+      type: 'messageStarted',
+      message: { ...assistant, id: 'm2' },
+    });
+    push({
+      ...ids,
+      type: 'messageDelta',
+      messageId: 'm2',
+      part: 'text',
+      text: 'x',
+    });
+    resolve({
+      session,
+      messages: [{ ...assistant, parts: [{ kind: 'text', text: 'ho' }] }],
+    });
+    await loading;
+    const msgs = store.transcript('s1');
+    expect(msgs?.[0]?.parts).toEqual([{ kind: 'text', text: 'ho' }]);
+    expect(msgs?.[1]?.parts).toEqual([{ kind: 'text', text: 'x' }]);
+  });
+
+  it('shows events that arrive before start resolves', async () => {
+    const store = setup();
+    api['startChat'].mockImplementationOnce(async () => {
+      push({ ...ids, type: 'messageStarted', message: assistant });
+      push({
+        ...ids,
+        type: 'messageDelta',
+        messageId: 'm1',
+        part: 'text',
+        text: 'hey',
+      });
+      return { ok: true, session };
+    });
+    api['getChatTranscript'].mockReturnValueOnce(new Promise(() => undefined));
+    await store.start('p1', 'hi');
+    expect(store.transcript('s1')?.[0]?.parts).toEqual([
+      { kind: 'text', text: 'hey' },
+    ]);
+  });
+
+  it('start without the desktop gives noDesktop', async () => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: ASCUA_API, useValue: undefined }],
+    });
+    const store = TestBed.inject(ChatStore);
+    expect(await store.start('p1', 'hi')).toEqual({ code: 'noDesktop' });
+  });
+
+  it('runs the provider auth and select flow', async () => {
+    const store = setup();
+    await store.loadProviders();
+    expect(store.providers()).toHaveLength(1);
+    expect(store.selectedProvider()).toBeUndefined();
+    const auth = await store.checkAuth('claude');
+    expect(auth?.state).toBe('loggedOut');
+    expect(store.auth()?.state).toBe('loggedOut');
+    expect(await store.select('claude')).toBeUndefined();
+    expect(store.selectedProvider()).toBe('claude');
+    expect(store.providers()[0]?.selected).toBe(true);
+    settingsChanged({});
+    expect(store.selectedProvider()).toBeUndefined();
+  });
+});

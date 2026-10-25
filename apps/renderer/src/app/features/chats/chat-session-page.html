@@ -1,0 +1,15 @@
+<app-message-list
+  [messages]="messages()"
+  [projectId]="projectId()"
+  [responding]="status() === 'running'"
+/>
+
+@if (error(); as e) {
+  <app-notice type="error" [title]="e" />
+}
+<app-chat-composer
+  [disabled]="!loaded()"
+  [running]="running()"
+  (submitted)="send($event)"
+  (aborted)="stop()"
+/>
