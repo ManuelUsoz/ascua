@@ -79,6 +79,19 @@ export class ProjectSide {
     },
   ];
 
+  protected onChatKey(
+    event: KeyboardEvent,
+    projectId: string,
+    c: ChatSession,
+  ): void {
+    if (
+      event.key === 'ContextMenu' ||
+      (event.shiftKey && event.key === 'F10')
+    ) {
+      this.openChatMenu(event, projectId, c);
+    }
+  }
+
   protected openChatMenu(
     event: Event,
     projectId: string,

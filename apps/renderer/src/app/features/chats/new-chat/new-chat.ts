@@ -104,7 +104,8 @@ export class NewChat {
   );
 
   constructor() {
-    void this.store.loadProviders().then(() => this.ready.set(true));
+    const done = () => this.ready.set(true);
+    void this.store.loadProviders().then(done, done);
     effect(() => {
       const projectId = this.projectId();
       untracked(() => {

@@ -18,11 +18,14 @@ async function setup(
   startResult: unknown,
   chatDefaults?: Settings['chatDefaults'],
   provider: string | null = 'claude',
+  loadFails = false,
 ) {
   const store = {
     providers: () => [],
     auth: () => undefined,
-    loadProviders: vi.fn().mockResolvedValue(undefined),
+    loadProviders: loadFails
+      ? vi.fn().mockRejectedValue(new Error('boom'))
+      : vi.fn().mockResolvedValue(undefined),
     start: vi.fn().mockResolvedValue(startResult),
     commands: () => [CLEAR_COMMAND, ...NXY_COMMANDS],
     loadCommands: vi.fn().mockResolvedValue(undefined),
@@ -76,6 +79,11 @@ describe('NewChat', () => {
     const { el } = await setup({ id: 's1' }, undefined, null);
     expect(el.querySelector('app-provider-onboarding')).not.toBeNull();
     expect(el.querySelector('app-chat-composer')).toBeNull();
+  });
+
+  it('becomes ready and shows onboarding when loadProviders rejects', async () => {
+    const { el } = await setup({ id: 's1' }, undefined, null, true);
+    expect(el.querySelector('app-provider-onboarding')).not.toBeNull();
   });
 
   it('shows the empty state in Spanish', async () => {

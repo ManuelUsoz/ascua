@@ -62,8 +62,7 @@
           routerLinkActive
           [ariaCurrentWhenActive]="true"
           (contextmenu)="openChatMenu($event, p.id, c)"
-          (keydown.shift.f10)="openChatMenu($event, p.id, c)"
-          (keydown.contextmenu)="openChatMenu($event, p.id, c)"
+          (keydown)="onChatKey($event, p.id, c)"
         >
           <app-icon name="chat" />
           <span class="as-tree__name">{{

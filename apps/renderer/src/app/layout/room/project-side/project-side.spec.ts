@@ -155,6 +155,19 @@ describe('ProjectSide chats', () => {
       );
     });
 
+    it('ContextMenu key opens the menu at the row', async () => {
+      const { el, row, flush } = await mount('/proyectos/p1/terminales');
+      const ev = new KeyboardEvent('keydown', {
+        key: 'ContextMenu',
+        bubbles: true,
+        cancelable: true,
+      });
+      row.dispatchEvent(ev);
+      await flush();
+      expect(ev.defaultPrevented).toBe(true);
+      expect(el.querySelector('[role="menuitem"]')).not.toBeNull();
+    });
+
     it('confirm removes the chat; cancel does not', async () => {
       const { el, openModal, flush } = await mount('/proyectos/p1/terminales');
       await openModal();
