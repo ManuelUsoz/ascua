@@ -55,7 +55,10 @@ describe('RepositoryLinkNotice', () => {
       project,
       path: '/x/r',
     });
-    expect(el.textContent).toContain('CON PROYECTO');
+    expect(el.textContent).toContain('Vinculado');
+    expect(el.textContent).toContain(
+      'Esta copia ya está vinculada al proyecto Mi proyecto.',
+    );
     expect(el.querySelector('.as-mono')?.textContent).toBe('/x/r');
     action(el).click();
     expect(navigate).toHaveBeenCalledWith(['/proyectos', 'p1']);
@@ -66,6 +69,7 @@ describe('RepositoryLinkNotice', () => {
       { state: 'match', project, path: '/x/r' },
       { ok: false, error: { code: 'project.repositoryInvalid' } },
     );
+    expect(el.textContent).toContain('Sin vincular');
     expect(action(el).textContent).toContain('Vincular a Mi proyecto');
     action(el).click();
     await fixture.whenStable();
@@ -79,27 +83,26 @@ describe('RepositoryLinkNotice', () => {
     expect(el.querySelector('[role="alert"]')).not.toBeNull();
   });
 
-  it('none: shows WITHOUT PROJECT and goes to the clone page', async () => {
+  it('none: shows no project and goes to the clone page', async () => {
     const { el, navigate } = await setup({
       state: 'none',
       path: '/home/r',
       folderExists: false,
     });
-    expect(el.textContent).toContain('SIN PROYECTO');
+    expect(el.textContent).toContain('Sin proyecto');
+    expect(el.textContent).toContain('Todavía no hay un proyecto');
     action(el).click();
     expect(navigate).toHaveBeenCalledWith(['/proyectos', 'clonar'], {
       queryParams: { provider: 'github', repo: 'o/r' },
     });
   });
 
-  it('dismissing hides the notice', async () => {
-    const { el, fixture } = await setup({
+  it('is not dismissible', async () => {
+    const { el } = await setup({
       state: 'none',
       path: '/home/r',
       folderExists: false,
     });
-    (el.querySelector('.as-notice__close') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    expect(el.querySelector('app-notice')).toBeNull();
+    expect(el.querySelector('.as-notice__close')).toBeNull();
   });
 });

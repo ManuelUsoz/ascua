@@ -79,10 +79,18 @@
     "draft": "Borrador"
   },
   "link": {
-    "title": "Copia local de este repositorio",
-    "withProject": "CON PROYECTO",
-    "withoutProject": "SIN PROYECTO",
-    "path": "Ruta posible:",
+    "title": "Tienes una copia local de este repo",
+    "status": {
+      "linked": "Vinculado",
+      "match": "Sin vincular",
+      "none": "Sin proyecto"
+    },
+    "body": {
+      "linked": "Esta copia ya está vinculada al proyecto {{name}}.",
+      "match": "Coincide con el proyecto {{name}}. Vincúlalo para que Ascua use esta copia.",
+      "none": "Todavía no hay un proyecto para esta copia. Crea uno para usarla en Ascua."
+    },
+    "path": "Ruta posible",
     "open": "Abrir proyecto",
     "link": "Vincular a {{name}}",
     "create": "Crear proyecto"

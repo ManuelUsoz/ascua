@@ -1,16 +1,7 @@
 @if (visible() && link(); as l) {
-  <app-notice type="info" [dismissible]="true" (dismissed)="dismiss()">
-    <span class="as-chip">{{
-      (withProject()
-        ? 'repositories.link.withProject'
-        : 'repositories.link.withoutProject'
-      ) | transloco
-    }}</span>
-    {{ 'repositories.link.title' | transloco }}
-    <div>
-      {{ 'repositories.link.path' | transloco }}
-      <span class="as-mono">{{ l.path }}</span>
-    </div>
+  <app-notice type="info" [title]="{ key: 'repositories.link.title' }">
+    <app-status noticeStatus [state]="status()" [label]="statusLabel()" />
+    <p>{{ bodyKey() | transloco: bodyParams() }}</p>
     @if (error(); as e) {
       <p class="as-form__error" role="alert">
         {{ e.key | transloco: e.params }}
@@ -22,7 +13,6 @@
           <button
             type="button"
             appButton
-            variant="primary"
             size="s"
             (clicked)="open(l.project.id)"
           >
@@ -33,7 +23,6 @@
           <button
             type="button"
             appButton
-            variant="primary"
             size="s"
             (clicked)="linkTo(l.project.id)"
           >
@@ -41,13 +30,7 @@
           </button>
         }
         @default {
-          <button
-            type="button"
-            appButton
-            variant="primary"
-            size="s"
-            (clicked)="create()"
-          >
+          <button type="button" appButton size="s" (clicked)="create()">
             {{ 'repositories.link.create' | transloco }}
           </button>
         }

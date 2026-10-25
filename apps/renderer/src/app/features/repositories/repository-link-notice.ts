@@ -14,21 +14,20 @@ import type { Repository } from '@ascua/source-control';
 import { errorText, toAscuaError } from '../../core/i18n/app-error';
 import type { Text } from '../../core/i18n/text';
 import { ProjectStore } from '../../core/projects/project-store';
-import { RepositoryNoticeDismissals } from '../../core/source-control/repository-notice-dismissals';
 import { Button } from '../../shared/button/button';
 import { Notice } from '../../shared/notice/notice';
+import { Status, StatusState } from '../../shared/status/status';
 
 /** Under the branch row: where the repo would live locally and whether a project covers it. */
 @Component({
   selector: 'app-repository-link-notice',
-  imports: [TranslocoPipe, Notice, Button],
+  imports: [TranslocoPipe, Button, Notice, Status],
   templateUrl: './repository-link-notice.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RepositoryLinkNotice {
   private readonly router = inject(Router);
   private readonly projects = inject(ProjectStore);
-  private readonly dismissals = inject(RepositoryNoticeDismissals);
 
   readonly repo = input.required<Repository>();
   protected readonly error = signal<Text | undefined>(undefined);
@@ -48,18 +47,32 @@ export class RepositoryLinkNotice {
     this.linkResource.hasValue() ? this.linkResource.value() : undefined,
   );
   protected readonly visible = computed(
-    () =>
-      this.projects.available &&
-      !this.dismissals.isDismissed(this.repo()) &&
-      this.link() !== undefined,
-  );
-  protected readonly withProject = computed(
-    () => this.link()?.state !== 'none',
+    () => this.projects.available && this.link() !== undefined,
   );
 
-  protected dismiss(): void {
-    this.dismissals.dismiss(this.repo());
-  }
+  /** Status chip: linked is ok, a matching project waiting to be linked is ask, none is idle. */
+  protected readonly status = computed<StatusState>(() => {
+    switch (this.link()?.state) {
+      case 'linked':
+        return 'running';
+      case 'match':
+        return 'waiting';
+      default:
+        return 'stopped';
+    }
+  });
+  protected readonly statusLabel = computed<Text>(
+    () => ({ key: `repositories.link.status.${this.link()?.state ?? 'none'}` }), // i18n-ignore: catalog key
+  );
+
+  /** One short sentence saying what this copy is and what the user can do with it. */
+  protected readonly bodyKey = computed(
+    () => `repositories.link.body.${this.link()?.state ?? 'none'}`, // i18n-ignore: catalog key
+  );
+  protected readonly bodyParams = computed(() => {
+    const link = this.link();
+    return link && link.state !== 'none' ? { name: link.project.name } : {};
+  });
 
   protected open(id: string): void {
     void this.router.navigate(['/proyectos', id]);

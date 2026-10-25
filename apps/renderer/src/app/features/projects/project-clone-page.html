@@ -1,6 +1,6 @@
 @if (!repo()) {
   <div class="as-empty">
-    <app-notice type="warning">{{
+    <app-notice type="warning" [title]="{ key: 'notice.warning' }">{{
       'projects.clone.repoMissing' | transloco
     }}</app-notice>
     <a class="as-btn as-btn--quiet" routerLink="/proyectos">{{

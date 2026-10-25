@@ -6,6 +6,7 @@ import {
   output,
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
+import type { Text } from '../../core/i18n/text';
 
 export type NoticeType = 'error' | 'warning' | 'info';
 
@@ -32,8 +33,15 @@ export type NoticeType = 'error' | 'warning' | 'info';
         }
       </svg>
     </span>
-    <div>
-      <div class="as-notice__title">{{ titleKey() | transloco }}</div>
+    <div class="as-notice__main">
+      <div class="as-notice__head">
+        <div class="as-notice__title">
+          {{ title().key | transloco: title().params }}
+        </div>
+        <div class="as-notice__status">
+          <ng-content select="[noticeStatus]" />
+        </div>
+      </div>
       <div class="as-notice__body"><ng-content /></div>
       <div class="as-notice__actions">
         <ng-content select="[noticeActions]" />
@@ -55,6 +63,7 @@ export type NoticeType = 'error' | 'warning' | 'info';
 })
 export class Notice {
   readonly type = input.required<NoticeType>();
+  readonly title = input.required<Text>();
   readonly dismissible = input(false);
   readonly dismissed = output<void>();
 
@@ -68,5 +77,4 @@ export class Notice {
         return 'ask';
     }
   });
-  protected readonly titleKey = computed(() => `notice.${this.type()}`);
 }

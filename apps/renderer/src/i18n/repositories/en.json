@@ -79,10 +79,18 @@
     "draft": "Draft"
   },
   "link": {
-    "title": "Local copy of this repository",
-    "withProject": "WITH PROJECT",
-    "withoutProject": "WITHOUT PROJECT",
-    "path": "Possible path:",
+    "title": "You have a local copy of this repo",
+    "status": {
+      "linked": "Linked",
+      "match": "Not linked",
+      "none": "No project"
+    },
+    "body": {
+      "linked": "This copy is already linked to the project {{name}}.",
+      "match": "It matches the project {{name}}. Link it so Ascua uses this copy.",
+      "none": "There is no project for this copy yet. Create one to use it in Ascua."
+    },
+    "path": "Possible path",
     "open": "Open project",
     "link": "Link to {{name}}",
     "create": "Create project"

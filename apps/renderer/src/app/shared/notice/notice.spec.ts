@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
+import type { Text } from '../../core/i18n/text';
 import { i18nTesting } from '../../testing/i18n';
 import { Notice, NoticeType } from './notice';
 
@@ -9,6 +10,7 @@ import { Notice, NoticeType } from './notice';
   template: `
     <app-notice
       [type]="type"
+      [title]="title"
       [dismissible]="dismissible"
       (dismissed)="count = count + 1"
     >
@@ -19,14 +21,16 @@ import { Notice, NoticeType } from './notice';
 })
 class Host {
   type: NoticeType = 'error';
+  title: Text = { key: 'notice.error' };
   dismissible = false;
   count = 0;
 }
 
-function render(type: NoticeType) {
+function render(type: NoticeType, title: Text = { key: `notice.${type}` }) {
   TestBed.configureTestingModule({ imports: [Host, i18nTesting()] });
   const fixture = TestBed.createComponent(Host);
   fixture.componentInstance.type = type;
+  fixture.componentInstance.title = title;
   fixture.detectChanges();
   return (fixture.nativeElement as HTMLElement).querySelector(
     'app-notice',
@@ -44,6 +48,13 @@ describe('Notice', () => {
     expect(el.getAttribute('data-tone')).toBe(tone);
     expect(el.getAttribute('role')).toBe(role);
     expect(el.querySelector('.as-notice__title')?.textContent).toContain(title);
+  });
+
+  it('renders the configured title over the type default', () => {
+    const el = render('info', { key: 'repositories.link.title' });
+    expect(el.querySelector('.as-notice__title')?.textContent).toContain(
+      'Tienes una copia local de este repo',
+    );
   });
 
   it('shows a close button only when dismissible and emits dismissed', () => {
