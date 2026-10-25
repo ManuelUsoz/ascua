@@ -75,6 +75,12 @@ export class JsonChatSessionStore implements ChatSessionStore {
     });
   }
 
+  async remove(projectId: string, id: string): Promise<void> {
+    await this.files.update(projectId, (sessions) => ({
+      items: sessions.filter((s) => s.id !== id),
+    }));
+  }
+
   removeProject(projectId: string): Promise<void> {
     return this.files.remove(projectId);
   }

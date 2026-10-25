@@ -46,6 +46,7 @@ export type ChatEvent = Ids &
     | { type: 'statusChanged'; status: SessionStatus; error?: ChatErrorKind }
     | { type: 'sessionUpdated'; session: ChatSession }
     | { type: 'transcriptCleared' }
+    | { type: 'sessionRemoved' }
     | {
         type: 'capabilitiesChanged';
         commands?: ChatCommand[];

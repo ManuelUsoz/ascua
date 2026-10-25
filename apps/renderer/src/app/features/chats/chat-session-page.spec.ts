@@ -99,14 +99,16 @@ describe('ChatSessionPage', () => {
   });
 
   it('the permission selector updates the session', async () => {
-    const { el, store } = await setup();
-    const selects = el.querySelectorAll('select');
-    const permission = selects[selects.length - 1] as HTMLSelectElement;
-    expect(permission.selectedOptions[0]?.textContent?.trim()).toBe(
-      'Supervisado',
-    );
-    permission.value = 'fullAccess';
-    permission.dispatchEvent(new Event('change'));
+    const { el, store, fixture } = await setup();
+    const permission = el.querySelector<HTMLButtonElement>(
+      '.chat-composer__perm button',
+    )!;
+    expect(permission.textContent?.trim()).toBe('Supervisado');
+    permission.click();
+    fixture.detectChanges();
+    Array.from(el.querySelectorAll<HTMLElement>('[role="option"]'))
+      .find((o) => o.textContent?.includes('Acceso total'))!
+      .click();
     await Promise.resolve();
     expect(store.update).toHaveBeenCalledWith('p1', 's1', {
       permissionMode: 'fullAccess',

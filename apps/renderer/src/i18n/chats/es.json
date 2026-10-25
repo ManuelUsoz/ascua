@@ -32,13 +32,13 @@
     "permission": {
       "label": "Permisos",
       "supervised": "Supervisado",
-      "supervisedHint": "Pregunta antes de ejecutar herramientas o editar archivos",
+      "supervisedHint": "Pregunta antes de ejecutar comandos o cambiar archivos.",
       "acceptEdits": "Aceptar ediciones",
-      "acceptEditsHint": "Edita archivos solo y pregunta por lo demás",
+      "acceptEditsHint": "Aprueba las ediciones solo; pregunta por lo demás.",
       "auto": "Automático",
-      "autoHint": "Un clasificador aprueba lo seguro y pregunta el resto",
+      "autoHint": "Un clasificador aprueba lo rutinario; el resto pregunta.",
       "fullAccess": "Acceso total",
-      "fullAccessHint": "Ejecuta todas las herramientas sin preguntar"
+      "fullAccessHint": "Permite comandos y ediciones sin preguntar."
     },
     "model": {
       "label": "Modelo",

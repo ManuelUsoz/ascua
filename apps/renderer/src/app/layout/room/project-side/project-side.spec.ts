@@ -69,4 +69,120 @@ describe('ProjectSide chats', () => {
       'ask',
     );
   });
+
+  describe('delete', () => {
+    const remove = vi.fn(async () => undefined);
+
+    async function mount(url: string) {
+      remove.mockClear();
+      TestBed.configureTestingModule({
+        imports: [ProjectSide, i18nTesting()],
+        providers: [
+          provideRouter([
+            { path: 'proyectos/:projectId/terminales', children: [] },
+            { path: 'proyectos/:projectId/chats/:id', children: [] },
+            { path: 'proyectos/:projectId/chats/nuevo', children: [] },
+          ]),
+          {
+            provide: ProjectStore,
+            useValue: {
+              projects: signal([{ id: 'p1', name: 'Uno', terminals: [] }]),
+            },
+          },
+          {
+            provide: TerminalSessions,
+            useValue: {
+              counts: () => ({ running: 0, total: 0 }),
+              shells: () => [],
+              session: () => undefined,
+            },
+          },
+          {
+            provide: ChatStore,
+            useValue: {
+              sessions: () => [{ id: 'c1', title: 'Hola' }],
+              status: () => undefined,
+              ensureLoaded: vi.fn(),
+              remove,
+            },
+          },
+        ],
+      });
+      const router = TestBed.inject(Router);
+      await router.navigateByUrl(url);
+      const fixture = TestBed.createComponent(ProjectSide);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const row = el.querySelector<HTMLAnchorElement>('a[href*="/chats/c1"]')!;
+      const flush = async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+      };
+      const openModal = async () => {
+        row.dispatchEvent(
+          new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+        );
+        await flush();
+        el.querySelector<HTMLElement>('[role="menuitem"]')!.click();
+        await flush();
+      };
+      return { router, el, row, flush, openModal };
+    }
+
+    const buttons = (el: HTMLElement) =>
+      Array.from(el.querySelectorAll<HTMLButtonElement>('.as-modal button'));
+
+    it('right-click shows the red Eliminar option and opens the modal', async () => {
+      const { el, row, flush, openModal } = await mount(
+        '/proyectos/p1/terminales',
+      );
+      const ev = new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+      });
+      row.dispatchEvent(ev);
+      await flush();
+      expect(ev.defaultPrevented).toBe(true);
+      const item = el.querySelector('[role="menuitem"]')!;
+      expect(item.textContent).toContain('Eliminar');
+      expect(item.classList).toContain('as-menu__option--danger');
+      await openModal();
+      expect(el.querySelector('.as-modal__body')?.textContent).toContain(
+        'Hola',
+      );
+    });
+
+    it('confirm removes the chat; cancel does not', async () => {
+      const { el, openModal, flush } = await mount('/proyectos/p1/terminales');
+      await openModal();
+      buttons(el)[0].click();
+      await flush();
+      expect(remove).not.toHaveBeenCalled();
+      await openModal();
+      buttons(el)[1].click();
+      await flush();
+      expect(remove).toHaveBeenCalledWith('p1', 'c1');
+    });
+
+    it('deleting the open chat navigates to nuevo', async () => {
+      const { router, el, openModal, flush } = await mount(
+        '/proyectos/p1/chats/c1',
+      );
+      await openModal();
+      buttons(el)[1].click();
+      await flush();
+      await new Promise((r) => setTimeout(r));
+      expect(router.url).toBe('/proyectos/p1/chats/nuevo');
+    });
+
+    it('left click still navigates', async () => {
+      const { router, row, flush } = await mount('/proyectos/p1/terminales');
+      row.click();
+      await flush();
+      expect(router.url).toBe('/proyectos/p1/chats/c1');
+    });
+  });
 });

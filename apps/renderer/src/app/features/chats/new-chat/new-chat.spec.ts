@@ -17,14 +17,19 @@ import { NewChat } from './new-chat';
 async function setup(
   startResult: unknown,
   chatDefaults?: Settings['chatDefaults'],
+  provider: string | null = 'claude',
 ) {
   const store = {
+    providers: () => [],
+    auth: () => undefined,
+    loadProviders: vi.fn().mockResolvedValue(undefined),
     start: vi.fn().mockResolvedValue(startResult),
     commands: () => [CLEAR_COMMAND, ...NXY_COMMANDS],
     loadCommands: vi.fn().mockResolvedValue(undefined),
     loadModels: vi.fn().mockResolvedValue(undefined),
+    capabilitiesLoading: () => false,
     models: () => STATIC_MODEL_CATALOGS.claude,
-    selectedProvider: () => 'claude',
+    selectedProvider: () => provider ?? undefined,
   };
   const settings = {
     settings: signal<Settings>({ language: 'es', chatDefaults }),
@@ -44,6 +49,8 @@ async function setup(
   const fixture = TestBed.createComponent(NewChat);
   fixture.componentRef.setInput('projectId', 'p');
   fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const area = el.querySelector('textarea') as HTMLTextAreaElement;
   const submit = async () => {
@@ -58,6 +65,19 @@ async function setup(
 }
 
 describe('NewChat', () => {
+  it('loads providers on init and shows the composer when one is selected', async () => {
+    const { el, store } = await setup({ id: 's1' });
+    expect(store.loadProviders).toHaveBeenCalledTimes(1);
+    expect(el.querySelector('app-chat-composer')).not.toBeNull();
+    expect(el.querySelector('app-provider-onboarding')).toBeNull();
+  });
+
+  it('shows onboarding instead of the composer without a provider', async () => {
+    const { el } = await setup({ id: 's1' }, undefined, null);
+    expect(el.querySelector('app-provider-onboarding')).not.toBeNull();
+    expect(el.querySelector('app-chat-composer')).toBeNull();
+  });
+
   it('shows the empty state in Spanish', async () => {
     const { el, submit } = await setup({ id: 's1' });
     await submit();
@@ -66,11 +86,10 @@ describe('NewChat', () => {
 
   it('starts with full access by default, shows the selectors and navigates', async () => {
     const { el, store, navigate, submit } = await setup({ id: 's1' });
-    const selects = el.querySelectorAll('select');
-    const permission = selects[selects.length - 1] as HTMLSelectElement;
-    expect(permission.selectedOptions[0]?.textContent?.trim()).toBe(
-      'Acceso total',
-    );
+    const permission = el.querySelector<HTMLButtonElement>(
+      '.chat-composer__perm button',
+    )!;
+    expect(permission.textContent?.trim()).toBe('Acceso total');
     await submit();
     expect(store.start).toHaveBeenCalledWith('p', 'hola', {
       permissionMode: 'fullAccess',
@@ -101,10 +120,11 @@ describe('NewChat', () => {
 
   it('a permission pick applies to the first prompt', async () => {
     const { el, store, fixture, submit } = await setup({ id: 's1' });
-    const selects = el.querySelectorAll('select');
-    const permission = selects[selects.length - 1] as HTMLSelectElement;
-    permission.value = 'supervised';
-    permission.dispatchEvent(new Event('change'));
+    el.querySelector<HTMLButtonElement>('.chat-composer__perm button')!.click();
+    fixture.detectChanges();
+    Array.from(el.querySelectorAll<HTMLElement>('[role="option"]'))
+      .find((o) => o.textContent?.includes('Supervisado'))!
+      .click();
     fixture.detectChanges();
     await submit();
     expect(store.start).toHaveBeenCalledWith('p', 'hola', {

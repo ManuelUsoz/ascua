@@ -13,12 +13,13 @@ const origin: BloomOrigin = {
 const has = (name: string) => document.body.classList.contains(name);
 const ox = () => document.documentElement.style.getPropertyValue('--ox');
 
-function desktopApi() {
+function desktopApi(state: FullscreenState = { fullscreen: false }) {
   let fullscreen: ((state: FullscreenState) => void) | undefined;
   const api: AscuaApi = {
     toggleFullscreen: vi.fn(async () => origin),
     exitFullscreen: vi.fn(async () => undefined),
-    isFullscreen: vi.fn(async () => false),
+    isFullscreen: vi.fn(async () => state.fullscreen),
+    getWindowState: vi.fn(async () => state),
     quit: vi.fn(async () => undefined),
     dragStart: vi.fn(async () => undefined),
     dragEnd: vi.fn(async () => undefined),
@@ -124,5 +125,19 @@ describe('RoomState in the desktop shell', () => {
     expect(room.open()).toBe(false);
     expect(room.isCompact()).toBe(true);
     expect(ox()).toBe('');
+  });
+
+  it('lands open without a bloom when main launched fullscreen', async () => {
+    const { api } = desktopApi({ fullscreen: true, origin });
+    TestBed.configureTestingModule({
+      providers: [{ provide: ASCUA_API, useValue: api }],
+    });
+    const room = TestBed.inject(RoomState);
+
+    await vi.waitFor(() => expect(room.open()).toBe(true));
+    expect(has('is-open')).toBe(true);
+    expect(has('is-waking')).toBe(false);
+    expect(room.isCompact()).toBe(false);
+    expect(ox()).toBe('10px');
   });
 });

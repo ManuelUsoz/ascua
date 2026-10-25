@@ -29,8 +29,13 @@ export function drive(ascua: Ascua) {
   const isOpen = () =>
     ascua.page.evaluate(() => document.body.classList.contains('is-open'));
 
-  /** Double-click the avatar and wait for the bloom to settle. */
+  /** Double-click the avatar and wait for the bloom to settle (no-op when the
+   * room already launched open). */
   const open = async () => {
+    if (await isOpen()) {
+      await sleep(400);
+      return;
+    }
     await ascua.page.dblclick('#ascua-host');
     await ascua.page.waitForFunction(() =>
       document.body.classList.contains('is-open'),
@@ -38,7 +43,7 @@ export function drive(ascua: Ascua) {
     await sleep(1200);
   };
 
-  /** Click a button/link by its text or aria-label (also when it is clipped). */
+  /** Click a visible button/link by its text or aria-label (also when clipped). */
   const clickText = async (text: string, scope = 'body') => {
     const ok = await ascua.page.evaluate(
       ({ text, scope }) => {
@@ -47,8 +52,9 @@ export function drive(ascua: Ascua) {
           ...(root?.querySelectorAll<HTMLElement>('button, a') ?? []),
         ].find(
           (e) =>
-            e.textContent?.trim() === text ||
-            e.getAttribute('aria-label') === text,
+            e.checkVisibility() &&
+            (e.textContent?.trim() === text ||
+              e.getAttribute('aria-label') === text),
         );
         if (!el) return false;
         el.click();

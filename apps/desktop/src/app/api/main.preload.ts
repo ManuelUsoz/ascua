@@ -52,6 +52,8 @@ const api: AscuaApi = {
     ipcRenderer.invoke(IPC.toggleFullscreen) as Promise<BloomOrigin>,
   exitFullscreen: () => ipcRenderer.invoke(IPC.exitFullscreen) as Promise<void>,
   isFullscreen: () => ipcRenderer.invoke(IPC.isFullscreen) as Promise<boolean>,
+  getWindowState: () =>
+    ipcRenderer.invoke(IPC.getWindowState) as Promise<FullscreenState>,
   quit: () => ipcRenderer.invoke(IPC.quit) as Promise<void>,
   dragStart: () => ipcRenderer.invoke(IPC.dragStart) as Promise<void>,
   dragEnd: () => ipcRenderer.invoke(IPC.dragEnd) as Promise<void>,
@@ -261,6 +263,8 @@ const api: AscuaApi = {
   listChatModels: (projectId) => ipcRenderer.invoke(IPC.chatModels, projectId),
   clearChat: (projectId, sessionId) =>
     ipcRenderer.invoke(IPC.clearChat, projectId, sessionId),
+  deleteChat: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.deleteChat, projectId, sessionId),
   updateChatSession: (projectId, sessionId, patch) =>
     ipcRenderer.invoke(IPC.updateChatSession, projectId, sessionId, patch),
   getChatTranscript: (projectId, sessionId) =>

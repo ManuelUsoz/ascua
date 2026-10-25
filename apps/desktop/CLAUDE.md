@@ -54,9 +54,12 @@ hook server. Read the root `CLAUDE.md` first.
   mark the window interactive, as the permission bubble does.
 - **Fullscreen.** `expanded` is the source of truth. On Windows
   `isFullScreen()` can lie. Fullscreen is announced only after bounds match
-  the display. Bloom origin is DIP relative to the display's top-left.
+  the display. Bloom origin is DIP relative to the display's top-left. Ascua
+  launches expanded (`startExpanded()`): the renderer reads `getWindowState()`
+  and lands on the open frame, no bloom; the avatar is the collapsed state.
 - **Full renderer load while the room is open** calls `exitFullscreen()`
-  (`did-navigate`). Keep the fresh renderer and window in agreement.
+  (`did-navigate`, skipping the launch navigation). Keep the fresh renderer
+  and window in agreement.
 - **Linux.** `ozone-platform=x11` is forced (also in the AppImage
   `executableArgs`). Native fullscreen is not used; `toggleFullscreen` uses
   `setBounds(display.bounds)`. Bounds may be 1 px short; checks allow 2 px.

@@ -183,6 +183,15 @@ export default class App {
         ids: randomUUID,
         now: Date.now,
       });
+      // Warm capabilities after first paint so the SDK load never competes with it.
+      setTimeout(() => {
+        void repository
+          .list()
+          .then((projects) => {
+            if (projects[0]) chats.warm(projects[0].id);
+          })
+          .catch(() => undefined);
+      }, 1500);
       registerChatIpc(
         chats,
         chatRegistry,

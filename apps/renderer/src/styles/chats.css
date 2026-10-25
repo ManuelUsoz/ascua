@@ -1,5 +1,4 @@
 /* Chats tab: onboarding, session view, messages, permission card. */
-app-chats-home,
 app-new-chat-page,
 app-chat-session-page,
 .chat-new,
@@ -285,12 +284,24 @@ app-chat-session-page,
   opacity: 0.55;
   cursor: not-allowed;
 }
-.chat-composer__select--permission {
+.chat-composer__perm {
   order: 1;
+}
+.chat-composer__perm .as-menu {
+  min-width: 300px;
+}
+.chat-composer__select--permission {
   height: 26px;
   border-color: var(--line-mid);
   border-radius: var(--radius-s);
+  background-color: transparent;
+  color: var(--ink-muted);
   font-family: var(--font-sans);
+  font-size: 12px;
+}
+.chat-composer__select--permission app-icon {
+  width: 14px;
+  height: 14px;
 }
 .chat-composer__chip {
   order: 2;

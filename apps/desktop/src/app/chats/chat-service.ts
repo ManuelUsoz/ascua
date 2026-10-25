@@ -102,7 +102,7 @@ export class ChatService {
     { projectId: string; session: ProviderSession }
   >();
   private readonly pending = new Map<string, PendingPermission>();
-  private readonly capsCache = new Map<string, Capabilities>();
+  private readonly capsCache = new Map<string, Promise<Capabilities>>();
 
   constructor(private readonly o: ChatServiceOptions) {}
 
@@ -280,16 +280,28 @@ export class ChatService {
     if (!project) throw new ChatError('notFound');
     let caps = this.capsCache.get(projectId);
     if (!caps) {
-      try {
-        const provider = await this.o.registry.current();
-        const got = await provider.capabilities?.(project.path);
-        caps = { commands: got?.commands ?? [], models: got?.models ?? [] };
-      } catch {
-        caps = { commands: [], models: [] };
-      }
+      caps = (async (): Promise<Capabilities> => {
+        try {
+          const provider = await this.o.registry.current();
+          const got = await provider.capabilities?.(project.path);
+          return { commands: got?.commands ?? [], models: got?.models ?? [] };
+        } catch {
+          // Fail open, but do not cache the failure: the next request retries.
+          queueMicrotask(() => {
+            if (this.capsCache.get(projectId) === caps)
+              this.capsCache.delete(projectId);
+          });
+          return { commands: [], models: [] };
+        }
+      })();
       this.capsCache.set(projectId, caps);
     }
     return caps;
+  }
+
+  /** Fire-and-forget: primes the capabilities cache; never throws. */
+  warm(projectId: string): void {
+    this.capabilities(projectId).catch(() => undefined);
   }
 
   async commands(projectId: string): Promise<ChatCommand[]> {
@@ -347,6 +359,26 @@ export class ChatService {
     if (!run || run.projectId !== projectId) return;
     this.denyAll((p) => p.sessionId === sessionId);
     this.providerSessions.get(sessionId)?.session.abort();
+  }
+
+  async remove(projectId: string, sessionId: string): Promise<void> {
+    const record = await this.o.store.get(projectId, sessionId);
+    if (!record) throw new ChatError('notFound');
+    // Mark the run dead before touching the store so late events do not resave.
+    const run = this.runs.get(sessionId);
+    if (run) {
+      run.dead = true;
+      this.runs.delete(sessionId);
+    }
+    this.denyAll((p) => p.sessionId === sessionId);
+    this.providerSessions.get(sessionId)?.session.abort();
+    this.dropProviderSession(sessionId);
+    await this.o.store.remove(projectId, sessionId);
+    this.o.bus.publish({
+      sessionId,
+      projectId,
+      type: 'sessionRemoved',
+    });
   }
 
   async removedProject(projectId: string): Promise<void> {
@@ -548,11 +580,17 @@ export class ChatService {
     if (!run || run.dead) return;
     if (e.type === 'sessionInfo') {
       if (e.commands || e.models) {
-        const prev = this.capsCache.get(run.projectId);
-        this.capsCache.set(run.projectId, {
-          commands: e.commands ?? prev?.commands ?? [],
-          models: e.models?.length ? e.models : (prev?.models ?? []),
-        });
+        const projectId = run.projectId;
+        const prev = this.capsCache.get(projectId);
+        this.capsCache.set(
+          projectId,
+          Promise.resolve(prev)
+            .catch(() => undefined)
+            .then((p) => ({
+              commands: e.commands ?? p?.commands ?? [],
+              models: e.models?.length ? e.models : (p?.models ?? []),
+            })),
+        );
         this.emit(run, {
           type: 'capabilitiesChanged',
           commands: e.commands ? mergeCommands(e.commands) : undefined,

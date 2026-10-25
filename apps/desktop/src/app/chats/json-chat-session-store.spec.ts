@@ -121,6 +121,14 @@ describe('JsonChatSessionStore', () => {
     expect((await make().get('p1', 'c'))?.permissionMode).toBe('auto');
   });
 
+  it('removes one session', async () => {
+    const store = make();
+    await store.save(record('s1', 'p1'));
+    await store.save(record('s2', 'p1'));
+    await store.remove('p1', 's1');
+    expect((await store.list('p1')).map((s) => s.id)).toEqual(['s2']);
+  });
+
   it('removes a project file', async () => {
     const store = make();
     await store.save(record('s1', 'p1'));

@@ -127,6 +127,7 @@ const GROUPS: ChatCommand['source'][] = ['builtin', 'nxy', 'custom'];
           [effort]="effort()"
           [permissionMode]="permissionMode()"
           [running]="running()"
+          [loading]="loading()"
           (changed)="runtimeChanged.emit($event)"
         />
         @if (mode() !== 'chat') {
@@ -176,6 +177,7 @@ const GROUPS: ChatCommand['source'][] = ['builtin', 'nxy', 'custom'];
 export class ChatComposer {
   readonly disabled = input(false);
   readonly running = input(false);
+  readonly loading = input(false);
   readonly commands = input<readonly ChatCommand[]>([]);
   readonly permissionMode = input<PermissionMode>(DEFAULT_PERMISSION_MODE);
   readonly model = input<string | undefined>(undefined);

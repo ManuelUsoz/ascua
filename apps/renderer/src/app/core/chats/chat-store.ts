@@ -91,6 +91,7 @@ export class ChatStore {
   private readonly sessionMap = signal<Record<string, ChatSession[]>>({});
   private readonly commandMap = signal<Record<string, ChatCommand[]>>({});
   private readonly modelMap = signal<Record<string, ModelCatalog>>({});
+  private readonly capsLoading = signal<Record<string, number>>({});
   private readonly transcripts = signal<Record<string, Message[]>>({});
   private readonly statuses = signal<Record<string, SessionStatus>>({});
   private readonly failure = signal<AscuaError | undefined>(undefined);
@@ -239,25 +240,45 @@ export class ChatStore {
   async loadCommands(projectId: string, sessionId?: string): Promise<void> {
     const api = this.api;
     if (!api) return this.failure.set(NO_DESKTOP);
+    if (!sessionId && this.commandMap()[projectId]) return;
     this.subscribe(api);
+    this.setCapsLoading(projectId, true);
     try {
       const list = await api.listChatCommands(projectId, sessionId);
       this.commandMap.update((m) => ({ ...m, [projectId]: list }));
     } catch (e) {
       this.failure.set(toAscuaError(e));
+    } finally {
+      this.setCapsLoading(projectId, false);
     }
+  }
+
+  /** True while the project's commands or models are being fetched. */
+  capabilitiesLoading(projectId: string): boolean {
+    return (this.capsLoading()[projectId] ?? 0) > 0;
+  }
+
+  private setCapsLoading(projectId: string, on: boolean): void {
+    this.capsLoading.update((c) => ({
+      ...c,
+      [projectId]: Math.max(0, (c[projectId] ?? 0) + (on ? 1 : -1)),
+    }));
   }
 
   /** Loads the project's model catalog; keeps the static one on failure. */
   async loadModels(projectId: string): Promise<void> {
     const api = this.api;
     if (!api) return;
+    if (this.modelMap()[projectId]) return;
     this.subscribe(api);
+    this.setCapsLoading(projectId, true);
     try {
       const catalog = await api.listChatModels(projectId);
       this.modelMap.update((m) => ({ ...m, [projectId]: catalog }));
     } catch {
       // Static fallback from `models()`.
+    } finally {
+      this.setCapsLoading(projectId, false);
     }
   }
 
@@ -364,6 +385,22 @@ export class ChatStore {
     }
   }
 
+  /** Deletes the session for good; main also publishes `sessionRemoved`. */
+  async remove(
+    projectId: string,
+    sessionId: string,
+  ): Promise<AscuaError | undefined> {
+    const api = this.api;
+    if (!api) return NO_DESKTOP;
+    try {
+      const err = await api.deleteChat(projectId, sessionId);
+      if (!err) this.drop(sessionId);
+      return err;
+    } catch (e) {
+      return toAscuaError(e);
+    }
+  }
+
   /** Changes the permission mode or the nxy mode; main echoes the session. */
   async update(
     projectId: string,
@@ -426,6 +463,9 @@ export class ChatStore {
       this.putSession(event.session);
     } else if (event.type === 'capabilitiesChanged') {
       this.applyCapabilities(event);
+    } else if (event.type === 'sessionRemoved') {
+      this.drop(id);
+      return;
     }
     const current = this.transcripts()[id];
     if (!current || this.fetching.has(id)) this.buffer(event);
@@ -435,6 +475,25 @@ export class ChatStore {
         [id]: applyChatEvent(current, event),
       }));
     }
+  }
+
+  /** Forgets a deleted session everywhere; safe to call twice. */
+  private drop(sessionId: string): void {
+    this.sessionMap.update((m) =>
+      Object.fromEntries(
+        Object.entries(m).map(([p, list]) => [
+          p,
+          list.filter((s) => s.id !== sessionId),
+        ]),
+      ),
+    );
+    const without = <T>(m: Record<string, T>): Record<string, T> => {
+      const { [sessionId]: _gone, ...rest } = m;
+      return rest;
+    };
+    this.transcripts.update(without);
+    this.statuses.update(without);
+    this.buffers.delete(sessionId);
   }
 
   private applyCapabilities(

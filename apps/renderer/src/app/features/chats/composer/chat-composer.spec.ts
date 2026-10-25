@@ -75,7 +75,12 @@ function setup(inputs: Inputs = {}) {
   };
   const options = () =>
     Array.from(el.querySelectorAll<HTMLElement>('[role="option"]'));
-  const buttons = () => Array.from(el.querySelectorAll('button'));
+  const buttons = () =>
+    Array.from(
+      el.querySelectorAll<HTMLButtonElement>(
+        '.chat-composer__actions > button',
+      ),
+    );
   return {
     el,
     area,
@@ -220,14 +225,19 @@ describe('ChatComposer', () => {
   });
 
   it('the permission selector shows the Spanish label and emits a patch', () => {
-    const { el, runtimeChanged } = setup({ permissionMode: 'supervised' });
-    const selects = el.querySelectorAll('select');
-    const permission = selects[selects.length - 1] as HTMLSelectElement;
-    expect(permission.selectedOptions[0]?.textContent?.trim()).toBe(
-      'Supervisado',
-    );
-    permission.value = 'fullAccess';
-    permission.dispatchEvent(new Event('change'));
+    const { el, runtimeChanged, options, detect } = setup({
+      permissionMode: 'supervised',
+    });
+    const permission = el.querySelector<HTMLButtonElement>(
+      '.chat-composer__perm button',
+    )!;
+    expect(permission.textContent?.trim()).toBe('Supervisado');
+    permission.click();
+    detect();
+    const full = options().find((o) =>
+      o.textContent?.includes('Acceso total'),
+    )!;
+    full.click();
     expect(runtimeChanged).toHaveBeenCalledWith({
       permissionMode: 'fullAccess',
     });

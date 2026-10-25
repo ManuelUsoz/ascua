@@ -51,7 +51,9 @@ describe('ChatStore', () => {
       getChatTranscript: vi.fn(async () => ({ session, messages: [] })),
       startChat: vi.fn(async () => ({ ok: true, session })),
       listChatCommands: vi.fn(async () => [CLEAR_COMMAND, ...NXY_COMMANDS]),
+      listChatModels: vi.fn(async () => ({ models: [] })),
       clearChat: vi.fn(async () => undefined),
+      deleteChat: vi.fn(async () => undefined),
       updateChatSession: vi.fn(async () => undefined),
       onChatEvent: vi.fn((cb) => {
         push = cb;
@@ -195,6 +197,20 @@ describe('ChatStore', () => {
     expect(store.commands('p1').map((c) => c.name)).toEqual(names);
   });
 
+  it('tracks capability loading and skips already loaded projects', async () => {
+    const store = setup();
+    expect(store.capabilitiesLoading('p1')).toBe(false);
+    const pending = store.loadCommands('p1');
+    expect(store.capabilitiesLoading('p1')).toBe(true);
+    await pending;
+    expect(store.capabilitiesLoading('p1')).toBe(false);
+    await store.loadCommands('p1');
+    expect(api['listChatCommands']).toHaveBeenCalledTimes(1);
+    await store.loadModels('p1');
+    await store.loadModels('p1');
+    expect(api['listChatModels']).toHaveBeenCalledTimes(1);
+  });
+
   it('capabilitiesChanged updates commands and models', async () => {
     const store = setup();
     await store.load('p1');
@@ -232,6 +248,19 @@ describe('ChatStore', () => {
     expect(api['updateChatSession']).toHaveBeenCalledWith('p1', 's1', {
       permissionMode: 'auto',
     });
+  });
+
+  it('remove and sessionRemoved drop the session', async () => {
+    const store = setup();
+    await store.load('p1');
+    expect(await store.remove('p1', 's1')).toBeUndefined();
+    expect(api['deleteChat']).toHaveBeenCalledWith('p1', 's1');
+    expect(store.sessions('p1')).toEqual([]);
+    await store.load('p1');
+    expect(store.sessions('p1')).toEqual([session]);
+    push({ ...ids, type: 'sessionRemoved' });
+    push({ ...ids, type: 'sessionRemoved' });
+    expect(store.sessions('p1')).toEqual([]);
   });
 
   it('start passes the permission mode to main', async () => {

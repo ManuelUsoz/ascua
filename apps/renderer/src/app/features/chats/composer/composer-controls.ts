@@ -14,11 +14,21 @@ import {
 } from '@ascua/chat';
 import type { ChatSessionPatch } from '@ascua/ipc';
 import { TranslocoPipe } from '@jsverse/transloco';
+import type { IconName } from '../../../shared/icon/icon';
+import { Spinner } from '../../../shared/spinner/spinner';
+import { AsSelect, type SelectOption } from '../../../shared/select/select';
+
+const PERMISSION_ICONS: Record<PermissionMode, IconName> = {
+  supervised: 'lock',
+  acceptEdits: 'edit',
+  auto: 'sparkles',
+  fullAccess: 'unlock',
+};
 
 /** Model, reasoning effort and permission mode selectors of the composer. */
 @Component({
   selector: 'app-composer-controls',
-  imports: [TranslocoPipe],
+  imports: [TranslocoPipe, AsSelect, Spinner],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'chat-composer__controls' },
   template: `
@@ -37,41 +47,33 @@ import { TranslocoPipe } from '@jsverse/transloco';
         </option>
       }
     </select>
-    @if (efforts().length > 0) {
-      <select
-        class="as-input as-select chat-composer__select chat-composer__select--effort"
-        [attr.aria-label]="'chats.composer.effort.label' | transloco"
-        [disabled]="running()"
-        (change)="onEffort($event)"
-      >
-        <option value="" [selected]="!selectedEffort()">
-          {{ 'chats.composer.effort.default' | transloco }}
-        </option>
-        @for (e of efforts(); track e) {
-          <option [value]="e" [selected]="e === selectedEffort()">
-            {{ 'chats.composer.effort.' + e | transloco }}
-          </option>
-        }
-      </select>
+    @if (loading()) {
+      <app-spinner [size]="12" [label]="'chats.loading' | transloco" />
     }
     <select
-      class="as-input as-select chat-composer__select chat-composer__select--permission"
-      [attr.aria-label]="'chats.composer.permission.label' | transloco"
-      [title]="
-        'chats.composer.permission.' + permissionMode() + 'Hint' | transloco
-      "
-      (change)="onPermission($event)"
+      class="as-input as-select chat-composer__select chat-composer__select--effort"
+      [attr.aria-label]="'chats.composer.effort.label' | transloco"
+      [disabled]="running() || efforts().length === 0"
+      (change)="onEffort($event)"
     >
-      @for (p of permissionModes; track p) {
-        <option
-          [value]="p"
-          [selected]="p === permissionMode()"
-          [title]="'chats.composer.permission.' + p + 'Hint' | transloco"
-        >
-          {{ 'chats.composer.permission.' + p | transloco }}
+      <option value="" [selected]="!selectedEffort()">
+        {{ 'chats.composer.effort.default' | transloco }}
+      </option>
+      @for (e of efforts(); track e) {
+        <option [value]="e" [selected]="e === selectedEffort()">
+          {{ 'chats.composer.effort.' + e | transloco }}
         </option>
       }
     </select>
+    <app-select
+      class="chat-composer__perm"
+      placement="up"
+      triggerClass="chat-composer__select chat-composer__select--permission"
+      [options]="permissionOptions"
+      [selected]="permissionMode()"
+      [ariaLabel]="'chats.composer.permission.label' | transloco"
+      (picked)="onPermission($event)"
+    />
   `,
 })
 export class ComposerControls {
@@ -80,9 +82,17 @@ export class ComposerControls {
   readonly effort = input<ReasoningEffort | undefined>(undefined);
   readonly permissionMode = input<PermissionMode>('fullAccess');
   readonly running = input(false);
+  readonly loading = input(false);
   readonly changed = output<ChatSessionPatch>();
 
-  protected readonly permissionModes = PERMISSION_MODES;
+  protected readonly permissionOptions: SelectOption[] = PERMISSION_MODES.map(
+    (mode) => ({
+      value: mode,
+      label: `chats.composer.permission.${mode}`,
+      hint: `chats.composer.permission.${mode}Hint`,
+      icon: PERMISSION_ICONS[mode],
+    }),
+  );
   protected readonly models = computed(() => this.catalog()?.models ?? []);
   private readonly selection = computed(() => {
     const catalog = this.catalog();
@@ -111,8 +121,7 @@ export class ComposerControls {
     this.changed.emit({ effort: (value || null) as ReasoningEffort | null });
   }
 
-  protected onPermission(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  protected onPermission(value: string): void {
     this.changed.emit({ permissionMode: value as PermissionMode });
   }
 }

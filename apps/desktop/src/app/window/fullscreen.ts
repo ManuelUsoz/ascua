@@ -1,4 +1,9 @@
-import { IPC, type BloomOrigin, type Layout } from '@ascua/ipc';
+import {
+  IPC,
+  type BloomOrigin,
+  type FullscreenState,
+  type Layout,
+} from '@ascua/ipc';
 import {
   AVATAR,
   bloomOrigin,
@@ -33,6 +38,7 @@ export class FullscreenController {
   private expandedState = false;
   private compactBounds: Rect | null = null;
   private pendingOrigin: BloomOrigin | undefined;
+  private openedOrigin: BloomOrigin | undefined;
   private announced = false;
   private closing = false;
 
@@ -46,6 +52,39 @@ export class FullscreenController {
     const { win, mode } = this.options;
     if (win.isDestroyed()) return false;
     return mode.isFullscreen(win, this.expandedState);
+  }
+
+  /** The room's state for a renderer that booted after main opened it. */
+  state(): FullscreenState {
+    if (!this.expandedState) return { fullscreen: false };
+    const origin = this.openedOrigin ?? this.bloomOrigin();
+    return { fullscreen: true, origin };
+  }
+
+  /**
+   * Opens the room on launch, before the renderer exists: no bloom and no
+   * `fullscreenChanged` event. The renderer reads `state()` when it boots.
+   */
+  startExpanded(): void {
+    const { win, screen, mode } = this.options;
+    if (win.isDestroyed() || this.expandedState) return;
+
+    const compact = win.getBounds();
+    const display = screen.getDisplayMatching(compact);
+    this.compactBounds = compact;
+    this.openedOrigin = bloomOrigin(
+      compact,
+      display.bounds,
+      this.options.layout,
+    );
+    this.pendingOrigin = undefined;
+    // `onEnterFullScreen` must not announce to a renderer that isn't there yet.
+    this.announced = true;
+    this.expandedState = true;
+    win.setFocusable(true);
+    win.setMinimizable(true);
+    mode.enter(win, display);
+    win.focus();
   }
 
   /** The avatar's position on its display, for the renderer's bloom origin. */
@@ -66,6 +105,7 @@ export class FullscreenController {
 
     this.compactBounds = win.getBounds();
     this.pendingOrigin = origin;
+    this.openedOrigin = origin;
     this.announced = false;
     this.expandedState = true;
     win.setFocusable(true);

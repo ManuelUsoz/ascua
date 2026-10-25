@@ -1,4 +1,9 @@
 {
+  "common": {
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar"
+  },
   "breadcrumb": {
     "label": "Ruta",
     "showHidden": "Mostrar niveles ocultos"
@@ -35,7 +40,10 @@
     "heading": "PROYECTOS",
     "newProject": "Nuevo proyecto",
     "startAll": "Levantar todo",
-    "untitledChat": "Chat sin título"
+    "untitledChat": "Chat sin título",
+    "deleteChatTitle": "Eliminar chat",
+    "deleteChatBody": "Se eliminará \"{{name}}\" y su historial. No se puede deshacer.",
+    "deleteChatConfirm": "Eliminar chat"
   },
   "status": {
     "working": "Trabajando",

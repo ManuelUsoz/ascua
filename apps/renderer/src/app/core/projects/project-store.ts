@@ -47,8 +47,17 @@ export class ProjectStore {
     () => new Map(this.list().map((project) => [project.id, project])),
   );
 
+  private initialClaimed = false;
+
   constructor() {
     void this.reload();
+  }
+
+  /** True only once per app run: the first landing preselects a project. */
+  claimInitialSelection(): boolean {
+    if (this.initialClaimed) return false;
+    this.initialClaimed = true;
+    return true;
   }
 
   byId(id: string | undefined): Project | undefined {

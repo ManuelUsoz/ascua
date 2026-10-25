@@ -10,16 +10,18 @@ Renderer-wide rules (signals, zoneless, i18n, strict templates) are in
 
 ## Components
 
-| Component | Selector | File | Notes |
-| --- | --- | --- | --- |
-| `Button` | `button[appButton]` | `button/button.ts` | Attribute directive on a native button. The `as-btn` look is CSS in `styles/controls.css`. |
-| `Notice` | `app-notice` | `notice/notice.ts` | Styled by `styles/notice.css`. |
-| `Character` | `[appCharacter]` | `character/character.ts` | Mounts `@ascua/character` (`libs/character`) into the host. |
-| `Icon` | `app-icon` | `icon/icon.ts` | Icons come from the `ICONS` map at the top of the file. |
-| `AsSelect` | `app-select` | `select/select.ts` | ControlValueAccessor; use with forms. |
-| `Spinner` | `app-spinner` | `spinner/spinner.ts` | Loading indicator. |
-| `Breadcrumb` | `app-breadcrumb` | `breadcrumb/breadcrumb.ts` | `visibleCrumbs()` decides what fits. |
-| `RelativeTimePipe` | pipe | `time/relative-time.pipe.ts` | Relative time display. |
+| Component          | Selector            | File                           | Notes                                                                                                                                                                                                        |
+| ------------------ | ------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Button`           | `button[appButton]` | `button/button.ts`             | Attribute directive on a native button. The `as-btn` look is CSS in `styles/controls.css`.                                                                                                                   |
+| `Notice`           | `app-notice`        | `notice/notice.ts`             | Styled by `styles/notice.css`.                                                                                                                                                                               |
+| `Character`        | `[appCharacter]`    | `character/character.ts`       | Mounts `@ascua/character` (`libs/character`) into the host.                                                                                                                                                  |
+| `Icon`             | `app-icon`          | `icon/icon.ts`                 | Icons come from the `ICONS` map at the top of the file.                                                                                                                                                      |
+| `AsSelect`         | `app-select`        | `select/select.ts`             | ControlValueAccessor; use with forms, or without via `selected`/`picked`. Options are strings or `SelectOption` (label/hint keys + icon); rich options render a custom listbox instead of the native select. |
+| `ContextMenu`      | `app-context-menu`  | `context-menu/context-menu.ts` | Flat menu at a point: `openAt(x, y)` / `close()`; items are `ContextMenuItem` (icon, label key, `run`, optional `tone: 'danger'`).                                                                           |
+| `ConfirmModal`     | `app-confirm-modal` | `modal/modal.ts`               | Native `<dialog>` confirm. Inputs `open`, `title`, `body`, `bodyParams`, `confirmLabel`, `cancelLabel`, `tone`; outputs `confirmed`, `cancelled`.                                                            |
+| `Spinner`          | `app-spinner`       | `spinner/spinner.ts`           | Loading indicator.                                                                                                                                                                                           |
+| `Breadcrumb`       | `app-breadcrumb`    | `breadcrumb/breadcrumb.ts`     | `visibleCrumbs()` decides what fits.                                                                                                                                                                         |
+| `RelativeTimePipe` | pipe                | `time/relative-time.pipe.ts`   | Relative time display.                                                                                                                                                                                       |
 
 ## The `as-*` controls are CSS, not components
 

@@ -36,6 +36,7 @@ export const IPC = {
   toggleFullscreen: 'ascua:window:toggle-fullscreen',
   exitFullscreen: 'ascua:window:exit-fullscreen',
   isFullscreen: 'ascua:window:is-fullscreen',
+  getWindowState: 'ascua:window:get-state',
   fullscreenChanged: 'ascua:window:fullscreen-changed',
   quit: 'ascua:app:quit',
   dragStart: 'ascua:window:drag-start',
@@ -98,6 +99,7 @@ export const IPC = {
   chatCommands: 'ascua:chats:commands',
   chatModels: 'ascua:chats:models',
   clearChat: 'ascua:chats:clear',
+  deleteChat: 'ascua:chats:delete',
   updateChatSession: 'ascua:chats:update-session',
   chatTranscript: 'ascua:chats:transcript',
   sendChatPrompt: 'ascua:chats:send',
@@ -476,6 +478,8 @@ export interface AscuaApi {
   toggleFullscreen(): Promise<BloomOrigin>;
   exitFullscreen(): Promise<void>;
   isFullscreen(): Promise<boolean>;
+  /** The room's state at renderer boot: main may open it before the page loads. */
+  getWindowState(): Promise<FullscreenState>;
   /** The user pressed the room's close button: quit Ascua entirely. */
   quit(): Promise<void>;
   dragStart(): Promise<void>;
@@ -631,6 +635,11 @@ export interface AscuaApi {
   ): Promise<ChatCommand[]>;
   /** Empties the transcript and resets the conversation in place. */
   clearChat(
+    projectId: string,
+    sessionId: string,
+  ): Promise<AscuaError | undefined>;
+  /** Deletes the chat session and its transcript. */
+  deleteChat(
     projectId: string,
     sessionId: string,
   ): Promise<AscuaError | undefined>;

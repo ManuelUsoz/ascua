@@ -32,13 +32,13 @@
     "permission": {
       "label": "Permissions",
       "supervised": "Supervised",
-      "supervisedHint": "Ask before running tools or editing files",
+      "supervisedHint": "Ask before commands and file changes.",
       "acceptEdits": "Auto-accept edits",
-      "acceptEditsHint": "Edit files automatically, ask for everything else",
+      "acceptEditsHint": "Auto-approve edits, ask before other actions.",
       "auto": "Auto",
-      "autoHint": "A classifier approves safe actions and asks for the rest",
+      "autoHint": "A classifier approves routine actions; others still ask.",
       "fullAccess": "Full access",
-      "fullAccessHint": "Run every tool without asking"
+      "fullAccessHint": "Allow commands and edits without prompts."
     },
     "model": {
       "label": "Model",

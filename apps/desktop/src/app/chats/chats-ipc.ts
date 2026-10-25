@@ -170,6 +170,17 @@ export function registerChatIpc(
     },
   );
   ipcMain.handle(
+    IPC.deleteChat,
+    async (_e, projectId: unknown, sessionId: unknown) => {
+      try {
+        await service.remove(str(projectId), str(sessionId));
+        return undefined;
+      } catch (error) {
+        return toError(error);
+      }
+    },
+  );
+  ipcMain.handle(
     IPC.updateChatSession,
     async (_e, projectId: unknown, sessionId: unknown, patch: unknown) => {
       try {

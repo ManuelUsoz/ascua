@@ -1,4 +1,9 @@
 {
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete"
+  },
   "breadcrumb": {
     "label": "Path",
     "showHidden": "Show hidden levels"
@@ -35,7 +40,10 @@
     "heading": "PROJECTS",
     "newProject": "New project",
     "startAll": "Start all",
-    "untitledChat": "Untitled chat"
+    "untitledChat": "Untitled chat",
+    "deleteChatTitle": "Delete chat",
+    "deleteChatBody": "\"{{name}}\" and its history will be deleted. This cannot be undone.",
+    "deleteChatConfirm": "Delete chat"
   },
   "status": {
     "working": "Working",

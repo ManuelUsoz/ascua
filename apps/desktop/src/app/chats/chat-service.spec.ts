@@ -54,6 +54,9 @@ class MemStore implements ChatSessionStore {
   ) {
     this.dir(p).get(id)?.messages.push(structuredClone(m));
   }
+  async remove(p: string, id: string) {
+    this.dir(p).delete(id);
+  }
   async removeProject(p: string) {
     this.files.delete(p);
   }
@@ -87,6 +90,7 @@ function fakeProvider(script: Script, openError?: Error) {
     decisions: [] as PermissionDecision[],
     opens: [] as OpenOptions[],
     probes: 0,
+    failProbe: false,
     modes: [] as string[],
     probed: [] as ChatCommand[],
   };
@@ -96,6 +100,7 @@ function fakeProvider(script: Script, openError?: Error) {
     loginCommand: () => undefined,
     capabilities: async () => {
       state.probes++;
+      if (state.failProbe) throw new Error('boom');
       return { commands: state.probed, models: [] };
     },
     open: async (o) => {
@@ -490,6 +495,46 @@ describe('ChatService', () => {
     expect(catalog.models.length).toBeGreaterThan(0);
   });
 
+  it('concurrent commands() and models() share one capabilities call', async () => {
+    const { service, state } = setup(streaming);
+    await Promise.all([service.commands('p1'), service.models('p1')]);
+    expect(state.probes).toBe(1);
+  });
+
+  it('warm() then models() calls capabilities once', async () => {
+    const { service, state } = setup(streaming);
+    service.warm('p1');
+    await service.models('p1');
+    expect(state.probes).toBe(1);
+  });
+
+  it('a throwing provider still returns the static catalog', async () => {
+    const { service, state } = setup(streaming);
+    state.failProbe = true;
+    const catalog = await service.models('p1');
+    expect(catalog.source).toBe('static');
+    expect(await service.commands('p1')).toBeDefined();
+  });
+
+  it('a failed probe is not cached: the next call retries', async () => {
+    const { service, state } = setup(streaming);
+    state.failProbe = true;
+    await service.models('p1');
+    state.failProbe = false;
+    await service.models('p1');
+    expect(state.probes).toBe(2);
+  });
+
+  it('capabilitiesChanged is visible to an immediate models() call', async () => {
+    const { service, events } = setup(async (o) => {
+      o.onEvent({ type: 'sessionInfo', models: [{ id: 'm1', efforts: [] }] });
+      return { stop: 'endTurn', usage };
+    });
+    await service.start('p1', 'a');
+    await until(() => events.some((e) => e.type === 'capabilitiesChanged'));
+    expect((await service.models('p1')).source).toBe('live');
+  });
+
   it('/make x sets the mode and reopens the provider', async () => {
     const { service, store, state, events } = setup(streaming);
     const session = await service.start('p1', 'hi');
@@ -551,6 +596,35 @@ describe('ChatService', () => {
       kind: 'busy',
     });
     state.release();
+  });
+
+  it('remove deletes the record and publishes sessionRemoved', async () => {
+    const { service, store, events } = setup(streaming);
+    const session = await service.start('p1', 'hi');
+    await until(idle(events));
+    await service.remove('p1', session.id);
+    expect(await store.get('p1', session.id)).toBeUndefined();
+    expect(types(events)).toContain('sessionRemoved');
+  });
+
+  it('remove of a running chat does not let late events resave it', async () => {
+    const { service, store, state } = setup(async (o, release) => {
+      await release;
+      o.onEvent({ type: 'messageDelta', part: 'text', text: 'late' });
+      return { stop: 'endTurn', usage };
+    });
+    const session = await service.start('p1', 'a');
+    await service.remove('p1', session.id);
+    state.release();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(await store.get('p1', session.id)).toBeUndefined();
+  });
+
+  it('remove of an unknown id is notFound', async () => {
+    const { service } = setup(streaming);
+    await expect(service.remove('p1', 'nope')).rejects.toMatchObject({
+      kind: 'notFound',
+    });
   });
 
   it('the init model updates the session', async () => {

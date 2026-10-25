@@ -30,12 +30,15 @@ export function unpackedPath(p: string): string {
   return p.replace(/app\.asar(?=[\\/]|$)/, 'app.asar.unpacked');
 }
 
-function isMusl(): boolean {
-  if (process.platform !== 'linux') return false;
+let muslCache: boolean | undefined;
+
+export function isMusl(): boolean {
+  if (muslCache !== undefined) return muslCache;
+  if (process.platform !== 'linux') return (muslCache = false);
   const report = process.report?.getReport() as
     | { header?: { glibcVersionRuntime?: string } }
     | undefined;
-  return !report?.header?.glibcVersionRuntime;
+  return (muslCache = !report?.header?.glibcVersionRuntime);
 }
 
 export function platformPackage(

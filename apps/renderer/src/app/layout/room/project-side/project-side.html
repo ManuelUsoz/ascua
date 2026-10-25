@@ -61,6 +61,9 @@
           [routerLink]="['/proyectos', p.id, 'chats', c.id]"
           routerLinkActive
           [ariaCurrentWhenActive]="true"
+          (contextmenu)="openChatMenu($event, p.id, c)"
+          (keydown.shift.f10)="openChatMenu($event, p.id, c)"
+          (keydown.contextmenu)="openChatMenu($event, p.id, c)"
         >
           <app-icon name="chat" />
           <span class="as-tree__name">{{
@@ -82,4 +85,20 @@
       </button>
     }
   }
+  @if (deleteError(); as code) {
+    <p class="as-side__error" role="alert">
+      {{ 'errors.' + code | transloco }}
+    </p>
+  }
+  <app-context-menu [items]="menuItems" />
+  <app-confirm-modal
+    [open]="pending() !== null"
+    [title]="'side.deleteChatTitle'"
+    [body]="'side.deleteChatBody'"
+    [bodyParams]="{ name: pending()?.name }"
+    [confirmLabel]="'side.deleteChatConfirm'"
+    tone="danger"
+    (confirmed)="confirmDelete()"
+    (cancelled)="pending.set(null)"
+  />
 </aside>

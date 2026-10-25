@@ -23,43 +23,52 @@ import type { Text } from '../../../core/i18n/text';
 import { Character } from '../../../shared/character/character';
 import { Notice } from '../../../shared/notice/notice';
 import { ChatComposer } from '../composer/chat-composer';
+import { ProviderOnboarding } from '../provider-onboarding/provider-onboarding';
 
 /** Empty state plus the first prompt; sending creates the session. */
 @Component({
   selector: 'app-new-chat',
-  imports: [TranslocoPipe, Character, ChatComposer, Notice],
+  imports: [TranslocoPipe, Character, ChatComposer, Notice, ProviderOnboarding],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'chat-new' },
   template: `
-    <div class="as-empty">
-      <div class="chat-new__ascua" aria-hidden="true">
-        <div appCharacter="new-chat"></div>
-      </div>
-      <h1>{{ 'chats.newChat.title' | transloco }}</h1>
-      <p>{{ 'chats.newChat.hint' | transloco }}</p>
-    </div>
-    @if (error(); as e) {
-      <app-notice type="error" [title]="e" />
+    @if (ready()) {
+      @if (!store.selectedProvider()) {
+        <app-provider-onboarding [projectId]="projectId()" />
+      } @else {
+        <div class="as-empty">
+          <div class="chat-new__ascua" aria-hidden="true">
+            <div appCharacter="new-chat"></div>
+          </div>
+          <h1>{{ 'chats.newChat.title' | transloco }}</h1>
+          <p>{{ 'chats.newChat.hint' | transloco }}</p>
+        </div>
+        @if (error(); as e) {
+          <app-notice type="error" [title]="e" />
+        }
+        <app-chat-composer
+          [disabled]="busy()"
+          [commands]="commands()"
+          [catalog]="catalog()"
+          [loading]="store.capabilitiesLoading(projectId())"
+          [permissionMode]="permissionMode()"
+          [model]="model()"
+          [effort]="effort()"
+          (submitted)="start($event)"
+          (runtimeChanged)="change($event)"
+        />
+      }
     }
-    <app-chat-composer
-      [disabled]="busy()"
-      [commands]="commands()"
-      [catalog]="catalog()"
-      [permissionMode]="permissionMode()"
-      [model]="model()"
-      [effort]="effort()"
-      (submitted)="start($event)"
-      (runtimeChanged)="change($event)"
-    />
   `,
 })
 export class NewChat {
   readonly projectId = input.required<string>();
 
-  private readonly store = inject(ChatStore);
+  protected readonly store = inject(ChatStore);
   private readonly settings = inject(SettingsStore);
   private readonly router = inject(Router);
   protected readonly busy = signal(false);
+  protected readonly ready = signal(false);
   protected readonly error = signal<Text | undefined>(undefined);
   /** User picks made in this form, over the remembered provider defaults. */
   private readonly picked = signal<ChatSessionPatch>({});
@@ -95,6 +104,7 @@ export class NewChat {
   );
 
   constructor() {
+    void this.store.loadProviders().then(() => this.ready.set(true));
     effect(() => {
       const projectId = this.projectId();
       untracked(() => {

@@ -55,6 +55,7 @@ export interface ChatSessionStore {
   get(projectId: string, id: string): Promise<ChatSessionRecord | undefined>;
   save(record: ChatSessionRecord): Promise<void>;
   appendMessage(projectId: string, id: string, message: Message): Promise<void>;
+  remove(projectId: string, id: string): Promise<void>;
   removeProject(projectId: string): Promise<void>;
 }
 
