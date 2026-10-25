@@ -2,10 +2,7 @@
   <div class="as-term__bar">
     <app-icon [name]="spec() ? 'server' : 'terminal'" />
     <b>{{ name() }}</b>
-    <span class="as-state" [attr.data-tone]="state().tone">
-      <span class="as-dot"></span
-      >{{ state().label.key | transloco: state().label.params }}
-    </span>
+    <app-status [state]="state().state" [label]="state().label" />
     @if (spec(); as spec) {
       @if (spec.port) {
         <span>:{{ spec.port }}</span>

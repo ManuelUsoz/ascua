@@ -10,6 +10,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { TerminalSessions } from '../../core/terminals/terminal-sessions';
 import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
+import { Status } from '../../shared/status/status';
 import { PistaEditor } from './pista-editor';
 import { terminalStateView } from './terminal-state';
 import { TerminalView } from './terminal-view';
@@ -17,7 +18,7 @@ import { TerminalView } from './terminal-view';
 /** A terminal card: a saved pista (`spec` set) or an ad-hoc shell. */
 @Component({
   selector: 'app-terminal-pane',
-  imports: [TranslocoPipe, Icon, TerminalView, Button],
+  imports: [TranslocoPipe, Icon, TerminalView, Button, Status],
   templateUrl: './terminal-pane.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { style: 'display: contents' },

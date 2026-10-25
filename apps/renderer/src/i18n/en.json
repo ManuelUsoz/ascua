@@ -35,10 +35,15 @@
     "newProject": "New project",
     "startAll": "Start all"
   },
-  "state": {
+  "status": {
+    "working": "Working",
     "running": "Running",
-    "stopped": "Stopped",
-    "failed": "Failed",
+    "waiting": "Waiting for your reply",
+    "stuck": "Stuck",
+    "crashed": "Crashed",
+    "stopped": "Stopped"
+  },
+  "state": {
     "failedCode": "Failed (code {{code}})"
   },
   "errors": {

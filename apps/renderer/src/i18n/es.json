@@ -35,10 +35,15 @@
     "newProject": "Nuevo proyecto",
     "startAll": "Levantar todo"
   },
-  "state": {
+  "status": {
+    "working": "Trabajando",
     "running": "Corriendo",
-    "stopped": "Detenida",
-    "failed": "Falló",
+    "waiting": "Espera tu respuesta",
+    "stuck": "Trabado",
+    "crashed": "Se cayó",
+    "stopped": "Detenido"
+  },
+  "state": {
     "failedCode": "Falló (código {{code}})"
   },
   "errors": {

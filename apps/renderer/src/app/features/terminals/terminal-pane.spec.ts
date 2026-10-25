@@ -79,7 +79,7 @@ describe('TerminalPane', () => {
   it('starts a stopped pista and stops a running one', () => {
     current.set(session('stopped'));
     const { fixture, button } = render(spec);
-    expect(fixture.nativeElement.textContent).toContain('Detenida');
+    expect(fixture.nativeElement.textContent).toContain('Detenido');
     button('Iniciar api')?.click();
     expect(sessions.start).toHaveBeenCalledWith('p', 't1');
 
