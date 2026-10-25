@@ -1,13 +1,22 @@
 import type {
   CanUseTool,
+  ModelInfo,
+  Options,
+  PermissionMode as SdkPermissionMode,
   PermissionResult,
   SDKMessage,
   SDKResultMessage,
+  SlashCommand,
 } from '@anthropic-ai/claude-agent-sdk';
 import {
   ChatError,
   type AgentEvent,
+  type ChatCommand,
   type ChatErrorKind,
+  type OpenOptions,
+  type PermissionMode,
+  type ProviderModel,
+  type ReasoningEffort,
   type PermissionDecision,
   type PermissionRequest,
   type StopReason,
@@ -151,6 +160,73 @@ export function toChatError(
   return new ChatError(kind, undefined, msg);
 }
 
+/** Custom (non built-in) slash commands as chat commands. */
+export function toChatCommands(cmds: SlashCommand[]): ChatCommand[] {
+  return (cmds ?? [])
+    .filter((c) => !c.builtin && c.name)
+    .map((c) => {
+      const cmd: ChatCommand = { name: c.name, source: 'custom' };
+      if (c.description) cmd.description = c.description;
+      if (c.argumentHint) cmd.argumentHint = c.argumentHint;
+      return cmd;
+    });
+}
+
+const EFFORTS: readonly ReasoningEffort[] = [
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+  'max',
+];
+
+export function toProviderModels(models: ModelInfo[]): ProviderModel[] {
+  return (models ?? [])
+    .filter((m) => m.value)
+    .map((m) => {
+      const pm: ProviderModel = {
+        id: m.value,
+        efforts: (m.supportedEffortLevels ?? []).filter((e) =>
+          EFFORTS.includes(e),
+        ),
+      };
+      if (m.displayName) pm.label = m.displayName;
+      if (m.description) pm.description = m.description;
+      if (m.supportsAutoMode) pm.supportsAutoMode = true;
+      return pm;
+    });
+}
+
+export function toSdkPermissionMode(mode: PermissionMode): SdkPermissionMode {
+  switch (mode) {
+    case 'acceptEdits':
+      return 'acceptEdits';
+    case 'auto':
+      return 'auto';
+    case 'fullAccess':
+      return 'bypassPermissions';
+    default:
+      return 'default';
+  }
+}
+
+export function claudeRuntimeOptions(
+  runtime: OpenOptions['runtime'],
+): Partial<Options> {
+  const out: Partial<Options> = {
+    permissionMode: toSdkPermissionMode(runtime.permissionMode),
+  };
+  if (runtime.permissionMode === 'fullAccess') {
+    out.allowDangerouslySkipPermissions = true;
+  }
+  if (runtime.model) out.model = runtime.model;
+  if (runtime.effort && runtime.effort !== 'minimal') {
+    out.effort = runtime.effort;
+  }
+  return out;
+}
+
 interface Block {
   type?: string;
   id?: string;
@@ -176,6 +252,20 @@ export class TurnMapper {
       message?: { content?: unknown };
     };
     if (m.parent_tool_use_id) return [];
+    if (m.type === 'system') {
+      const s = msg as unknown as {
+        subtype?: string;
+        model?: string;
+        commands?: SlashCommand[];
+      };
+      if (s.subtype === 'init' && s.model) {
+        return [{ type: 'sessionInfo', model: s.model }];
+      }
+      if (s.subtype === 'commands_changed' && Array.isArray(s.commands)) {
+        return [{ type: 'sessionInfo', commands: toChatCommands(s.commands) }];
+      }
+      return [];
+    }
     if (m.type === 'stream_event') {
       const d =
         m.event?.type === 'content_block_delta' ? m.event.delta : undefined;

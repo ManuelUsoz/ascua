@@ -57,6 +57,7 @@
       "authRequired": "Inicia sesión en el proveedor para continuar.",
       "agentMissing": "No se encontró el agente del proveedor.",
       "notFound": "El chat o la solicitud ya no existe.",
+      "invalidInput": "Ese modelo, esfuerzo o modo no es válido.",
       "busy": "El chat está ocupado. Espera a que termine.",
       "startFailed": "No se pudo iniciar el chat.",
       "promptFailed": "No se pudo enviar el mensaje.",

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   TurnMapper,
   authFailure,
+  claudeRuntimeOptions,
+  toProviderModels,
   toChatError,
   toPermissionRequest,
   toSdkPermission,
@@ -81,9 +83,72 @@ describe('TurnMapper', () => {
     });
   });
 
+  it('maps init model and commands_changed custom commands', () => {
+    const t = new TurnMapper();
+    expect(
+      t.map(m({ type: 'system', subtype: 'init', model: 'opus' })),
+    ).toEqual([{ type: 'sessionInfo', model: 'opus' }]);
+    expect(
+      t.map(
+        m({
+          type: 'system',
+          subtype: 'commands_changed',
+          commands: [
+            { name: 'cost', builtin: true },
+            { name: 'ship', description: 'd', argumentHint: '<a>' },
+          ],
+        }),
+      ),
+    ).toEqual([
+      {
+        type: 'sessionInfo',
+        commands: [
+          {
+            name: 'ship',
+            source: 'custom',
+            description: 'd',
+            argumentHint: '<a>',
+          },
+        ],
+      },
+    ]);
+  });
+
   it('drops subagent output', () => {
     const t = new TurnMapper();
     expect(t.map(delta({ type: 'text_delta', text: 'x' }, 'p'))).toEqual([]);
+  });
+});
+
+describe('runtime mapping', () => {
+  it('maps permission modes', () => {
+    const mode = (m: 'supervised' | 'acceptEdits' | 'auto' | 'fullAccess') =>
+      claudeRuntimeOptions({ permissionMode: m });
+    expect(mode('supervised')).toEqual({ permissionMode: 'default' });
+    expect(mode('acceptEdits')).toEqual({ permissionMode: 'acceptEdits' });
+    expect(mode('auto')).toEqual({ permissionMode: 'auto' });
+    expect(mode('fullAccess')).toEqual({
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
+    });
+  });
+
+  it('adds model and effort only when set', () => {
+    expect(
+      claudeRuntimeOptions({
+        permissionMode: 'auto',
+        model: 'opus',
+        effort: 'max',
+      }),
+    ).toMatchObject({ model: 'opus', effort: 'max' });
+  });
+
+  it('maps models', () => {
+    expect(
+      toProviderModels([
+        { value: 'haiku', displayName: 'Haiku', description: '' },
+      ]),
+    ).toEqual([{ id: 'haiku', label: 'Haiku', efforts: [] }]);
   });
 });
 

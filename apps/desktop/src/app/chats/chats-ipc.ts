@@ -1,8 +1,12 @@
 import { ipcMain } from 'electron';
 import {
+  PERMISSION_MODES,
   ChatError,
   isAgentProviderId,
   type AgentProviderId,
+  type ChatModeId,
+  type PermissionMode,
+  type ReasoningEffort,
 } from '@ascua/chat';
 import { IPC, encodeError, type AscuaError } from '@ascua/ipc';
 import type { TerminalManager } from '../terminals/terminal-manager';
@@ -22,6 +26,40 @@ function str(value: unknown): string {
     throw new ChatError('notFound');
   }
   return value;
+}
+
+const MODE_IDS: ChatModeId[] = ['chat', 'locate', 'make', 'review'];
+
+function optionalPermissionMode(value: unknown): PermissionMode | undefined {
+  if (value === undefined) return undefined;
+  if (!PERMISSION_MODES.includes(value as PermissionMode))
+    throw new ChatError('invalidInput');
+  return value as PermissionMode;
+}
+
+const EFFORTS: ReasoningEffort[] = [
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+  'max',
+];
+
+function optionalModel(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || value === '' || value.length > 200) {
+    throw new ChatError('invalidInput');
+  }
+  return value;
+}
+
+function optionalEffort(value: unknown): ReasoningEffort | undefined {
+  if (value === undefined) return undefined;
+  if (!EFFORTS.includes(value as ReasoningEffort)) {
+    throw new ChatError('invalidInput');
+  }
+  return value as ReasoningEffort;
 }
 
 function providerId(value: unknown): AgentProviderId {
@@ -85,12 +123,75 @@ export function registerChatIpc(
   });
   ipcMain.handle(
     IPC.startChat,
-    async (_e, projectId: unknown, prompt: unknown) => {
+    async (_e, projectId: unknown, prompt: unknown, options?: unknown) => {
       try {
-        const session = await service.start(str(projectId), str(prompt));
+        const o = (options ?? {}) as {
+          permissionMode?: unknown;
+          model?: unknown;
+          effort?: unknown;
+        };
+        const session = await service.start(str(projectId), str(prompt), {
+          permissionMode: optionalPermissionMode(o.permissionMode),
+          model: optionalModel(o.model),
+          effort: optionalEffort(o.effort),
+        });
         return { ok: true, session };
       } catch (error) {
         return { ok: false, error: toError(error) };
+      }
+    },
+  );
+  ipcMain.handle(
+    IPC.chatCommands,
+    async (_e, projectId: unknown, _sessionId?: unknown) => {
+      try {
+        return await service.commands(str(projectId));
+      } catch (error) {
+        return thrown(error);
+      }
+    },
+  );
+  ipcMain.handle(IPC.chatModels, async (_e, projectId: unknown) => {
+    try {
+      return await service.models(str(projectId));
+    } catch (error) {
+      return thrown(error);
+    }
+  });
+  ipcMain.handle(
+    IPC.clearChat,
+    async (_e, projectId: unknown, sessionId: unknown) => {
+      try {
+        await service.clear(str(projectId), str(sessionId));
+        return undefined;
+      } catch (error) {
+        return toError(error);
+      }
+    },
+  );
+  ipcMain.handle(
+    IPC.updateChatSession,
+    async (_e, projectId: unknown, sessionId: unknown, patch: unknown) => {
+      try {
+        const p = (patch ?? {}) as {
+          permissionMode?: unknown;
+          mode?: unknown;
+          model?: unknown;
+          effort?: unknown;
+        };
+        const mode = p.mode;
+        if (mode !== undefined && !MODE_IDS.includes(mode as ChatModeId)) {
+          throw new ChatError('notFound');
+        }
+        await service.update(str(projectId), str(sessionId), {
+          permissionMode: optionalPermissionMode(p.permissionMode),
+          mode: mode as ChatModeId | undefined,
+          model: p.model === null ? null : optionalModel(p.model),
+          effort: p.effort === null ? null : optionalEffort(p.effort),
+        });
+        return undefined;
+      } catch (error) {
+        return toError(error);
       }
     },
   );

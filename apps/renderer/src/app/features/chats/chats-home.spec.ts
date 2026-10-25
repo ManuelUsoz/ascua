@@ -5,6 +5,7 @@ import type { ChatSession } from '@ascua/chat';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { describe, expect, it, vi } from 'vitest';
 import { ChatStore } from '../../core/chats/chat-store';
+import { SettingsStore } from '../../core/settings/settings-store';
 import { i18nTesting } from '../../testing/i18n';
 import { ChatsHome } from './chats-home';
 
@@ -32,12 +33,21 @@ async function setup(provider: 'claude' | undefined, list: ChatSession[]) {
     sessions: () => list,
     loadProviders: vi.fn().mockResolvedValue(undefined),
     load: vi.fn().mockResolvedValue(undefined),
+    commands: () => [],
+    loadCommands: vi.fn().mockResolvedValue(undefined),
+    models: () => ({ provider: 'claude', models: [], source: 'static' }),
+    loadModels: vi.fn().mockResolvedValue(undefined),
+  };
+  const settings = {
+    settings: signal({}),
+    setChatDefaults: vi.fn().mockResolvedValue(undefined),
   };
   TestBed.configureTestingModule({
     imports: [i18nTesting('es')],
     providers: [
       provideTranslocoScope('chats'),
       { provide: ChatStore, useValue: store },
+      { provide: SettingsStore, useValue: settings },
     ],
   });
   const navigate = vi

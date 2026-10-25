@@ -25,7 +25,53 @@
   "composer": {
     "label": "Message",
     "placeholder": "Write your message. Enter sends, Shift+Enter adds a line.",
-    "stop": "Stop"
+    "stop": "Stop",
+    "send": "Send",
+    "attach": "Attach file",
+    "attachSoon": "Attaching files is coming soon",
+    "permission": {
+      "label": "Permissions",
+      "supervised": "Supervised",
+      "supervisedHint": "Ask before running tools or editing files",
+      "acceptEdits": "Auto-accept edits",
+      "acceptEditsHint": "Edit files automatically, ask for everything else",
+      "auto": "Auto",
+      "autoHint": "A classifier approves safe actions and asks for the rest",
+      "fullAccess": "Full access",
+      "fullAccessHint": "Run every tool without asking"
+    },
+    "model": {
+      "label": "Model",
+      "default": "Provider default"
+    },
+    "effort": {
+      "label": "Reasoning effort",
+      "default": "Default effort",
+      "minimal": "Minimal",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "xhigh": "Extra high",
+      "max": "Max"
+    },
+    "mode": {
+      "locate": "Locate",
+      "make": "Make",
+      "review": "Review"
+    },
+    "exitMode": "Exit mode"
+  },
+  "commands": {
+    "label": "Commands",
+    "clear": "Clears the conversation and starts fresh",
+    "locate": "Finds where something lives and reports path:line, without edits",
+    "make": "Plans in batches, then implements and verifies",
+    "review": "Reviews files or a PR and reports findings, without edits",
+    "group": {
+      "builtin": "Built-in",
+      "nxy": "nxy modes",
+      "custom": "Project"
+    }
   },
   "session": {
     "loading": "Loading the chat",

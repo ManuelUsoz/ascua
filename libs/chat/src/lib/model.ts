@@ -1,3 +1,4 @@
+import type { ReasoningEffort } from './catalog';
 import type { ChatErrorKind } from './errors';
 import type { ChatModeId } from './harness';
 import type { PermissionRequest } from './permission';
@@ -25,11 +26,38 @@ export type SessionStatus =
   | 'awaitingPermission'
   | 'failed';
 
+export const PERMISSION_MODES = [
+  'supervised',
+  'acceptEdits',
+  'auto',
+  'fullAccess',
+] as const;
+
+export type PermissionMode = (typeof PERMISSION_MODES)[number];
+
+export const DEFAULT_PERMISSION_MODE: PermissionMode = 'fullAccess';
+
+/** Normalizes persisted values; legacy 'manual' and 'auto' are migrated. */
+export function toPermissionMode(value: unknown): PermissionMode {
+  if (value === 'manual') return 'supervised';
+  // Legacy 'auto' approved every tool, which is now 'fullAccess'.
+  if (value === 'auto') return 'fullAccess';
+  return PERMISSION_MODES.includes(value as PermissionMode)
+    ? (value as PermissionMode)
+    : DEFAULT_PERMISSION_MODE;
+}
+
 export interface ChatSession {
   id: string;
   projectId: string;
   provider: AgentProviderId;
   mode: ChatModeId;
+  permissionMode: PermissionMode;
+  /** The user's selection; undefined is the provider default. */
+  model?: string;
+  effort?: ReasoningEffort;
+  /** The model the provider reported in use. */
+  resolvedModel?: string;
   title?: string;
   createdAt: number;
   updatedAt: number;

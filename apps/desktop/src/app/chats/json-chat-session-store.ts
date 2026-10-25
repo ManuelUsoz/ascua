@@ -1,9 +1,22 @@
-import type { ChatSessionRecord, ChatSessionStore, Message } from '@ascua/chat';
+import {
+  toPermissionMode,
+  type ChatSessionRecord,
+  type ChatSessionStore,
+  type Message,
+} from '@ascua/chat';
 import { ProjectJsonFiles } from './project-json-files';
+
+type StampedRecord = ChatSessionRecord & { permissionModes?: number };
 
 /** A request that outlived the app can never be answered. */
 function settle(records: ChatSessionRecord[]): ChatSessionRecord[] {
   for (const record of records) {
+    // 'auto' changed meaning: only records written before the marker migrate.
+    const stamped = record as StampedRecord;
+    if (!stamped.permissionModes) {
+      record.permissionMode = toPermissionMode(record.permissionMode);
+      stamped.permissionModes = 2;
+    }
     if (record.status === 'running' || record.status === 'awaitingPermission') {
       record.status = 'idle';
     }
@@ -37,6 +50,7 @@ export class JsonChatSessionStore implements ChatSessionStore {
   }
 
   async save(record: ChatSessionRecord): Promise<void> {
+    (record as StampedRecord).permissionModes = 2;
     await this.files.update(record.projectId, (sessions) => {
       const index = sessions.findIndex((s) => s.id === record.id);
       if (index >= 0) sessions[index] = record;

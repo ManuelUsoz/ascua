@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -91,6 +91,34 @@ describe('JsonChatSessionStore', () => {
     const loaded = (await make().list('p1'))[0];
     expect(loaded.status).toBe('idle');
     expect(loaded.messages[0].parts[0]).toMatchObject({ state: 'denied' });
+  });
+
+  it('migrates legacy permission modes once and keeps new ones', async () => {
+    const store = make();
+    await store.save(record('s1', 'p1'));
+    const path = join(dir, 'chats', 'p1.json');
+    const raw = JSON.parse(await readFile(path, 'utf8'));
+    const items = raw.sessions as Record<string, unknown>[];
+    const legacy = (id: string, mode: string) => {
+      const { permissionModes: _drop, ...rest } = {
+        ...items[0],
+        id,
+        permissionMode: mode,
+      };
+      void _drop;
+      return rest;
+    };
+    const out = [legacy('a', 'manual'), legacy('b', 'auto')];
+    await writeFile(path, JSON.stringify({ ...raw, sessions: out }), 'utf8');
+    const fresh = make();
+    const loaded = await fresh.list('p1');
+    expect(loaded.map((s) => s.permissionMode)).toEqual([
+      'supervised',
+      'fullAccess',
+    ]);
+    // A new 'auto' (stamped on save) is not migrated again.
+    await fresh.save({ ...loaded[0], id: 'c', permissionMode: 'auto' });
+    expect((await make().get('p1', 'c'))?.permissionMode).toBe('auto');
   });
 
   it('removes a project file', async () => {

@@ -15,6 +15,8 @@ export function applyChatEvent(
   event: ChatEvent,
 ): Message[] {
   switch (event.type) {
+    case 'transcriptCleared':
+      return [];
     case 'messageStarted':
       return messages.some((m) => m.id === event.message.id)
         ? messages
@@ -58,6 +60,8 @@ export function applyChatEvent(
       return messages.some((m) => m.id === event.message.id)
         ? messages.map((m) => (m.id === event.message.id ? event.message : m))
         : [...messages, event.message];
+    case 'capabilitiesChanged':
+      return messages;
     default:
       return messages;
   }

@@ -12,7 +12,10 @@ import {
   ChatError,
   type AgentProvider,
   type AgentEvent,
+  type ChatCommand,
   type OpenOptions,
+  type PermissionMode,
+  type ProviderModel,
   type PermissionRequest,
   type PermissionDecision,
   type ProviderAuth,
@@ -25,6 +28,10 @@ import {
   toChatError,
   toPermissionRequest,
   toSdkPermission,
+  toChatCommands,
+  toProviderModels,
+  toSdkPermissionMode,
+  claudeRuntimeOptions,
   toStopReason,
   toUsage,
 } from './claude-mapping';
@@ -155,6 +162,38 @@ export class ClaudeProvider implements AgentProvider {
     }
   }
 
+  async capabilities(
+    cwd: string,
+  ): Promise<{ commands: ChatCommand[]; models: ProviderModel[] }> {
+    let q: Query | undefined;
+    try {
+      const sdk = await this.deps.loadSdk();
+      const exe = this.deps.executable();
+      q = sdk.query({
+        prompt: new InputQueue(),
+        options: this.baseOptions(exe, cwd),
+      });
+      const query = q;
+      const init = await Promise.race([
+        query.initializationResult(),
+        new Promise<undefined>((r) => setTimeout(r, AUTH_TIMEOUT_MS)),
+      ]);
+      if (!init) return { commands: [], models: [] };
+      return {
+        commands: toChatCommands(init.commands ?? []),
+        models: toProviderModels(init.models ?? []),
+      };
+    } catch {
+      return { commands: [], models: [] };
+    } finally {
+      try {
+        q?.close();
+      } catch {
+        /* already closed */
+      }
+    }
+  }
+
   private baseOptions(exe: ClaudeExecutable, cwd: string): Options {
     return {
       cwd,
@@ -182,6 +221,7 @@ export class ClaudeProvider implements AgentProvider {
     const opts: Options = {
       ...this.baseOptions(exe, options.cwd),
       includePartialMessages: true,
+      ...claudeRuntimeOptions(options.runtime),
       ...(options.resumeToken
         ? { resume: options.resumeToken }
         : { sessionId: token }),
@@ -210,10 +250,20 @@ export class ClaudeProvider implements AgentProvider {
       };
     }
 
+    const denied = options.turn.deniedTools?.flatMap((k) => TOOL_NAMES[k]);
+    if (denied?.length) opts.disallowedTools = denied;
+
     let q: Query;
     try {
       q = sdk.query({ prompt: input, options: opts });
-      await q.initializationResult();
+      const init = await q.initializationResult();
+      options.onEvent({
+        type: 'sessionInfo',
+        commands: toChatCommands(init?.commands ?? []),
+        ...(init?.models?.length
+          ? { models: toProviderModels(init.models) }
+          : {}),
+      });
     } catch (err) {
       throw toChatError(err, 'start');
     }
@@ -306,6 +356,10 @@ class ClaudeSession implements ProviderSession {
         parent_tool_use_id: null,
       });
     });
+  }
+
+  async setPermissionMode(mode: PermissionMode): Promise<void> {
+    await this.q?.setPermissionMode(toSdkPermissionMode(mode));
   }
 
   abort(): void {

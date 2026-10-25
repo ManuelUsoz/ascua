@@ -68,7 +68,6 @@ app-chat-session-page,
   text-align: center;
 }
 .chat-onboarding__actions,
-.chat-composer__actions,
 .chat-perm__actions {
   display: flex;
   gap: var(--space-2);
@@ -165,22 +164,172 @@ app-chat-session-page,
   font-size: 11.5px;
 }
 .chat-composer {
+  position: relative;
   display: flex;
-  flex-direction: row;
-  align-items: flex-end;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-top: 1px solid var(--line);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.chat-composer__box {
+  width: 100%;
+  max-width: 720px;
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-highlight);
+}
+.chat-composer__box:focus-within {
+  border-color: var(--violeta);
 }
 .chat-composer__input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 14px 4px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font: 13.5px/21px var(--font-sans);
   resize: none;
-  height: auto;
-  flex: 1;
+}
+.chat-composer__input::placeholder {
+  color: var(--ink-faint);
+}
+.chat-composer__model,
+.chat-composer__chip {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.chat-composer__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--line-mid);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+}
+.chat-commands {
+  position: absolute;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: 100%;
   max-width: 720px;
-  padding: 1rem;
+  max-height: 14rem;
+  margin: 0 auto var(--space-1);
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: 1px solid var(--line-mid);
+  border-radius: var(--radius-m);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-pop);
+  z-index: 1;
+}
+.chat-commands__heading {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+.chat-commands__item {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-s);
+  color: var(--ink);
+  cursor: pointer;
+}
+.chat-commands__item--active {
+  background: var(--line);
+}
+.chat-commands__name {
+  font-weight: 600;
+}
+.chat-commands__hint {
+  color: var(--ink-faint);
+}
+.chat-commands__desc {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-muted);
 }
 .chat-composer__actions {
-  flex: none;
-  justify-content: flex-end;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 8px 8px 10px;
+}
+.chat-composer__controls {
+  display: contents;
+}
+.chat-composer__select {
+  width: auto;
+  height: 30px;
+  max-width: 12rem;
+  padding-left: 8px;
+  border-color: transparent;
+  background-color: transparent;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-overflow: ellipsis;
+}
+.chat-composer__select:hover:not(:disabled) {
+  background-color: var(--surface);
+  color: var(--ink);
+}
+.chat-composer__select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.chat-composer__select--permission {
+  order: 1;
+  height: 26px;
+  border-color: var(--line-mid);
+  border-radius: var(--radius-s);
+  font-family: var(--font-sans);
+}
+.chat-composer__chip {
+  order: 2;
+}
+.chat-composer__spacer {
+  order: 3;
+  flex: 1;
+}
+.chat-composer__select--model {
+  order: 4;
+}
+.chat-composer__select--effort {
+  order: 5;
+}
+.chat-composer__send,
+.chat-composer__stop {
+  order: 6;
+}
+.chat-composer__attach {
+  order: 0;
+}
+.chat-composer__attach.as-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-s);
+}
+.chat-composer__attach:disabled:hover {
+  background: transparent;
+  color: var(--ink-muted);
+}
+.chat-composer__send.as-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-m);
+}
+.chat-composer__send:disabled {
+  background: var(--line);
+  color: var(--ink-muted);
+  box-shadow: none;
+  opacity: 1;
+  filter: none;
 }

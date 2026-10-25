@@ -4,6 +4,7 @@ export type ChatErrorKind =
   | 'authRequired'
   | 'agentMissing'
   | 'notFound'
+  | 'invalidInput'
   | 'busy'
   | 'startFailed'
   | 'promptFailed'

@@ -4,12 +4,17 @@
 
 import type {
   AgentProviderId,
+  ChatCommand,
   ChatErrorKind,
   ChatEvent,
+  ChatModeId,
   ChatSession,
   ChatTranscript,
+  ModelCatalog,
+  PermissionMode,
   ProviderAuth,
   ProviderInfo,
+  ReasoningEffort,
 } from '@ascua/chat';
 import type {
   Account,
@@ -90,6 +95,10 @@ export const IPC = {
   chatSelectProvider: 'ascua:chats:select-provider',
   listChatSessions: 'ascua:chats:list',
   startChat: 'ascua:chats:start',
+  chatCommands: 'ascua:chats:commands',
+  chatModels: 'ascua:chats:models',
+  clearChat: 'ascua:chats:clear',
+  updateChatSession: 'ascua:chats:update-session',
   chatTranscript: 'ascua:chats:transcript',
   sendChatPrompt: 'ascua:chats:send',
   abortChat: 'ascua:chats:abort',
@@ -106,6 +115,17 @@ export interface Settings {
   cloneDir?: string;
   /** Agent provider chosen for project chats. */
   chatProvider?: AgentProviderId;
+  /** Last runtime selection per provider, seeding new chats. */
+  chatDefaults?: Partial<
+    Record<
+      AgentProviderId,
+      {
+        permissionMode?: PermissionMode;
+        model?: string;
+        effort?: ReasoningEffort;
+      }
+    >
+  >;
 }
 
 export type SettingsPatch = Partial<Settings>;
@@ -185,6 +205,7 @@ export const CHAT_ERROR_CODES = [
   'chat.authRequired',
   'chat.agentMissing',
   'chat.notFound',
+  'chat.invalidInput',
   'chat.busy',
   'chat.startFailed',
   'chat.promptFailed',
@@ -423,6 +444,20 @@ export type SourceControlStatus =
       persisted: boolean;
     };
 
+export interface ChatStartOptions {
+  permissionMode?: PermissionMode;
+  model?: string;
+  effort?: ReasoningEffort;
+}
+
+export interface ChatSessionPatch {
+  permissionMode?: PermissionMode;
+  /** null clears the selection (provider default). */
+  model?: string | null;
+  effort?: ReasoningEffort | null;
+  mode?: ChatModeId;
+}
+
 export type StartChatResult =
   | { ok: true; session: ChatSession }
   | { ok: false; error: AscuaError };
@@ -584,7 +619,26 @@ export interface AscuaApi {
   selectChatProvider(id: AgentProviderId): Promise<Settings>;
   listChatSessions(projectId: string): Promise<ChatSession[]>;
   /** Creates the session and sends the first prompt; the reply streams. */
-  startChat(projectId: string, prompt: string): Promise<StartChatResult>;
+  startChat(
+    projectId: string,
+    prompt: string,
+    options?: ChatStartOptions,
+  ): Promise<StartChatResult>;
+  listChatModels(projectId: string): Promise<ModelCatalog>;
+  listChatCommands(
+    projectId: string,
+    sessionId?: string,
+  ): Promise<ChatCommand[]>;
+  /** Empties the transcript and resets the conversation in place. */
+  clearChat(
+    projectId: string,
+    sessionId: string,
+  ): Promise<AscuaError | undefined>;
+  updateChatSession(
+    projectId: string,
+    sessionId: string,
+    patch: ChatSessionPatch,
+  ): Promise<AscuaError | undefined>;
   getChatTranscript(
     projectId: string,
     sessionId: string,

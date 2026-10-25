@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import type { ChatEvent, ChatSession, Message } from '@ascua/chat';
-import { EMPTY_USAGE } from '@ascua/chat';
+import { CLEAR_COMMAND, EMPTY_USAGE, NXY_COMMANDS } from '@ascua/chat';
 import { ASCUA_API } from '../bridge/ascua-api';
 import { ChatStore } from './chat-store';
 
@@ -9,6 +9,7 @@ const session: ChatSession = {
   projectId: 'p1',
   provider: 'claude',
   mode: 'chat',
+  permissionMode: 'supervised',
   createdAt: 1,
   updatedAt: 1,
   status: 'idle',
@@ -49,6 +50,9 @@ describe('ChatStore', () => {
       listChatSessions: vi.fn(async () => [session]),
       getChatTranscript: vi.fn(async () => ({ session, messages: [] })),
       startChat: vi.fn(async () => ({ ok: true, session })),
+      listChatCommands: vi.fn(async () => [CLEAR_COMMAND, ...NXY_COMMANDS]),
+      clearChat: vi.fn(async () => undefined),
+      updateChatSession: vi.fn(async () => undefined),
       onChatEvent: vi.fn((cb) => {
         push = cb;
         return () => undefined;
@@ -170,6 +174,72 @@ describe('ChatStore', () => {
     expect(store.transcript('s1')?.[0]?.parts).toEqual([
       { kind: 'text', text: 'hey' },
     ]);
+  });
+
+  it('empties the transcript on transcriptCleared', async () => {
+    const store = setup();
+    await store.loadTranscript('p1', 's1');
+    push({ ...ids, type: 'messageStarted', message: assistant });
+    expect(store.transcript('s1')).toHaveLength(1);
+    push({ ...ids, type: 'transcriptCleared' });
+    expect(store.transcript('s1')).toEqual([]);
+  });
+
+  it('loads the commands per project and passes the session along', async () => {
+    const store = setup();
+    const names = ['clear', 'locate', 'make', 'review'];
+    // Builtin and nxy show before the provider probe answers.
+    expect(store.commands('p1').map((c) => c.name)).toEqual(names);
+    await store.loadCommands('p1', 's1');
+    expect(api['listChatCommands']).toHaveBeenCalledWith('p1', 's1');
+    expect(store.commands('p1').map((c) => c.name)).toEqual(names);
+  });
+
+  it('capabilitiesChanged updates commands and models', async () => {
+    const store = setup();
+    await store.load('p1');
+    push({
+      type: 'capabilitiesChanged',
+      ...ids,
+      commands: [{ name: 'deploy', source: 'custom', description: 'd' }],
+      models: [{ id: 'opus', efforts: [] }],
+    } as ChatEvent);
+    expect(store.commands('p1').map((c) => c.name)).toContain('deploy');
+    expect(store.models('p1')?.models.map((m) => m.id)).toEqual(['opus']);
+  });
+
+  it('finds a session by id and follows sessionUpdated', async () => {
+    const store = setup();
+    await store.load('p1');
+    expect(store.session('p1', 's1')).toEqual(session);
+    expect(store.session('p1', 'missing')).toBeUndefined();
+    push({
+      ...ids,
+      type: 'sessionUpdated',
+      session: { ...session, permissionMode: 'auto' },
+    });
+    expect(store.session('p1', 's1')?.permissionMode).toBe('auto');
+  });
+
+  it('clear and update forward to main and return its error', async () => {
+    const store = setup();
+    expect(await store.clear('p1', 's1')).toBeUndefined();
+    expect(api['clearChat']).toHaveBeenCalledWith('p1', 's1');
+    api['updateChatSession'].mockResolvedValueOnce({ code: 'chat.notFound' });
+    expect(await store.update('p1', 's1', { permissionMode: 'auto' })).toEqual({
+      code: 'chat.notFound',
+    });
+    expect(api['updateChatSession']).toHaveBeenCalledWith('p1', 's1', {
+      permissionMode: 'auto',
+    });
+  });
+
+  it('start passes the permission mode to main', async () => {
+    const store = setup();
+    await store.start('p1', 'hi', { permissionMode: 'auto' });
+    expect(api['startChat']).toHaveBeenCalledWith('p1', 'hi', {
+      permissionMode: 'auto',
+    });
   });
 
   it('start without the desktop gives noDesktop', async () => {

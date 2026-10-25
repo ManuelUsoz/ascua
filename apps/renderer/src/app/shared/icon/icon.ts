@@ -43,6 +43,10 @@ export const ICONS = {
   chat: ['M4 5h16v11H9l-5 4z'],
   minimize: ['M5 18h14'],
   close: ['M6 6l12 12M18 6L6 18'],
+  'arrow-up': ['M12 19V5M6 11l6-6 6 6'],
+  paperclip: [
+    'M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 17.5a2 2 0 0 1-3-3L14.5 7',
+  ],
 } as const satisfies Record<string, readonly string[]>;
 
 export type IconName = keyof typeof ICONS;

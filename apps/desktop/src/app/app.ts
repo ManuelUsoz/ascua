@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { DIRECT_MODE } from '@ascua/chat';
+import { LOCATE_MODE, MAKE_MODE, REVIEW_MODE } from './chats/harness/nxy-modes';
 import { IPC } from '@ascua/ipc';
 import { bridgeToRenderer, ChatEventBus } from './chats/chat-event-bus';
 import { ChatService } from './chats/chat-service';
@@ -171,7 +172,12 @@ export default class App {
         store: new JsonChatSessionStore(join(userData, 'chats')),
         ledger: new JsonUsageLedger(join(userData, 'usage')),
         registry: chatRegistry,
-        harness: new HarnessHost([DIRECT_MODE]),
+        harness: new HarnessHost([
+          DIRECT_MODE,
+          LOCATE_MODE,
+          MAKE_MODE,
+          REVIEW_MODE,
+        ]),
         projects: repository,
         bus: chatBus,
         ids: randomUUID,

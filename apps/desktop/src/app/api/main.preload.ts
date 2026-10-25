@@ -249,12 +249,20 @@ const api: AscuaApi = {
     ipcRenderer.invoke(IPC.listChatSessions, projectId) as Promise<
       ChatSession[]
     >,
-  startChat: (projectId, prompt) =>
+  startChat: (projectId, prompt, options) =>
     ipcRenderer.invoke(
       IPC.startChat,
       projectId,
       prompt,
+      options,
     ) as Promise<StartChatResult>,
+  listChatCommands: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.chatCommands, projectId, sessionId),
+  listChatModels: (projectId) => ipcRenderer.invoke(IPC.chatModels, projectId),
+  clearChat: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.clearChat, projectId, sessionId),
+  updateChatSession: (projectId, sessionId, patch) =>
+    ipcRenderer.invoke(IPC.updateChatSession, projectId, sessionId, patch),
   getChatTranscript: (projectId, sessionId) =>
     ipcRenderer.invoke(IPC.chatTranscript, projectId, sessionId) as Promise<
       ChatTranscript | undefined

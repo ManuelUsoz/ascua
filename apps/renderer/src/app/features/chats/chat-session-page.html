@@ -10,6 +10,14 @@
 <app-chat-composer
   [disabled]="!loaded()"
   [running]="running()"
+  [commands]="commands()"
+  [permissionMode]="permissionMode()"
+  [model]="model()"
+  [effort]="effort()"
+  [catalog]="catalog()"
+  [mode]="mode()"
   (submitted)="send($event)"
   (aborted)="stop()"
+  (runtimeChanged)="changeRuntime($event)"
+  (modeCleared)="exitMode()"
 />

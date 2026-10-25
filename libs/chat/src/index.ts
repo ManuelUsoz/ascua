@@ -7,3 +7,5 @@ export * from './lib/events';
 export * from './lib/transcript';
 export * from './lib/harness';
 export * from './lib/ports';
+export * from './lib/commands';
+export * from './lib/catalog';

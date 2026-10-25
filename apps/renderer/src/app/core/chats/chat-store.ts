@@ -5,11 +5,21 @@ import {
   Injectable,
   signal,
 } from '@angular/core';
-import type { AscuaApi, AscuaError, TerminalSession } from '@ascua/ipc';
+import type {
+  AscuaApi,
+  AscuaError,
+  ChatSessionPatch,
+  ChatStartOptions,
+  TerminalSession,
+} from '@ascua/ipc';
 import {
   applyChatEvent,
+  mergeCommands,
   pendingPermissions,
+  STATIC_MODEL_CATALOGS,
+  type ModelCatalog,
   type AgentProviderId,
+  type ChatCommand,
   type ChatEvent,
   type ChatSession,
   type Message,
@@ -79,6 +89,8 @@ export class ChatStore {
   private readonly selected = signal<AgentProviderId | undefined>(undefined);
   private readonly authState = signal<ProviderAuth | undefined>(undefined);
   private readonly sessionMap = signal<Record<string, ChatSession[]>>({});
+  private readonly commandMap = signal<Record<string, ChatCommand[]>>({});
+  private readonly modelMap = signal<Record<string, ModelCatalog>>({});
   private readonly transcripts = signal<Record<string, Message[]>>({});
   private readonly statuses = signal<Record<string, SessionStatus>>({});
   private readonly failure = signal<AscuaError | undefined>(undefined);
@@ -94,6 +106,24 @@ export class ChatStore {
 
   sessions(projectId: string): readonly ChatSession[] {
     return this.sessionMap()[projectId] ?? NONE;
+  }
+
+  session(projectId: string, sessionId: string): ChatSession | undefined {
+    return this.sessionMap()[projectId]?.find((s) => s.id === sessionId);
+  }
+
+  /** Slash commands: builtin and nxy always, provider ones once pushed. */
+  commands(projectId: string): readonly ChatCommand[] {
+    return mergeCommands(this.commandMap()[projectId] ?? []);
+  }
+
+  /** Model catalog of the project; the static one until the live one lands. */
+  models(projectId: string): ModelCatalog | undefined {
+    const provider = this.selected();
+    return (
+      this.modelMap()[projectId] ??
+      (provider ? STATIC_MODEL_CATALOGS[provider] : undefined)
+    );
   }
 
   /** Undefined until `loadTranscript` has resolved. */
@@ -205,6 +235,32 @@ export class ChatStore {
     }
   }
 
+  /** Loads the project's slash commands; a session adds its live list. */
+  async loadCommands(projectId: string, sessionId?: string): Promise<void> {
+    const api = this.api;
+    if (!api) return this.failure.set(NO_DESKTOP);
+    this.subscribe(api);
+    try {
+      const list = await api.listChatCommands(projectId, sessionId);
+      this.commandMap.update((m) => ({ ...m, [projectId]: list }));
+    } catch (e) {
+      this.failure.set(toAscuaError(e));
+    }
+  }
+
+  /** Loads the project's model catalog; keeps the static one on failure. */
+  async loadModels(projectId: string): Promise<void> {
+    const api = this.api;
+    if (!api) return;
+    this.subscribe(api);
+    try {
+      const catalog = await api.listChatModels(projectId);
+      this.modelMap.update((m) => ({ ...m, [projectId]: catalog }));
+    } catch {
+      // Static fallback from `models()`.
+    }
+  }
+
   /** Fetches the transcript once; later changes arrive as events. */
   async loadTranscript(projectId: string, sessionId: string): Promise<void> {
     const api = this.api;
@@ -257,12 +313,13 @@ export class ChatStore {
   async start(
     projectId: string,
     prompt: string,
+    options?: ChatStartOptions,
   ): Promise<ChatSession | AscuaError> {
     const api = this.api;
     if (!api) return NO_DESKTOP;
     this.subscribe(api);
     try {
-      const result = await api.startChat(projectId, prompt);
+      const result = await api.startChat(projectId, prompt, options);
       if (!result.ok) return result.error;
       this.putSession(result.session);
       // Events can beat the invoke reply: show them now, then reconcile.
@@ -288,6 +345,35 @@ export class ChatStore {
     if (!api) return NO_DESKTOP;
     try {
       return await api.sendChatPrompt(projectId, sessionId, text);
+    } catch (e) {
+      return toAscuaError(e);
+    }
+  }
+
+  /** Empties the conversation in place; main answers with `transcriptCleared`. */
+  async clear(
+    projectId: string,
+    sessionId: string,
+  ): Promise<AscuaError | undefined> {
+    const api = this.api;
+    if (!api) return NO_DESKTOP;
+    try {
+      return await api.clearChat(projectId, sessionId);
+    } catch (e) {
+      return toAscuaError(e);
+    }
+  }
+
+  /** Changes the permission mode or the nxy mode; main echoes the session. */
+  async update(
+    projectId: string,
+    sessionId: string,
+    patch: ChatSessionPatch,
+  ): Promise<AscuaError | undefined> {
+    const api = this.api;
+    if (!api) return NO_DESKTOP;
+    try {
+      return await api.updateChatSession(projectId, sessionId, patch);
     } catch (e) {
       return toAscuaError(e);
     }
@@ -338,6 +424,8 @@ export class ChatStore {
       this.statuses.update((s) => ({ ...s, [id]: event.status }));
     } else if (event.type === 'sessionUpdated') {
       this.putSession(event.session);
+    } else if (event.type === 'capabilitiesChanged') {
+      this.applyCapabilities(event);
     }
     const current = this.transcripts()[id];
     if (!current || this.fetching.has(id)) this.buffer(event);
@@ -347,6 +435,31 @@ export class ChatStore {
         [id]: applyChatEvent(current, event),
       }));
     }
+  }
+
+  private applyCapabilities(
+    event: Extract<ChatEvent, { type: 'capabilitiesChanged' }>,
+  ): void {
+    const projectId = this.projectOf(event.sessionId);
+    if (!projectId) return;
+    const { commands, models } = event;
+    if (commands) {
+      this.commandMap.update((m) => ({ ...m, [projectId]: commands }));
+    }
+    const provider = this.session(projectId, event.sessionId)?.provider;
+    if (models && models.length > 0 && provider) {
+      this.modelMap.update((m) => ({
+        ...m,
+        [projectId]: { provider, models, source: 'live' },
+      }));
+    }
+  }
+
+  private projectOf(sessionId: string): string | undefined {
+    for (const [projectId, list] of Object.entries(this.sessionMap())) {
+      if (list.some((s) => s.id === sessionId)) return projectId;
+    }
+    return undefined;
   }
 
   private putSession(session: ChatSession): void {

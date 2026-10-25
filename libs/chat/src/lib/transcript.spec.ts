@@ -21,6 +21,10 @@ const request = {
 };
 
 describe('applyChatEvent', () => {
+  it('empties the transcript on transcriptCleared', () => {
+    expect(fold([{ ...ids, type: 'transcriptCleared' }], [msg()])).toEqual([]);
+  });
+
   it('merges deltas into the last part of the same kind', () => {
     const out = fold([
       { ...ids, type: 'messageStarted', message: msg() },

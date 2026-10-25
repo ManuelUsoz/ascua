@@ -1,9 +1,16 @@
 import {
+  DEFAULT_PERMISSION_MODE,
   ChatError,
   EMPTY_USAGE,
+  STATIC_MODEL_CATALOGS,
   addUsage,
   applyChatEvent,
+  mergeCommands,
+  nxyMode,
+  type ModelCatalog,
+  type ProviderModel,
   type AgentEvent,
+  type ChatCommand,
   type ChatEvent,
   type ChatEventPublisher,
   type ChatSession,
@@ -16,6 +23,7 @@ import {
   type ProviderSession,
   type UsageLedger,
 } from '@ascua/chat';
+import type { ChatSessionPatch, ChatStartOptions } from '@ascua/ipc';
 import type { ProjectRepository } from '../projects/project-repository';
 import type { HarnessHost } from './harness/harness-host';
 import type { ProviderRegistry } from './provider-registry';
@@ -48,7 +56,13 @@ interface PendingPermission {
   projectId: string;
   sessionId: string;
   messageId: string;
+  tool: PermissionRequest['tool'];
   resolve(decision: PermissionDecision): void;
+}
+
+interface Capabilities {
+  commands: ChatCommand[];
+  models: ProviderModel[];
 }
 
 type Unstamped = ChatEvent extends infer E
@@ -63,6 +77,10 @@ function toSession(r: ChatSessionRecord): ChatSession {
     projectId: r.projectId,
     provider: r.provider,
     mode: r.mode,
+    permissionMode: r.permissionMode,
+    model: r.model,
+    effort: r.effort,
+    resolvedModel: r.resolvedModel,
     title: r.title,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
@@ -84,6 +102,7 @@ export class ChatService {
     { projectId: string; session: ProviderSession }
   >();
   private readonly pending = new Map<string, PendingPermission>();
+  private readonly capsCache = new Map<string, Capabilities>();
 
   constructor(private readonly o: ChatServiceOptions) {}
 
@@ -110,17 +129,25 @@ export class ChatService {
     return { session: toSession(record), messages: record.messages };
   }
 
-  async start(projectId: string, prompt: string): Promise<ChatSession> {
+  async start(
+    projectId: string,
+    prompt: string,
+    options?: ChatStartOptions,
+  ): Promise<ChatSession> {
     if (!(await this.o.projects.get(projectId))) {
       throw new ChatError('notFound');
     }
     const provider = await this.o.registry.current();
     const now = this.o.now();
+    const nxy = nxyMode(prompt);
     const record: ChatSessionRecord = {
       id: this.o.ids(),
       projectId,
       provider: provider.descriptor.id,
-      mode: 'chat',
+      mode: nxy?.mode ?? 'chat',
+      permissionMode: options?.permissionMode ?? DEFAULT_PERMISSION_MODE,
+      model: options?.model,
+      effort: options?.effort,
       title: titleOf(prompt),
       createdAt: now,
       updatedAt: now,
@@ -129,7 +156,8 @@ export class ChatService {
       messages: [],
     };
     await this.save(record);
-    return toSession(await this.accept(record, prompt));
+    if (nxy && !nxy.prompt) return toSession(record);
+    return toSession(await this.accept(record, nxy ? nxy.prompt : prompt));
   }
 
   async send(
@@ -148,7 +176,153 @@ export class ChatService {
       this.starting.delete(sessionId);
     }
     if (!record) throw new ChatError('notFound');
+    const nxy = nxyMode(text);
+    if (nxy) {
+      if (this.runs.has(sessionId) || this.starting.has(sessionId)) {
+        throw new ChatError('busy');
+      }
+      if (nxy.mode !== record.mode) {
+        record.mode = nxy.mode;
+        this.dropProviderSession(sessionId);
+      }
+      if (!nxy.prompt) {
+        record.updatedAt = this.o.now();
+        await this.save(record);
+        this.publish(record, { type: 'sessionUpdated' });
+        return;
+      }
+      await this.save(record);
+      text = nxy.prompt;
+    }
     await this.accept(record, text);
+  }
+
+  async clear(projectId: string, sessionId: string): Promise<void> {
+    if (this.runs.has(sessionId) || this.starting.has(sessionId)) {
+      throw new ChatError('busy');
+    }
+    const record = await this.o.store.get(projectId, sessionId);
+    if (!record) throw new ChatError('notFound');
+    if (this.runs.has(sessionId)) throw new ChatError('busy');
+    this.dropProviderSession(sessionId);
+    record.resumeToken = undefined;
+    record.messages = [];
+    record.mode = 'chat';
+    record.status = 'idle';
+    record.updatedAt = this.o.now();
+    await this.save(record);
+    this.publish(record, { type: 'transcriptCleared' });
+    this.publish(record, { type: 'sessionUpdated' });
+  }
+
+  async update(
+    projectId: string,
+    sessionId: string,
+    patch: ChatSessionPatch,
+  ): Promise<void> {
+    const run = this.runs.get(sessionId);
+    if (run && patch.mode !== undefined && patch.mode !== run.record.mode) {
+      throw new ChatError('busy');
+    }
+    if (
+      (run || this.starting.has(sessionId)) &&
+      (patch.model !== undefined || patch.effort !== undefined)
+    ) {
+      throw new ChatError('busy');
+    }
+    const record =
+      run?.projectId === projectId
+        ? run.record
+        : await this.o.store.get(projectId, sessionId);
+    if (!record) throw new ChatError('notFound');
+    if (patch.mode !== undefined && patch.mode !== record.mode) {
+      record.mode = patch.mode;
+      this.dropProviderSession(sessionId);
+    }
+    if (patch.permissionMode !== undefined) {
+      record.permissionMode = patch.permissionMode;
+      const live = this.providerSessions.get(sessionId)?.session;
+      if (live?.setPermissionMode) {
+        try {
+          await live.setPermissionMode(patch.permissionMode);
+        } catch (err) {
+          console.error('chat setPermissionMode failed', err);
+        }
+      }
+    }
+    let runtimeChanged = false;
+    if (patch.model !== undefined) {
+      const next = patch.model ?? undefined;
+      if (next !== record.model) runtimeChanged = true;
+      record.model = next;
+    }
+    if (patch.effort !== undefined) {
+      const next = patch.effort ?? undefined;
+      if (next !== record.effort) runtimeChanged = true;
+      record.effort = next;
+    }
+    if (runtimeChanged) this.dropProviderSession(sessionId);
+    record.updatedAt = this.o.now();
+    await this.save(record);
+    const mode = patch.permissionMode;
+    if (mode === 'fullAccess' || mode === 'acceptEdits') {
+      for (const [requestId, p] of [...this.pending]) {
+        if (p.projectId !== projectId || p.sessionId !== sessionId) continue;
+        if (mode === 'acceptEdits' && p.tool !== 'edit') continue;
+        this.settle(requestId, { allow: true }, true);
+      }
+    }
+    this.publish(record, { type: 'sessionUpdated' });
+  }
+
+  private async capabilities(projectId: string): Promise<Capabilities> {
+    const project = await this.o.projects.get(projectId);
+    if (!project) throw new ChatError('notFound');
+    let caps = this.capsCache.get(projectId);
+    if (!caps) {
+      try {
+        const provider = await this.o.registry.current();
+        const got = await provider.capabilities?.(project.path);
+        caps = { commands: got?.commands ?? [], models: got?.models ?? [] };
+      } catch {
+        caps = { commands: [], models: [] };
+      }
+      this.capsCache.set(projectId, caps);
+    }
+    return caps;
+  }
+
+  async commands(projectId: string): Promise<ChatCommand[]> {
+    return mergeCommands((await this.capabilities(projectId)).commands);
+  }
+
+  async models(projectId: string): Promise<ModelCatalog> {
+    const caps = await this.capabilities(projectId);
+    const provider = (await this.o.registry.current()).descriptor.id;
+    if (caps.models.length > 0) {
+      return { provider, models: caps.models, source: 'live' };
+    }
+    return STATIC_MODEL_CATALOGS[provider];
+  }
+
+  private dropProviderSession(sessionId: string): void {
+    const entry = this.providerSessions.get(sessionId);
+    if (!entry) return;
+    this.providerSessions.delete(sessionId);
+    this.closeQuietly(entry.session);
+  }
+
+  /** Publish an event for a session that has no run. */
+  private publish(
+    record: ChatSessionRecord,
+    event: { type: 'transcriptCleared' | 'sessionUpdated' },
+  ): void {
+    const base = { sessionId: record.id, projectId: record.projectId };
+    this.o.bus.publish(
+      event.type === 'transcriptCleared'
+        ? { ...base, type: 'transcriptCleared' }
+        : { ...base, type: 'sessionUpdated', session: toSession(record) },
+    );
   }
 
   resolvePermission(
@@ -269,6 +443,11 @@ export class ChatService {
           cwd,
           resumeToken: record.resumeToken,
           turn: setup,
+          runtime: {
+            permissionMode: record.permissionMode,
+            model: record.model,
+            effort: record.effort,
+          },
           onEvent: (e) => this.onAgentEvent(sessionId, e),
           onPermission: (req) => this.onPermission(sessionId, req),
         });
@@ -366,7 +545,30 @@ export class ChatService {
 
   private onAgentEvent(sessionId: string, e: AgentEvent): void {
     const run = this.runs.get(sessionId);
-    if (!run || run.dead || e.type === 'usage') return;
+    if (!run || run.dead) return;
+    if (e.type === 'sessionInfo') {
+      if (e.commands || e.models) {
+        const prev = this.capsCache.get(run.projectId);
+        this.capsCache.set(run.projectId, {
+          commands: e.commands ?? prev?.commands ?? [],
+          models: e.models?.length ? e.models : (prev?.models ?? []),
+        });
+        this.emit(run, {
+          type: 'capabilitiesChanged',
+          commands: e.commands ? mergeCommands(e.commands) : undefined,
+          models: e.models,
+        });
+      }
+      if (e.model && e.model !== run.record.resolvedModel) {
+        run.record.resolvedModel = e.model;
+        this.emit(run, {
+          type: 'sessionUpdated',
+          session: toSession(run.record),
+        });
+      }
+      return;
+    }
+    if (e.type === 'usage') return;
     this.emit(run, { ...e, messageId: run.assistantId });
   }
 
@@ -378,11 +580,19 @@ export class ChatService {
     if (!run || run.dead) {
       return Promise.resolve({ allow: false, reason: 'aborted' });
     }
+    const mode = run.record.permissionMode;
+    if (
+      mode === 'fullAccess' ||
+      (mode === 'acceptEdits' && request.tool === 'edit')
+    ) {
+      return Promise.resolve({ allow: true });
+    }
     return new Promise<PermissionDecision>((resolve) => {
       this.pending.set(request.requestId, {
         projectId: run.projectId,
         sessionId,
         messageId: run.assistantId,
+        tool: request.tool,
         resolve,
       });
       run.record.status = 'awaitingPermission';

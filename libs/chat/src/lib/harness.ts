@@ -1,8 +1,7 @@
 import type { ChatSession, ToolKind } from './model';
 import type { Usage } from './usage';
 
-/** Later: 'locate' | 'make' | 'review'. */
-export type ChatModeId = 'chat';
+export type ChatModeId = 'chat' | 'locate' | 'make' | 'review';
 
 export type AgentRole =
   | 'scout'
@@ -28,6 +27,7 @@ export interface AgentRunRecord {
 export interface TurnSetup {
   systemAppend?: string;
   allowedTools?: ToolKind[];
+  deniedTools?: ToolKind[];
   agents?: AgentDefinition[];
 }
 

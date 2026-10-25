@@ -25,7 +25,53 @@
   "composer": {
     "label": "Mensaje",
     "placeholder": "Escribí tu mensaje. Enter envía, Shift+Enter agrega una línea.",
-    "stop": "Detener"
+    "stop": "Detener",
+    "send": "Enviar",
+    "attach": "Adjuntar archivo",
+    "attachSoon": "Adjuntar archivos llegará pronto",
+    "permission": {
+      "label": "Permisos",
+      "supervised": "Supervisado",
+      "supervisedHint": "Pregunta antes de ejecutar herramientas o editar archivos",
+      "acceptEdits": "Aceptar ediciones",
+      "acceptEditsHint": "Edita archivos solo y pregunta por lo demás",
+      "auto": "Automático",
+      "autoHint": "Un clasificador aprueba lo seguro y pregunta el resto",
+      "fullAccess": "Acceso total",
+      "fullAccessHint": "Ejecuta todas las herramientas sin preguntar"
+    },
+    "model": {
+      "label": "Modelo",
+      "default": "Predeterminado del proveedor"
+    },
+    "effort": {
+      "label": "Esfuerzo de razonamiento",
+      "default": "Esfuerzo predeterminado",
+      "minimal": "Mínimo",
+      "low": "Bajo",
+      "medium": "Medio",
+      "high": "Alto",
+      "xhigh": "Muy alto",
+      "max": "Máximo"
+    },
+    "mode": {
+      "locate": "Ubicar",
+      "make": "Construir",
+      "review": "Revisar"
+    },
+    "exitMode": "Salir del modo"
+  },
+  "commands": {
+    "label": "Comandos",
+    "clear": "Borra la conversación y empieza de cero",
+    "locate": "Ubica algo y reporta path:line, sin editar",
+    "make": "Planifica por lotes, después implementa y verifica",
+    "review": "Revisa archivos o un PR y reporta hallazgos, sin editar",
+    "group": {
+      "builtin": "Integrados",
+      "nxy": "Modos nxy",
+      "custom": "Del proyecto"
+    }
   },
   "session": {
     "loading": "Cargando el chat",

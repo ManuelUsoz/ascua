@@ -10,7 +10,11 @@ function fakeSdk(
     opts: Record<string, any>,
     emit: (m: Msg) => void,
   ) => void | Promise<void>,
-  extra: Partial<{ init: () => Promise<unknown>; account: object }> = {},
+  extra: Partial<{
+    init: () => Promise<unknown>;
+    account: object;
+    supported: () => Promise<unknown>;
+  }> = {},
 ) {
   const closed = vi.fn();
   const interrupt = vi.fn(async () => undefined);
@@ -35,6 +39,7 @@ function fakeSdk(
       return {
         initializationResult: extra.init ?? (async () => ({})),
         accountInfo: async () => extra.account ?? {},
+        supportedCommands: extra.supported ?? (async () => []),
         interrupt,
         close: () => {
           ended = true;
@@ -85,6 +90,7 @@ const open = (
   p.open({
     cwd: '/p',
     turn: {},
+    runtime: { permissionMode: 'supervised' },
     onEvent: (e) => events.push(e),
     onPermission: async () => ({ allow: true }),
     ...o,
@@ -112,11 +118,136 @@ describe('ClaudeProvider', () => {
       outputTokens: 2,
       costUsd: 0.1,
     });
-    expect(events[0]).toMatchObject({ type: 'messageDelta', text: 'a' });
+    expect(events.find((e) => e.type === 'messageDelta')).toMatchObject({
+      text: 'a',
+    });
     // second turn reports the cost delta
     const r2 = await s.prompt('again');
     expect(r2.usage.costUsd).toBeCloseTo(0);
     s.close();
+  });
+
+  it('emits custom commands after init and maps deniedTools', async () => {
+    let seen: Record<string, any> = {};
+    const { sdk } = fakeSdk(() => undefined, {
+      init: async () => ({
+        commands: [
+          {
+            name: 'compact',
+            description: 'x',
+            argumentHint: '',
+            builtin: true,
+          },
+          { name: 'deploy', description: 'Ship', argumentHint: '<env>' },
+        ],
+      }),
+    });
+    const orig = sdk.query;
+    sdk.query = (a: any) => {
+      seen = a.options;
+      return orig(a);
+    };
+    const events: AgentEvent[] = [];
+    const s = await open(
+      provider(sdk),
+      { turn: { deniedTools: ['edit', 'execute'] } },
+      events,
+    );
+    expect(events[0]).toEqual({
+      type: 'sessionInfo',
+      commands: [
+        {
+          name: 'deploy',
+          source: 'custom',
+          description: 'Ship',
+          argumentHint: '<env>',
+        },
+      ],
+    });
+    expect(seen['disallowedTools']).toEqual([
+      'Edit',
+      'MultiEdit',
+      'Write',
+      'NotebookEdit',
+      'Bash',
+    ]);
+    s.close();
+  });
+
+  it('capabilities() returns commands and models and fails open', async () => {
+    const ok = fakeSdk(() => undefined, {
+      init: async () => ({
+        commands: [
+          { name: 'init', builtin: true },
+          { name: 'deploy', description: 'Ship' },
+        ],
+        models: [
+          {
+            value: 'opus',
+            displayName: 'Opus',
+            description: 'd',
+            supportedEffortLevels: ['low', 'max'],
+            supportsAutoMode: true,
+          },
+        ],
+      }),
+    });
+    expect(await provider(ok.sdk).capabilities('/p')).toEqual({
+      commands: [{ name: 'deploy', source: 'custom', description: 'Ship' }],
+      models: [
+        {
+          id: 'opus',
+          label: 'Opus',
+          description: 'd',
+          efforts: ['low', 'max'],
+          supportsAutoMode: true,
+        },
+      ],
+    });
+    expect(ok.closed).toHaveBeenCalled();
+    const bad = fakeSdk(() => undefined, {
+      init: async () => {
+        throw new Error('boom');
+      },
+    });
+    expect(await provider(bad.sdk).capabilities('/p')).toEqual({
+      commands: [],
+      models: [],
+    });
+    vi.useFakeTimers();
+    const slow = fakeSdk(() => undefined, {
+      init: () => new Promise(() => undefined),
+    });
+    const pending = provider(slow.sdk).capabilities('/p');
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(await pending).toEqual({ commands: [], models: [] });
+    vi.useRealTimers();
+  });
+
+  it('passes runtime mode, model and effort to the query', async () => {
+    const { sdk } = fakeSdk(() => undefined);
+    const inner = sdk.query;
+    const seen: Record<string, any>[] = [];
+    sdk.query = (a) => {
+      seen.push(a.options);
+      return inner(a);
+    };
+    const s = await open(provider(sdk), {
+      runtime: { permissionMode: 'fullAccess', model: 'opus', effort: 'high' },
+    });
+    expect(seen[0]).toMatchObject({
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
+      model: 'opus',
+      effort: 'high',
+    });
+    s.close();
+    const s2 = await open(provider(sdk), {
+      runtime: { permissionMode: 'supervised' },
+    });
+    expect(seen[1]['permissionMode']).toBe('default');
+    expect(seen[1]['model']).toBeUndefined();
+    s2.close();
   });
 
   it('rejects a second prompt during a turn with busy', async () => {

@@ -1,3 +1,5 @@
+import type { ProviderModel } from './catalog';
+import type { ChatCommand } from './commands';
 import type { ChatErrorKind } from './errors';
 import type {
   ChatSession,
@@ -43,6 +45,12 @@ export type ChatEvent = Ids &
     | { type: 'messageCompleted'; message: Message }
     | { type: 'statusChanged'; status: SessionStatus; error?: ChatErrorKind }
     | { type: 'sessionUpdated'; session: ChatSession }
+    | { type: 'transcriptCleared' }
+    | {
+        type: 'capabilitiesChanged';
+        commands?: ChatCommand[];
+        models?: ProviderModel[];
+      }
     | { type: 'error'; error: ChatErrorKind }
   );
 
@@ -50,4 +58,10 @@ export type ChatEvent = Ids &
 export type AgentEvent =
   | { type: 'messageDelta'; part: 'text' | 'thinking'; text: string }
   | { type: 'toolUpdated'; part: ToolUsePart | ToolResultPart }
-  | { type: 'usage'; usage: Usage; stop?: StopReason };
+  | { type: 'usage'; usage: Usage; stop?: StopReason }
+  | {
+      type: 'sessionInfo';
+      model?: string;
+      commands?: ChatCommand[];
+      models?: ProviderModel[];
+    };

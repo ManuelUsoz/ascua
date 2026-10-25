@@ -1,10 +1,36 @@
 import { TestBed } from '@angular/core/testing';
+import {
+  CLEAR_COMMAND,
+  NXY_COMMANDS,
+  type ChatCommand,
+  type ChatModeId,
+  type PermissionMode,
+} from '@ascua/chat';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { describe, expect, it, vi } from 'vitest';
 import { i18nTesting } from '../../../testing/i18n';
 import { ChatComposer } from './chat-composer';
 
-function setup(inputs: { disabled?: boolean; running?: boolean } = {}) {
+const CUSTOM: ChatCommand = {
+  name: 'deploy',
+  source: 'custom',
+  description: 'Deploy the app',
+};
+const COMMANDS: ChatCommand[] = [CLEAR_COMMAND, ...NXY_COMMANDS, CUSTOM];
+
+interface Inputs {
+  disabled?: boolean;
+  running?: boolean;
+  commands?: ChatCommand[];
+  permissionMode?: PermissionMode;
+  model?: string;
+  mode?: ChatModeId;
+}
+
+/** Visible text of a control with whitespace collapsed. */
+const label = (el: Element) => el.textContent?.replace(/\s+/g, ' ').trim();
+
+function setup(inputs: Inputs = {}) {
   TestBed.configureTestingModule({
     imports: [i18nTesting('es')],
     providers: [provideTranslocoScope('chats')],
@@ -12,10 +38,22 @@ function setup(inputs: { disabled?: boolean; running?: boolean } = {}) {
   const fixture = TestBed.createComponent(ChatComposer);
   fixture.componentRef.setInput('disabled', inputs.disabled ?? false);
   fixture.componentRef.setInput('running', inputs.running ?? false);
+  fixture.componentRef.setInput('commands', inputs.commands ?? []);
+  fixture.componentRef.setInput(
+    'permissionMode',
+    inputs.permissionMode ?? 'supervised',
+  );
+  fixture.componentRef.setInput('model', inputs.model);
+  fixture.componentRef.setInput('mode', inputs.mode ?? 'chat');
   const submitted = vi.fn();
   const aborted = vi.fn();
-  fixture.componentInstance.submitted.subscribe(submitted);
-  fixture.componentInstance.aborted.subscribe(aborted);
+  const runtimeChanged = vi.fn();
+  const modeCleared = vi.fn();
+  const composer = fixture.componentInstance;
+  composer.submitted.subscribe(submitted);
+  composer.aborted.subscribe(aborted);
+  composer.runtimeChanged.subscribe(runtimeChanged);
+  composer.modeCleared.subscribe(modeCleared);
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const area = el.querySelector('textarea') as HTMLTextAreaElement;
@@ -35,7 +73,22 @@ function setup(inputs: { disabled?: boolean; running?: boolean } = {}) {
     fixture.detectChanges();
     return event;
   };
-  return { el, area, type, key, submitted, aborted };
+  const options = () =>
+    Array.from(el.querySelectorAll<HTMLElement>('[role="option"]'));
+  const buttons = () => Array.from(el.querySelectorAll('button'));
+  return {
+    el,
+    area,
+    type,
+    key,
+    options,
+    detect: () => fixture.detectChanges(),
+    buttons,
+    submitted,
+    aborted,
+    runtimeChanged,
+    modeCleared,
+  };
 }
 
 describe('ChatComposer', () => {
@@ -65,15 +118,28 @@ describe('ChatComposer', () => {
     type('hola');
     key('Enter');
     expect(submitted).not.toHaveBeenCalled();
-    const buttons = Array.from(el.querySelectorAll('button'));
-    expect(buttons.map((b) => b.textContent?.trim())).toEqual(['Detener']);
-    buttons[0].click();
+    const stop = Array.from(el.querySelectorAll('button')).find(
+      (b) => label(b) === 'Detener',
+    );
+    stop?.click();
     expect(aborted).toHaveBeenCalledTimes(1);
   });
 
-  it('renders no button while idle', () => {
-    const { el } = setup();
-    expect(el.querySelectorAll('button').length).toBe(0);
+  it('while idle there are attach (disabled) and send buttons, and no mode chip', () => {
+    const { el, buttons, type, detect, submitted } = setup();
+    expect(buttons()).toHaveLength(2);
+    const attach = buttons()[0];
+    expect(attach.getAttribute('aria-label')).toBe('Adjuntar archivo');
+    expect(attach.disabled).toBe(true);
+    const send = buttons()[1];
+    expect(send.getAttribute('aria-label')).toBe('Enviar');
+    expect(send.disabled).toBe(true);
+    type('hola');
+    detect();
+    expect(send.disabled).toBe(false);
+    send.click();
+    expect(submitted).toHaveBeenCalledWith('hola');
+    expect(el.querySelector('.chat-composer__chip')).toBeNull();
   });
 
   it('Escape stops at the host and aborts only while running', () => {
@@ -89,5 +155,101 @@ describe('ChatComposer', () => {
     const busy = setup({ running: true });
     busy.key('Escape');
     expect(busy.aborted).toHaveBeenCalledTimes(1);
+  });
+
+  it('typing / opens the menu grouped by source', () => {
+    const { el, type, options } = setup({ commands: COMMANDS });
+    type('/');
+    expect(el.querySelector('[role="listbox"]')).not.toBeNull();
+    expect(
+      options().map(
+        (o) => o.querySelector('.chat-commands__name')?.textContent,
+      ),
+    ).toEqual(['/clear', '/locate', '/make', '/review', '/deploy']);
+    expect(
+      Array.from(el.querySelectorAll('[role="group"]')).map((g) =>
+        g.getAttribute('aria-label'),
+      ),
+    ).toEqual(['Integrados', 'Modos nxy', 'Del proyecto']);
+    expect(options()[0]?.textContent).toContain('Borra la conversación');
+    expect(options()[4]?.textContent).toContain('Deploy the app');
+  });
+
+  it('filters by prefix and Tab completes to /name with a space', () => {
+    const { el, area, type, key, options, submitted } = setup({
+      commands: COMMANDS,
+    });
+    type('/loc');
+    expect(options().map((o) => o.textContent?.trim())).toEqual([
+      expect.stringContaining('/locate'),
+    ]);
+    expect(key('Tab').defaultPrevented).toBe(true);
+    expect(area.value).toBe('/locate ');
+    expect(el.querySelector('[role="listbox"]')).toBeNull();
+    expect(submitted).not.toHaveBeenCalled();
+  });
+
+  it('arrows move the highlight with wrap-around and Enter completes', () => {
+    const { area, type, key, submitted } = setup({ commands: COMMANDS });
+    type('/');
+    key('ArrowDown');
+    expect(area.getAttribute('aria-activedescendant')).toBe('chat-commands-1');
+    key('ArrowUp');
+    key('ArrowUp');
+    expect(area.getAttribute('aria-activedescendant')).toBe('chat-commands-4');
+    key('Enter');
+    expect(area.value).toBe('/deploy ');
+    expect(submitted).not.toHaveBeenCalled();
+  });
+
+  it('Escape closes the menu before stopping a run, and typing reopens it', () => {
+    const { el, type, key, aborted } = setup({
+      running: true,
+      commands: COMMANDS,
+    });
+    type('/');
+    key('Escape');
+    expect(el.querySelector('[role="listbox"]')).toBeNull();
+    expect(aborted).not.toHaveBeenCalled();
+    type('/l');
+    expect(el.querySelector('[role="listbox"]')).not.toBeNull();
+    key('Escape');
+    expect(el.querySelector('[role="listbox"]')).toBeNull();
+    key('Escape');
+    expect(aborted).toHaveBeenCalledTimes(1);
+  });
+
+  it('the permission selector shows the Spanish label and emits a patch', () => {
+    const { el, runtimeChanged } = setup({ permissionMode: 'supervised' });
+    const selects = el.querySelectorAll('select');
+    const permission = selects[selects.length - 1] as HTMLSelectElement;
+    expect(permission.selectedOptions[0]?.textContent?.trim()).toBe(
+      'Supervisado',
+    );
+    permission.value = 'fullAccess';
+    permission.dispatchEvent(new Event('change'));
+    expect(runtimeChanged).toHaveBeenCalledWith({
+      permissionMode: 'fullAccess',
+    });
+  });
+
+  it('a / mid-draft opens the menu and completes at the cursor', () => {
+    const { area, key, options, detect } = setup({ commands: COMMANDS });
+    area.value = 'hola /loc mundo';
+    area.setSelectionRange(9, 9);
+    area.dispatchEvent(new Event('input'));
+    detect();
+    expect(options()).toHaveLength(1);
+    key('Tab');
+    expect(area.value).toBe('hola /locate  mundo');
+    expect(area.selectionStart).toBe(13);
+  });
+
+  it('shows a mode chip whose exit button clears the mode', () => {
+    const { el, modeCleared } = setup({ mode: 'locate' });
+    const chip = el.querySelector('.chat-composer__chip') as HTMLElement;
+    expect(chip.textContent).toContain('Ubicar');
+    chip.querySelector('button')?.click();
+    expect(modeCleared).toHaveBeenCalledTimes(1);
   });
 });

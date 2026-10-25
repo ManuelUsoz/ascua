@@ -5,6 +5,7 @@ import {
   Injectable,
   signal,
 } from '@angular/core';
+import type { AgentProviderId } from '@ascua/chat';
 import { LANGUAGES, type Language, type Settings } from '@ascua/ipc';
 import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
@@ -52,6 +53,20 @@ export class SettingsStore {
     const api = this.api;
     await this.apply(
       api ? await api.updateSettings({ language }) : { language },
+    );
+  }
+
+  /** Remembers the last chat runtime choices of a provider. */
+  async setChatDefaults(
+    provider: AgentProviderId,
+    defaults: NonNullable<Settings['chatDefaults']>[AgentProviderId],
+  ): Promise<void> {
+    const chatDefaults = { ...this.state().chatDefaults, [provider]: defaults };
+    const api = this.api;
+    await this.apply(
+      api
+        ? await api.updateSettings({ chatDefaults })
+        : { ...this.state(), chatDefaults },
     );
   }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ChatError,
   type AgentProvider,
+  type ChatCommand,
   type ChatEvent,
   type ChatSessionRecord,
   type ChatSessionStore,
@@ -18,6 +19,7 @@ import {
 import type { Project } from '@ascua/ipc';
 import { ChatService } from './chat-service';
 import { HarnessHost } from './harness/harness-host';
+import { LOCATE_MODE, MAKE_MODE, REVIEW_MODE } from './harness/nxy-modes';
 import { ProviderRegistry } from './provider-registry';
 
 const project = { id: 'p1', name: 'Demo', path: '/demo', terminals: [] };
@@ -83,12 +85,21 @@ function fakeProvider(script: Script, openError?: Error) {
     aborted: 0,
     release: () => undefined as void,
     decisions: [] as PermissionDecision[],
+    opens: [] as OpenOptions[],
+    probes: 0,
+    modes: [] as string[],
+    probed: [] as ChatCommand[],
   };
   const provider: AgentProvider = {
     descriptor: { id: 'claude', enabled: true },
     authStatus: async () => ({ provider: 'claude', state: 'loggedIn' }),
     loginCommand: () => undefined,
+    capabilities: async () => {
+      state.probes++;
+      return { commands: state.probed, models: [] };
+    },
     open: async (o) => {
+      state.opens.push(o);
       if (openError) throw openError;
       const session: ProviderSession = {
         resumeToken: 'tok',
@@ -96,6 +107,7 @@ function fakeProvider(script: Script, openError?: Error) {
           const release = new Promise<void>((r) => (state.release = r));
           return script(o, release);
         },
+        setPermissionMode: async (m) => void state.modes.push(m),
         abort: () => void state.aborted++,
         close: () => void state.closed++,
       };
@@ -121,7 +133,12 @@ function setup(script: Script, openError?: Error) {
         update: async () => undefined,
       },
     }),
-    harness: new HarnessHost([DIRECT_MODE]),
+    harness: new HarnessHost([
+      DIRECT_MODE,
+      LOCATE_MODE,
+      MAKE_MODE,
+      REVIEW_MODE,
+    ]),
     projects: {
       get: async (id: string) =>
         id === 'p1' ? (project as Project) : undefined,
@@ -133,6 +150,7 @@ function setup(script: Script, openError?: Error) {
   return { service, store, ledger, events, state };
 }
 
+const SUP = { permissionMode: 'supervised' } as const;
 const tick = () => new Promise((r) => setTimeout(r, 0));
 async function until(cond: () => boolean) {
   for (let i = 0; i < 100 && !cond(); i++) await tick();
@@ -237,7 +255,7 @@ describe('ChatService', () => {
       );
       return { stop: 'endTurn', usage };
     });
-    const session = await service.start('p1', 'a');
+    const session = await service.start('p1', 'a', SUP);
     await until(() => types(events).includes('permissionRequested'));
     expect((lastStatus(events) as { status: string }).status).toBe(
       'awaitingPermission',
@@ -256,7 +274,7 @@ describe('ChatService', () => {
       );
       return { stop: 'endTurn', usage };
     });
-    const session = await service.start('p1', 'a');
+    const session = await service.start('p1', 'a', SUP);
     await until(() => types(events).includes('permissionRequested'));
     service.resolvePermission('p1', session.id, 'r1', false);
     await until(() => decisions.length === 1);
@@ -282,7 +300,7 @@ describe('ChatService', () => {
       );
       return { stop: 'aborted', usage };
     });
-    const session = await service.start('p1', 'a');
+    const session = await service.start('p1', 'a', SUP);
     await until(() => types(events).includes('permissionRequested'));
     service.abort('p1', session.id);
     await until(() => decisions.length === 1);
@@ -310,6 +328,252 @@ describe('ChatService', () => {
       kind: 'error',
       code: 'authRequired',
     });
+  });
+
+  const idle = (events: ChatEvent[]) => () =>
+    (lastStatus(events) as { status: string } | undefined)?.status === 'idle';
+
+  const askEdit =
+    (decisions: PermissionDecision[]): Script =>
+    async (o) => {
+      decisions.push(
+        await o.onPermission({ requestId: 'r1', tool: 'edit', title: 'Edit' }),
+      );
+      return { stop: 'endTurn', usage };
+    };
+
+  it('new chats default to fullAccess and approve without a card', async () => {
+    const decisions: PermissionDecision[] = [];
+    const { service, events, state } = setup(askEdit(decisions));
+    const session = await service.start('p1', 'a');
+    await until(idle(events));
+    expect(session.permissionMode).toBe('fullAccess');
+    expect(state.opens[0].runtime.permissionMode).toBe('fullAccess');
+    expect(decisions).toEqual([{ allow: true }]);
+    expect(types(events)).not.toContain('permissionRequested');
+  });
+
+  it('supervised and auto still ask the user', async () => {
+    for (const permissionMode of ['supervised', 'auto'] as const) {
+      const { service, events } = setup(askEdit([]));
+      await service.start('p1', 'a', { permissionMode });
+      await until(() => types(events).includes('permissionRequested'));
+    }
+  });
+
+  it('acceptEdits allows edits but asks for other tools', async () => {
+    const decisions: PermissionDecision[] = [];
+    const { service, events } = setup(async (o) => {
+      decisions.push(
+        await o.onPermission({ requestId: 'r1', tool: 'edit', title: 'Edit' }),
+      );
+      decisions.push(
+        await o.onPermission({ requestId: 'r2', tool: 'execute', title: 'B' }),
+      );
+      return { stop: 'endTurn', usage };
+    });
+    await service.start('p1', 'a', { permissionMode: 'acceptEdits' });
+    await until(() => types(events).includes('permissionRequested'));
+    expect(decisions).toEqual([{ allow: true }]);
+  });
+
+  it('switching to fullAccess settles pending permissions and updates the live session', async () => {
+    const decisions: PermissionDecision[] = [];
+    const { service, events } = setup(askEdit(decisions));
+    const session = await service.start('p1', 'a', SUP);
+    await until(() => types(events).includes('permissionRequested'));
+    await service.update('p1', session.id, { permissionMode: 'fullAccess' });
+    await until(() => decisions.length === 1);
+    expect(decisions[0]).toEqual({ allow: true });
+  });
+
+  it('switching to acceptEdits settles only pending edits', async () => {
+    const decisions: PermissionDecision[] = [];
+    const { service, events } = setup(async (o) => {
+      decisions.push(
+        await o.onPermission({ requestId: 'r1', tool: 'execute', title: 'B' }),
+      );
+      return { stop: 'endTurn', usage };
+    });
+    const session = await service.start('p1', 'a', SUP);
+    await until(() => types(events).includes('permissionRequested'));
+    await service.update('p1', session.id, { permissionMode: 'acceptEdits' });
+    await tick();
+    expect(decisions).toEqual([]);
+  });
+
+  it('calls setPermissionMode on the live provider session', async () => {
+    const { service, events, state } = setup(streaming);
+    const session = await service.start('p1', 'a', SUP);
+    await until(idle(events));
+    await service.update('p1', session.id, { permissionMode: 'auto' });
+    expect(state.modes).toEqual(['auto']);
+  });
+
+  it('a model change while running is busy', async () => {
+    const { service, state } = setup(async (_o, release) => {
+      await release;
+      return { stop: 'endTurn', usage };
+    });
+    const session = await service.start('p1', 'a');
+    await expect(
+      service.update('p1', session.id, { model: 'opus' }),
+    ).rejects.toMatchObject({ kind: 'busy' });
+    state.release();
+  });
+
+  it('a model or effort change while idle drops the provider session', async () => {
+    const { service, state, events } = setup(streaming);
+    const session = await service.start('p1', 'a');
+    await until(idle(events));
+    await service.update('p1', session.id, { model: 'opus', effort: 'high' });
+    expect(state.closed).toBe(1);
+    await service.send('p1', session.id, 'again');
+    await until(() => state.opens.length === 2);
+    expect(state.opens[1].resumeToken).toBe('tok');
+    expect(state.opens[1].runtime).toMatchObject({
+      model: 'opus',
+      effort: 'high',
+    });
+    await until(idle(events));
+    await service.update('p1', session.id, { model: null });
+    expect(
+      (await service.transcript('p1', session.id))?.session.model,
+    ).toBeUndefined();
+  });
+
+  it('a same-value model or effort patch does not drop the session', async () => {
+    const { service, state, events } = setup(streaming);
+    const session = await service.start('p1', 'a', {
+      model: 'sonnet',
+      effort: 'low',
+    });
+    await until(idle(events));
+    await service.update('p1', session.id, { model: 'sonnet', effort: 'low' });
+    expect(state.closed).toBe(0);
+  });
+
+  it('start stores model and effort', async () => {
+    const { service } = setup(streaming);
+    const session = await service.start('p1', 'a', {
+      model: 'sonnet',
+      effort: 'low',
+    });
+    expect(session).toMatchObject({ model: 'sonnet', effort: 'low' });
+  });
+
+  it('sessionInfo emits capabilitiesChanged and feeds the caches', async () => {
+    const { service, events } = setup(async (o) => {
+      o.onEvent({
+        type: 'sessionInfo',
+        commands: [{ name: 'deploy', source: 'custom' }],
+        models: [{ id: 'm1', efforts: [] }],
+      });
+      return { stop: 'endTurn', usage };
+    });
+    await service.start('p1', 'a');
+    await until(idle(events));
+    const ev = events.find((e) => e.type === 'capabilitiesChanged') as {
+      commands: ChatCommand[];
+      models: unknown[];
+    };
+    expect(ev.commands.map((c) => c.name)).toContain('deploy');
+    expect(ev.models).toHaveLength(1);
+    expect((await service.models('p1')).source).toBe('live');
+  });
+
+  it('models fall back to the static catalog', async () => {
+    const { service } = setup(streaming);
+    const catalog = await service.models('p1');
+    expect(catalog.source).toBe('static');
+    expect(catalog.provider).toBe('claude');
+    expect(catalog.models.length).toBeGreaterThan(0);
+  });
+
+  it('/make x sets the mode and reopens the provider', async () => {
+    const { service, store, state, events } = setup(streaming);
+    const session = await service.start('p1', 'hi');
+    await until(idle(events));
+    await service.send('p1', session.id, '/make do x');
+    await until(() => state.opens.length === 2);
+    expect(state.closed).toBe(1);
+    expect(state.opens[1].resumeToken).toBe('tok');
+    expect(state.opens[1].turn.systemAppend).toContain('make');
+    const saved = await store.get('p1', session.id);
+    expect(saved?.mode).toBe('make');
+  });
+
+  it('/make x while a run is active throws busy and changes nothing', async () => {
+    const { service, store, state, events } = setup(async (o) => {
+      await o.onPermission({ requestId: 'r1', tool: 'edit', title: 'Edit' });
+      return { stop: 'endTurn', usage };
+    });
+    const session = await service.start('p1', 'a', SUP);
+    await until(() => types(events).includes('permissionRequested'));
+    await expect(service.send('p1', session.id, '/make x')).rejects.toThrow();
+    expect(state.closed).toBe(0);
+    expect((await store.get('p1', session.id))?.mode).not.toBe('make');
+  });
+
+  it('/make alone only switches the mode', async () => {
+    const { service, store, state, events } = setup(streaming);
+    const session = await service.start('p1', 'hi');
+    await until(idle(events));
+    const before = events.length;
+    await service.send('p1', session.id, '/make');
+    expect((await store.get('p1', session.id))?.mode).toBe('make');
+    expect(events.slice(before).map((e) => e.type)).toEqual(['sessionUpdated']);
+    expect(state.opens).toHaveLength(1);
+    expect((await store.get('p1', session.id))?.messages).toHaveLength(2);
+  });
+
+  it('clear empties the transcript and drops the resume token', async () => {
+    const { service, store, state, events } = setup(streaming);
+    const session = await service.start('p1', 'hi');
+    await until(idle(events));
+    await service.clear('p1', session.id);
+    expect(types(events)).toContain('transcriptCleared');
+    const saved = await store.get('p1', session.id);
+    expect(saved?.messages).toEqual([]);
+    expect(saved?.resumeToken).toBeUndefined();
+    await service.send('p1', session.id, 'again');
+    await until(() => state.opens.length === 2);
+    expect(state.opens[1].resumeToken).toBeUndefined();
+  });
+
+  it('clear is busy while running', async () => {
+    const { service, state } = setup(async (_o, release) => {
+      await release;
+      return { stop: 'endTurn', usage };
+    });
+    const session = await service.start('p1', 'a');
+    await expect(service.clear('p1', session.id)).rejects.toMatchObject({
+      kind: 'busy',
+    });
+    state.release();
+  });
+
+  it('the init model updates the session', async () => {
+    const { service, events } = setup(async (o) => {
+      o.onEvent({ type: 'sessionInfo', model: 'opus' });
+      return { stop: 'endTurn', usage };
+    });
+    const session = await service.start('p1', 'a');
+    await until(idle(events));
+    const t = await service.transcript('p1', session.id);
+    expect(t?.session.resolvedModel).toBe('opus');
+  });
+
+  it('commands merge the builtin, nxy and custom ones without duplicates', async () => {
+    const { service, state } = setup(streaming);
+    state.probed = [
+      { name: 'clear', source: 'custom' },
+      { name: 'deploy', source: 'custom' },
+    ];
+    const names = (await service.commands('p1')).map((c) => c.name);
+    expect(names).toEqual(['clear', 'locate', 'make', 'review', 'deploy']);
+    await service.commands('p1');
+    expect(state.probes).toBe(1);
   });
 
   it('removing the project closes the session and deletes the file', async () => {
