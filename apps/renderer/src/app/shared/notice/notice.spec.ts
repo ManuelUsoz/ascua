@@ -51,7 +51,7 @@ describe('Notice', () => {
   });
 
   it('renders the configured title over the type default', () => {
-    const el = render('info', { key: 'repositories.link.title' });
+    const el = render('info', { key: 'repositories.link.title.none' });
     expect(el.querySelector('.as-notice__title')?.textContent).toContain(
       'Tienes una copia local de este repo',
     );

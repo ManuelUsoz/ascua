@@ -1,5 +1,5 @@
 @if (visible() && link(); as l) {
-  <app-notice type="info" [title]="{ key: 'repositories.link.title' }">
+  <app-notice type="info" [title]="titleKey()">
     <app-status noticeStatus [state]="status()" [label]="statusLabel()" />
     <p>{{ bodyKey() | transloco: bodyParams() }}</p>
     @if (error(); as e) {

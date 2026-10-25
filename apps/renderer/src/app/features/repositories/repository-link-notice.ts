@@ -65,6 +65,10 @@ export class RepositoryLinkNotice {
     () => ({ key: `repositories.link.status.${this.link()?.state ?? 'none'}` }), // i18n-ignore: catalog key
   );
 
+  protected readonly titleKey = computed<Text>(
+    () => ({ key: `repositories.link.title.${this.link()?.state ?? 'none'}` }), // i18n-ignore: catalog key
+  );
+
   /** One short sentence saying what this copy is and what the user can do with it. */
   protected readonly bodyKey = computed(
     () => `repositories.link.body.${this.link()?.state ?? 'none'}`, // i18n-ignore: catalog key

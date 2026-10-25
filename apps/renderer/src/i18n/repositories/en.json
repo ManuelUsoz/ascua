@@ -79,7 +79,11 @@
     "draft": "Draft"
   },
   "link": {
-    "title": "You have a local copy of this repo",
+    "title": {
+      "linked": "This copy is linked",
+      "match": "A project matches this copy",
+      "none": "There isn't a local copy of this repo"
+    },
     "status": {
       "linked": "Linked",
       "match": "Not linked",
