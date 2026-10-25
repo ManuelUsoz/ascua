@@ -25,6 +25,7 @@ import type {
 } from '@ascua/source-control';
 import { CommitDiffView } from './commit-diff-view';
 import { CommitRow } from './commit-row';
+import { RepositoryLinkNotice } from './repository-link-notice';
 import { PullRequestView } from './pull-request-view';
 import { PROVIDER_OPTIONS, termKey } from './providers';
 import { prStateKey, prTone } from './pr-state';
@@ -44,6 +45,7 @@ import { repositoryUrl } from './repository-path';
     Button,
     CommitRow,
     CommitDiffView,
+    RepositoryLinkNotice,
   ],
   templateUrl: './repository-browser.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

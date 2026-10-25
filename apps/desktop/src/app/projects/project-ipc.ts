@@ -98,8 +98,13 @@ export function registerProjectIpc(
     return result.canceled ? undefined : result.filePaths[0];
   };
 
-  ipcMain.handle(IPC.pickProjectFolder, () =>
-    showFolderDialog({ properties: ['openDirectory'] }),
+  ipcMain.handle(IPC.pickProjectFolder, (_event, defaultPath?: string) =>
+    showFolderDialog({
+      properties: ['openDirectory'],
+      ...(typeof defaultPath === 'string' && defaultPath
+        ? { defaultPath }
+        : {}),
+    }),
   );
 
   ipcMain.handle(

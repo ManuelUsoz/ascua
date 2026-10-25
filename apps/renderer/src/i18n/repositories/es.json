@@ -78,6 +78,15 @@
     "noCommits": "No hay commits.",
     "draft": "Borrador"
   },
+  "link": {
+    "title": "Copia local de este repositorio",
+    "withProject": "CON PROYECTO",
+    "withoutProject": "SIN PROYECTO",
+    "path": "Ruta posible:",
+    "open": "Abrir proyecto",
+    "link": "Vincular a {{name}}",
+    "create": "Crear proyecto"
+  },
   "pr": {
     "state": {
       "open": "Abierto",

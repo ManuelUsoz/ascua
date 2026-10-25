@@ -68,6 +68,11 @@ export class GitHubProvider implements SourceControlProvider {
     return response;
   }
 
+  cloneUrl(repoId: string): string {
+    parseRepoId(repoId);
+    return `${this.webOrigin}/${repoId}.git`;
+  }
+
   async getAccount(credential: Credential): Promise<Account> {
     const response = await this.get(credential, '/user');
     return toAccount(await response.json());

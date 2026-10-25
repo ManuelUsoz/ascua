@@ -86,6 +86,7 @@
             }}
           </button>
         </header>
+        <app-repository-link-notice [repo]="repo" />
         @if (openError(); as e) {
           <p class="as-form__error" role="alert">
             {{ e.key | transloco: e.params }}

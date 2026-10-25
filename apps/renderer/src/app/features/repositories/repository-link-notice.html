@@ -1,0 +1,57 @@
+@if (visible() && link(); as l) {
+  <app-notice type="info" [dismissible]="true" (dismissed)="dismiss()">
+    <span class="as-chip">{{
+      (withProject()
+        ? 'repositories.link.withProject'
+        : 'repositories.link.withoutProject'
+      ) | transloco
+    }}</span>
+    {{ 'repositories.link.title' | transloco }}
+    <div>
+      {{ 'repositories.link.path' | transloco }}
+      <span class="as-mono">{{ l.path }}</span>
+    </div>
+    @if (error(); as e) {
+      <p class="as-form__error" role="alert">
+        {{ e.key | transloco: e.params }}
+      </p>
+    }
+    <ng-container noticeActions>
+      @switch (l.state) {
+        @case ('linked') {
+          <button
+            type="button"
+            appButton
+            variant="primary"
+            size="s"
+            (clicked)="open(l.project.id)"
+          >
+            {{ 'repositories.link.open' | transloco }}
+          </button>
+        }
+        @case ('match') {
+          <button
+            type="button"
+            appButton
+            variant="primary"
+            size="s"
+            (clicked)="linkTo(l.project.id)"
+          >
+            {{ 'repositories.link.link' | transloco: { name: l.project.name } }}
+          </button>
+        }
+        @default {
+          <button
+            type="button"
+            appButton
+            variant="primary"
+            size="s"
+            (clicked)="create()"
+          >
+            {{ 'repositories.link.create' | transloco }}
+          </button>
+        }
+      }
+    </ng-container>
+  </app-notice>
+}

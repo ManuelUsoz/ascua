@@ -7,7 +7,11 @@ import { Notice, NoticeType } from './notice';
 @Component({
   imports: [Notice],
   template: `
-    <app-notice [type]="type">
+    <app-notice
+      [type]="type"
+      [dismissible]="dismissible"
+      (dismissed)="count = count + 1"
+    >
       Cuerpo
       <button noticeActions>Ok</button>
     </app-notice>
@@ -15,6 +19,8 @@ import { Notice, NoticeType } from './notice';
 })
 class Host {
   type: NoticeType = 'error';
+  dismissible = false;
+  count = 0;
 }
 
 function render(type: NoticeType) {
@@ -38,6 +44,22 @@ describe('Notice', () => {
     expect(el.getAttribute('data-tone')).toBe(tone);
     expect(el.getAttribute('role')).toBe(role);
     expect(el.querySelector('.as-notice__title')?.textContent).toContain(title);
+  });
+
+  it('shows a close button only when dismissible and emits dismissed', () => {
+    const plain = render('info');
+    expect(plain.querySelector('.as-notice__close')).toBeNull();
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [Host, i18nTesting()] });
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.dismissible = true;
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const close = el.querySelector('.as-notice__close') as HTMLButtonElement;
+    expect(close.getAttribute('aria-label')).toBe('Descartar');
+    close.click();
+    expect(fixture.componentInstance.count).toBe(1);
   });
 
   it('projects body and actions', () => {

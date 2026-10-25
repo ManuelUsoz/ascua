@@ -32,6 +32,13 @@
   border: 1px solid var(--line);
   color: var(--tone, var(--ink-muted));
 }
+.as-notice:has(.as-notice__close) {
+  grid-template-columns: 32px 1fr auto;
+}
+.as-notice__close {
+  align-self: start;
+  padding: 4px;
+}
 .as-notice__title {
   font-weight: 600;
   font-size: 14px;

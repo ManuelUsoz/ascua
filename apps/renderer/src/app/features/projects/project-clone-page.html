@@ -1,0 +1,116 @@
+@if (!repo()) {
+  <div class="as-empty">
+    <app-notice type="warning">{{
+      'projects.clone.repoMissing' | transloco
+    }}</app-notice>
+    <a class="as-btn as-btn--quiet" routerLink="/proyectos">{{
+      'projects.notFound.back' | transloco
+    }}</a>
+  </div>
+} @else {
+  <div class="as-page-head">
+    <h1>{{ 'projects.clone.title' | transloco }}</h1>
+  </div>
+
+  <form class="as-form" [formGroup]="form" (ngSubmit)="submit()">
+    <section class="as-panel as-form__panel">
+      <div class="as-form__field">
+        <label class="as-label" for="pc-name">{{
+          'projects.form.name' | transloco
+        }}</label>
+        <input
+          id="pc-name"
+          class="as-input"
+          type="text"
+          formControlName="name"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="as-form__field">
+        <label class="as-label" for="pc-parent">{{
+          'projects.clone.parent' | transloco
+        }}</label>
+        <div class="as-form__row">
+          <input
+            id="pc-parent"
+            class="as-input"
+            type="text"
+            formControlName="parentDir"
+            readonly
+          />
+          <button
+            appButton
+            type="button"
+            variant="quiet"
+            (clicked)="pickFolder()"
+          >
+            <app-icon name="folder" />{{
+              'projects.form.pickFolder' | transloco
+            }}
+          </button>
+        </div>
+      </div>
+
+      <div class="as-form__field">
+        <label class="as-label" for="pc-folder">{{
+          'projects.clone.folderName' | transloco
+        }}</label>
+        <input
+          id="pc-folder"
+          class="as-input"
+          type="text"
+          formControlName="folderName"
+          autocomplete="off"
+        />
+        <p class="as-hint">{{ 'projects.clone.folderNameHint' | transloco }}</p>
+      </div>
+
+      <div class="as-form__field">
+        <span class="as-label">{{ 'projects.clone.target' | transloco }}</span>
+        <span class="as-mono" data-test="target">{{ target() }}</span>
+      </div>
+
+      <div class="as-form__field">
+        <label class="as-label" for="pc-color">{{
+          'projects.form.color' | transloco
+        }}</label>
+        <div class="as-form__row">
+          <input
+            id="pc-color"
+            class="as-form__color"
+            type="color"
+            formControlName="color"
+          />
+          <button
+            appButton
+            type="button"
+            variant="ghost"
+            (clicked)="clearColor()"
+          >
+            {{ 'projects.form.noColor' | transloco }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    @if (error(); as message) {
+      <p class="as-form__error" role="alert">
+        {{ message.key | transloco: message.params }}
+      </p>
+    }
+
+    <div class="as-form__actions">
+      <button appButton type="submit" variant="primary" [disabled]="cloning()">
+        @if (cloning()) {
+          <app-spinner [size]="12" />{{ 'projects.clone.cloning' | transloco }}
+        } @else {
+          {{ 'projects.clone.submit' | transloco }}
+        }
+      </button>
+      <a class="as-btn as-btn--ghost" routerLink="/proyectos">{{
+        'projects.form.cancel' | transloco
+      }}</a>
+    </div>
+  </form>
+}

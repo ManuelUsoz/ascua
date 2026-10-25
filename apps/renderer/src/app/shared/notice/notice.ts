@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   input,
+  output,
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 
@@ -38,10 +39,24 @@ export type NoticeType = 'error' | 'warning' | 'info';
         <ng-content select="[noticeActions]" />
       </div>
     </div>
+    @if (dismissible()) {
+      <button
+        type="button"
+        class="as-btn as-btn--ghost as-notice__close"
+        [attr.aria-label]="'notice.dismiss' | transloco"
+        (click)="dismissed.emit()"
+      >
+        <svg class="as-ico" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    }
   `,
 })
 export class Notice {
   readonly type = input.required<NoticeType>();
+  readonly dismissible = input(false);
+  readonly dismissed = output<void>();
 
   protected readonly tone = computed(() => {
     switch (this.type()) {

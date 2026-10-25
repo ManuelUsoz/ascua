@@ -37,6 +37,9 @@ export const IPC = {
   removePista: 'ascua:projects:remove-pista',
   deleteProject: 'ascua:projects:delete',
   pickProjectFolder: 'ascua:projects:pick-folder',
+  repositoryLink: 'ascua:projects:repository-link',
+  linkProjectRepository: 'ascua:projects:link-repository',
+  cloneProject: 'ascua:projects:clone',
   pickTerminalFolder: 'ascua:projects:pick-terminal-folder',
   listTerminals: 'ascua:terminals:list',
   startTerminal: 'ascua:terminals:start',
@@ -79,6 +82,8 @@ export type Language = (typeof LANGUAGES)[number];
 
 export interface Settings {
   language: Language;
+  /** Last parent folder used to clone a repository. */
+  cloneDir?: string;
 }
 
 export type SettingsPatch = Partial<Settings>;
@@ -100,6 +105,7 @@ export const PROJECT_ERROR_CODES = [
   'project.terminalPortInvalid',
   'project.idMissing',
   'project.folderOutside',
+  'project.repositoryInvalid',
   'project.saveFailed',
   'project.deleteFailed',
   'pista.saveFailed',
@@ -128,6 +134,16 @@ export const FILE_ERROR_CODES = [
   'file.openFailed',
 ] as const;
 
+export const CLONE_ERROR_CODES = [
+  'clone.gitMissing',
+  'clone.authFailed',
+  'clone.failed',
+  'clone.targetExists',
+  'clone.folderNameInvalid',
+  'clone.parentMissing',
+  'clone.busy',
+] as const;
+
 export const SOURCE_CONTROL_ERROR_CODES = [
   'sourceControl.notConnected',
   'sourceControl.authExpired',
@@ -145,6 +161,7 @@ export const SOURCE_CONTROL_ERROR_CODES = [
 export type ErrorCode =
   | (typeof COMMON_ERROR_CODES)[number]
   | (typeof PROJECT_ERROR_CODES)[number]
+  | (typeof CLONE_ERROR_CODES)[number]
   | (typeof TERMINAL_ERROR_CODES)[number]
   | (typeof FILE_ERROR_CODES)[number]
   | (typeof SOURCE_CONTROL_ERROR_CODES)[number];
@@ -233,6 +250,14 @@ export interface TerminalSpec {
   port?: number;
 }
 
+/** The repository a project is linked to. */
+export interface RepositoryRef {
+  provider: ProviderId;
+  id: string;
+  name: string;
+  fullName: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -241,6 +266,20 @@ export interface Project {
   /** `#rrggbb` */
   color?: string;
   terminals: TerminalSpec[];
+  repository?: RepositoryRef;
+}
+
+export type RepositoryLink =
+  | { state: 'linked'; project: Project; path: string }
+  | { state: 'match'; project: Project; path: string }
+  | { state: 'none'; path: string; folderExists: boolean };
+
+export interface CloneProjectInput {
+  repository: RepositoryRef;
+  name: string;
+  color?: string;
+  parentDir: string;
+  folderName: string;
 }
 
 /** A terminal spec as submitted by the form: new ones have no id yet. */
@@ -390,7 +429,13 @@ export interface AscuaApi {
   ): Promise<SaveProjectResult>;
   deleteProject(id: string): Promise<void>;
   /** Native folder picker; `undefined` when cancelled. */
-  pickProjectFolder(): Promise<string | undefined>;
+  pickProjectFolder(defaultPath?: string): Promise<string | undefined>;
+  getRepositoryLink(ref: RepositoryRef): Promise<RepositoryLink>;
+  linkProjectRepository(
+    projectId: string,
+    ref: RepositoryRef,
+  ): Promise<SaveProjectResult>;
+  cloneProject(input: CloneProjectInput): Promise<SaveProjectResult>;
   /** Folder picker starting at the project root; `undefined` when cancelled. */
   pickTerminalFolder(
     projectId: string,

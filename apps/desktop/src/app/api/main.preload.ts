@@ -13,6 +13,7 @@ import {
   type PermissionDecision,
   type PickTerminalFolderResult,
   type Project,
+  type RepositoryLink,
   type SaveProjectResult,
   type Settings,
   type TerminalOutput,
@@ -78,8 +79,20 @@ const api: AscuaApi = {
     ) as Promise<SaveProjectResult>,
   deleteProject: (id) =>
     ipcRenderer.invoke(IPC.deleteProject, id) as Promise<void>,
-  pickProjectFolder: () =>
-    ipcRenderer.invoke(IPC.pickProjectFolder) as Promise<string | undefined>,
+  pickProjectFolder: (defaultPath) =>
+    ipcRenderer.invoke(IPC.pickProjectFolder, defaultPath) as Promise<
+      string | undefined
+    >,
+  getRepositoryLink: (ref) =>
+    ipcRenderer.invoke(IPC.repositoryLink, ref) as Promise<RepositoryLink>,
+  linkProjectRepository: (projectId, ref) =>
+    ipcRenderer.invoke(
+      IPC.linkProjectRepository,
+      projectId,
+      ref,
+    ) as Promise<SaveProjectResult>,
+  cloneProject: (input) =>
+    ipcRenderer.invoke(IPC.cloneProject, input) as Promise<SaveProjectResult>,
   pickTerminalFolder: (projectId) =>
     ipcRenderer.invoke(IPC.pickTerminalFolder, projectId) as Promise<
       PickTerminalFolderResult | undefined

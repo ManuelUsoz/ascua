@@ -20,6 +20,8 @@ export interface SourceControlProvider {
   readonly id: ProviderId;
   /** Origin of the provider's website, e.g. "https://github.com". */
   readonly webOrigin: string;
+  /** An https clone URL; throws `SourceControlError('notFound')` for an invalid id. */
+  cloneUrl(repoId: string): string;
   getAccount(credential: Credential): Promise<Account>;
   listRepositories(
     credential: Credential,

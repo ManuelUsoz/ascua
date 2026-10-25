@@ -8,6 +8,7 @@
     "terminals": "Terminales",
     "files": "Archivos",
     "newProject": "Nuevo proyecto",
+    "cloneProject": "Clonar repositorio",
     "edit": "Editar",
     "settings": "Ajustes",
     "repositories": "Repositorios",
@@ -26,7 +27,8 @@
   "notice": {
     "error": "Error",
     "warning": "Advertencia",
-    "info": "Información"
+    "info": "Información",
+    "dismiss": "Descartar"
   },
   "side": {
     "heading": "PROYECTOS",
@@ -54,6 +56,15 @@
       "unavailable": "El flujo de dispositivo está desactivado en la app del proveedor.",
       "rejected": "GitHub rechazó la revisión (no puedes aprobar ni pedir cambios en tu propio pull request)."
     },
+    "clone": {
+      "gitMissing": "Git no está instalado o no está en el PATH.",
+      "authFailed": "Git no pudo autenticarse. Vuelve a conectar el proveedor.",
+      "failed": "Falló la clonación.",
+      "targetExists": "La carpeta de destino ya existe y no está vacía.",
+      "folderNameInvalid": "El nombre de la carpeta no es válido.",
+      "parentMissing": "La carpeta padre no existe.",
+      "busy": "Este repositorio ya se está clonando ahí."
+    },
     "project": {
       "notFound": "No existe el proyecto.",
       "invalid": "Datos de proyecto inválidos.",
@@ -69,6 +80,7 @@
       "terminalPortInvalid": "El puerto de \"{{name}}\" debe ser un entero entre 1 y 65535.",
       "idMissing": "Falta un id",
       "folderOutside": "La carpeta tiene que estar dentro del proyecto.",
+      "repositoryInvalid": "Vínculo de repositorio inválido.",
       "saveFailed": "No se pudo guardar el proyecto",
       "deleteFailed": "No se pudo eliminar el proyecto"
     },

@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { isAbsolute } from 'node:path';
 import {
   LANGUAGES,
   type Language,
@@ -10,7 +11,11 @@ import { writeJsonAtomic } from '../storage/atomic-json';
 interface SettingsFile {
   version: 1;
   language?: Language;
+  cloneDir?: string;
 }
+
+const isCloneDir = (value: unknown): value is string =>
+  typeof value === 'string' && value !== '' && isAbsolute(value);
 
 const isLanguage = (value: unknown): value is Language =>
   LANGUAGES.includes(value as Language);
@@ -24,7 +29,16 @@ export class JsonSettingsRepository {
   ) {}
 
   async get(): Promise<Settings> {
-    return { language: (await this.read()).language ?? this.osLanguage() };
+    const stored = await this.read();
+    return this.view(stored);
+  }
+
+  private view(stored: Partial<SettingsFile>): Settings {
+    const settings: Settings = {
+      language: stored.language ?? this.osLanguage(),
+    };
+    if (stored.cloneDir) settings.cloneDir = stored.cloneDir;
+    return settings;
   }
 
   update(patch: SettingsPatch): Promise<Settings> {
@@ -41,17 +55,29 @@ export class JsonSettingsRepository {
     const language = isLanguage(patch.language)
       ? patch.language
       : stored.language;
-    if (language && language !== stored.language) {
-      await writeJsonAtomic(this.file, { version: 1, language });
+    const cloneDir = isCloneDir(patch.cloneDir)
+      ? patch.cloneDir
+      : stored.cloneDir;
+    if (
+      (language && language !== stored.language) ||
+      cloneDir !== stored.cloneDir
+    ) {
+      const file: SettingsFile = { version: 1 };
+      if (language) file.language = language;
+      if (cloneDir) file.cloneDir = cloneDir;
+      await writeJsonAtomic(this.file, file);
     }
-    return { language: language ?? this.osLanguage() };
+    return this.view({ language, cloneDir });
   }
 
   private async read(): Promise<Partial<SettingsFile>> {
     try {
       const data = JSON.parse(await readFile(this.file, 'utf8')) as unknown;
-      const language = (data as Partial<SettingsFile> | null)?.language;
-      return isLanguage(language) ? { language } : {};
+      const file = data as Partial<SettingsFile> | null;
+      const stored: Partial<SettingsFile> = {};
+      if (isLanguage(file?.language)) stored.language = file.language;
+      if (isCloneDir(file?.cloneDir)) stored.cloneDir = file.cloneDir;
+      return stored;
     } catch {
       return {};
     }

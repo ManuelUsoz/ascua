@@ -1,8 +1,11 @@
 import { computed, Injectable, inject, signal } from '@angular/core';
 import type {
+  CloneProjectInput,
   PickTerminalFolderResult,
   Project,
   ProjectInput,
+  RepositoryLink,
+  RepositoryRef,
   SaveProjectResult,
   TerminalSpecInput,
 } from '@ascua/ipc';
@@ -25,6 +28,7 @@ export function projectInput(
     terminals,
   };
   if (project.color) input.color = project.color;
+  if (project.repository) input.repository = project.repository;
   return input;
 }
 
@@ -119,7 +123,32 @@ export class ProjectStore {
     );
   }
 
-  async pickFolder(): Promise<string | undefined> {
-    return this.api?.pickProjectFolder();
+  async pickFolder(defaultPath?: string): Promise<string | undefined> {
+    return this.api?.pickProjectFolder(defaultPath);
+  }
+
+  async repositoryLink(
+    ref: RepositoryRef,
+  ): Promise<RepositoryLink | undefined> {
+    return this.api?.getRepositoryLink(ref);
+  }
+
+  async linkRepository(
+    projectId: string,
+    ref: RepositoryRef,
+  ): Promise<SaveProjectResult> {
+    const api = this.api;
+    if (!api) return NO_DESKTOP;
+    const result = await api.linkProjectRepository(projectId, ref);
+    if (result.ok) this.upsert(result.project);
+    return result;
+  }
+
+  async clone(input: CloneProjectInput): Promise<SaveProjectResult> {
+    const api = this.api;
+    if (!api) return NO_DESKTOP;
+    const result = await api.cloneProject(input);
+    if (result.ok) this.upsert(result.project);
+    return result;
   }
 }

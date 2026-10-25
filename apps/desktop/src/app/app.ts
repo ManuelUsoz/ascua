@@ -15,6 +15,8 @@ import {
 } from './permissions/permission-bridge';
 import { JsonProjectRepository } from './projects/json-project-repository';
 import { registerProjectIpc } from './projects/project-ipc';
+import { registerRepositoryLinkIpc } from './projects/repository-link-ipc';
+import { nodeGit, RepositoryLinks } from './projects/repository-links';
 import {
   SafeStorageCredentialStore,
   electronCipher,
@@ -122,25 +124,30 @@ export default class App {
       // `net.fetch` is read at call time so a test driver can stub it.
       const scFetch: typeof fetch = (input, init) =>
         net.fetch(input as string, init);
-      registerSourceControlIpc(
-        new SourceControlService({
-          adapters: {
-            github: {
-              provider: new GitHubProvider(scFetch),
-              authorizer: new GitHubDeviceFlow({
-                fetch: scFetch,
-                clientId: 'Ov23liPOEd2g5MaAWlgZ',
-                scopes: ['repo', 'read:user'],
-              }),
-            },
+      const sourceControl = new SourceControlService({
+        adapters: {
+          github: {
+            provider: new GitHubProvider(scFetch),
+            authorizer: new GitHubDeviceFlow({
+              fetch: scFetch,
+              clientId: 'Ov23liPOEd2g5MaAWlgZ',
+              scopes: ['repo', 'read:user'],
+            }),
           },
-          store: new SafeStorageCredentialStore(
-            join(App.application.getPath('userData'), 'source-control.json'),
-            electronCipher(safeStorage),
-          ),
-          send: (channel, payload) => App.controller.send(channel, payload),
-          openExternal: (url) => shell.openExternal(url),
-        }),
+        },
+        store: new SafeStorageCredentialStore(
+          join(App.application.getPath('userData'), 'source-control.json'),
+          electronCipher(safeStorage),
+        ),
+        send: (channel, payload) => App.controller.send(channel, payload),
+        openExternal: (url) => shell.openExternal(url),
+      });
+      registerSourceControlIpc(sourceControl);
+      registerRepositoryLinkIpc(
+        new RepositoryLinks(repository, settings, sourceControl, nodeGit, () =>
+          App.application.getPath('home'),
+        ),
+        manager,
       );
       guardQuit({
         text,

@@ -22,6 +22,16 @@
     "confirmDelete": "¿Seguro? Eliminar",
     "delete": "Eliminar proyecto"
   },
+  "clone": {
+    "title": "Clonar y crear proyecto",
+    "parent": "Carpeta destino",
+    "folderName": "Nombre de la carpeta",
+    "folderNameHint": "Podés renombrar la carpeta donde se clona.",
+    "target": "Se clonará en",
+    "submit": "Clonar y crear proyecto",
+    "cloning": "Clonando…",
+    "repoMissing": "No encontré ese repositorio. Abrilo desde la lista de repositorios."
+  },
   "page": {
     "running": "{{running}} de {{total}} corriendo",
     "addPista": "Pista",

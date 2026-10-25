@@ -8,6 +8,7 @@
     "terminals": "Terminals",
     "files": "Files",
     "newProject": "New project",
+    "cloneProject": "Clone repository",
     "edit": "Edit",
     "settings": "Settings",
     "repositories": "Repositories",
@@ -23,7 +24,12 @@
     "inTerminal": "In terminal",
     "queued": "+{{count}} waiting"
   },
-  "notice": { "error": "Error", "warning": "Warning", "info": "Information" },
+  "notice": {
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "dismiss": "Dismiss"
+  },
   "side": {
     "heading": "PROJECTS",
     "newProject": "New project",
@@ -50,6 +56,15 @@
       "unavailable": "The device flow is disabled on the provider's app.",
       "rejected": "GitHub rejected the review (you cannot approve or request changes on your own pull request)."
     },
+    "clone": {
+      "gitMissing": "Git is not installed or is not on the PATH.",
+      "authFailed": "Git could not authenticate. Reconnect the provider.",
+      "failed": "The clone failed.",
+      "targetExists": "The target folder already exists and is not empty.",
+      "folderNameInvalid": "The folder name is not valid.",
+      "parentMissing": "The parent folder does not exist.",
+      "busy": "This repository is already being cloned there."
+    },
     "project": {
       "notFound": "The project does not exist.",
       "invalid": "Invalid project data.",
@@ -65,6 +80,7 @@
       "terminalPortInvalid": "The port of \"{{name}}\" must be an integer between 1 and 65535.",
       "idMissing": "An id is missing",
       "folderOutside": "The folder must be inside the project.",
+      "repositoryInvalid": "Invalid repository link.",
       "saveFailed": "Could not save the project",
       "deleteFailed": "Could not delete the project"
     },
