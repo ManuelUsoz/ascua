@@ -1,0 +1,36 @@
+{
+  "checking": {
+    "title": "Despertando a Ascua",
+    "subtitle": "Comprobando Claude Code."
+  },
+  "unavailable": {
+    "notInstalled": {
+      "title": "Falta Claude Code",
+      "body": "El asistente usa tu propio Claude Code. Instálalo, abre una terminal y ejecuta claude para iniciar sesión. Luego reintenta."
+    },
+    "notLoggedIn": {
+      "title": "Falta iniciar sesión",
+      "body": "Abre una terminal, ejecuta claude e inicia sesión. Ascua nunca te pide la cuenta. Luego reintenta."
+    }
+  },
+  "retry": "Reintentar",
+  "empty": "Escríbeme lo que necesites: proyectos, archivos, terminales o repositorios.",
+  "thinking": "Pensando…",
+  "cancelled": "Cancelado",
+  "send": "Enviar",
+  "cancel": "Detener",
+  "reset": "Nueva conversación",
+  "composer": {
+    "label": "Mensaje para Ascua",
+    "placeholder": "Escribe un mensaje. Enter envía, Shift+Enter hace un salto de línea."
+  },
+  "tool": {
+    "window": "Sala",
+    "ui": "Guía de la interfaz",
+    "projects": "Proyectos",
+    "files": "Archivos",
+    "terminals": "Terminales",
+    "source_control": "Repositorios",
+    "other": "Herramienta"
+  }
+}

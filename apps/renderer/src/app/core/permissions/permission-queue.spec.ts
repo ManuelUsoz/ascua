@@ -3,16 +3,32 @@ import type { AscuaApi, PermissionRequest } from '@ascua/ipc';
 import { ASCUA_API } from '../bridge/ascua-api';
 import { Companion } from '../companion/companion';
 import { RoomState } from '../room/room-state';
-import { PermissionQueue } from './permission-queue';
+import { CATALOGS } from '../i18n/loader';
+import { ASSISTANT_TOOL_TITLES, PermissionQueue } from './permission-queue';
+
+describe('assistant bubble titles', () => {
+  it.each(['es', 'en'])('%s has a headline per listed tool', async (lang) => {
+    const root = (await CATALOGS[lang]()) as {
+      bubble: { tool: Record<string, unknown> };
+    };
+    for (const tool of [...ASSISTANT_TOOL_TITLES, 'other']) {
+      expect(typeof root.bubble.tool[tool], `bubble.tool.${tool}`).toBe(
+        'string',
+      );
+    }
+  });
+});
 
 const edit: PermissionRequest = {
   id: 1,
+  source: 'hook',
   tool: 'Edit',
   summary: 'src/app.ts',
   input: {},
 };
 const wipe: PermissionRequest = {
   id: 2,
+  source: 'hook',
   tool: 'Bash',
   summary: 'rm -rf dist',
   input: {},
@@ -69,6 +85,25 @@ describe('PermissionQueue', () => {
     expect(companion.need).toHaveBeenCalledTimes(1);
     expect(companion.need).toHaveBeenCalledWith('alert');
     expect(room.collapse).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the room open for an assistant request and titles it', () => {
+    push({
+      id: 7,
+      source: 'assistant',
+      tool: 'terminals_start',
+      params: { project: 'P', pista: 'api' },
+      summary: 'run api',
+      input: {},
+    });
+    expect(room.collapse).not.toHaveBeenCalled();
+    expect(queue.isAssistant()).toBe(true);
+    expect(queue.title()).toEqual({
+      key: 'bubble.tool.terminals_start',
+      params: { project: 'P', pista: 'api', tool: 'terminals_start' },
+    });
+    push(edit);
+    expect(room.collapse).toHaveBeenCalledTimes(1);
   });
 
   it('answers the hook and moves on to the next request', () => {

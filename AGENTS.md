@@ -148,6 +148,12 @@ false`, node-pty ships prebuilds). `shell.ts` resolves Git Bash on Windows
   `@ascua/source-control`) - provider-agnostic model, ports
   (`SourceControlProvider`, `DeviceAuthorizer`) and `SourceControlError`.
   Dependency-free; `@ascua/ipc` only `import type`s from it.
+- `libs/assistant` (Nx project `assistant`, import `@ascua/assistant`) - tool
+  and registry ports, `AssistantEngine`, `AssistantError`, `reduceTranscript`.
+  Dependency-free. Main side: `apps/desktop/src/app/assistant/`; renderer:
+  `features/assistant`, `core/assistant`, `core/navigation` (main-initiated
+  routing) and `core/voice` (ports, `whisper/` and `supertonic/` workers,
+  `runtime/` model cache). `THIRD_PARTY_NOTICES.md` credits ported code.
 - Shared libs are source-only (no build target); they resolve through
   `tsconfig.base.json` paths and are wired with `implicitDependencies`.
 
@@ -250,6 +256,110 @@ false`, node-pty ships prebuilds). `shell.ts` resolves Git Bash on Windows
   `events/` scaffold; do not treat them as new failures.
 - If `nx package desktop` fails because `dist/packages/win-unpacked.tmp` is
   locked, remove it and retry.
+
+## Assistant and voice
+
+- Engine: `ClaudeCodeEngine` drives the user's own `claude -p` (stream-json,
+  `--restricted`, cwd `userData/assistant`, never `--bare`). The persona goes
+  inline with `--append-system-prompt`: `--append-system-prompt-file` does not
+  exist in Claude Code 2.1.310. `status()` creates the workDir. The CLI path can
+  be forced with `ASCUA_CLAUDE_CLI` (a `.js/.mjs/.cjs` runs as Electron-as-node).
+- Tools: capabilities in `app/assistant/capabilities/` over an engine-agnostic
+  `ToolRegistry`, exposed by a hand-rolled MCP server on `node:http`
+  (`127.0.0.1`, per-launch bearer token, no SDK). Tool choice is the model's,
+  through the persona and intent-written tool descriptions; no regex fast path.
+  The window capability reads the room state from `expanded` (`isExpanded()`),
+  not `isFullScreen()`, and only opens/collapses the room (no OS minimize).
+  Claude Code's built-in tools stay off (`--tools ""`, WebSearch included). All
+  registry tools are allowed at CLI level (`mcp__ascua__*`, read and write):
+  the registry's `Confirmer` is the only gate for writes. On Windows the `.cmd`
+  shim is spawned with a shell, so stop/cancel kill the process tree.
+- Engine lifecycle: `warm()` spawns `claude` ahead of the first turn. Triggers
+  are the Asistente page and voice `pressStart`, never app launch. An idle warm
+  process is reaped after 10 min (the session id is kept, the next spawn
+  resumes). Cancel and barge-in send a stream-json `control_request`
+  `interrupt` instead of killing: the CLI answers with a `control_response`,
+  then a `result` `error_during_execution`, and the process stays alive (a drain
+  swallows that result); kill is only the fallback (error response or 3 s
+  timeout). Verified on Claude Code 2.1.310: an idle warm process makes no API
+  call, and the mcp.json `timeout` (set from `toolTimeoutMs`) lets a held tool
+  call last 90 s or more. `ENABLE_CLAUDEAI_MCP_SERVERS=false` is set in the
+  spawn env (turns and auth status): without it the CLI loads the user's
+  claude.ai connectors even with `--strict-mcp-config`.
+- Confirmations: `PermissionSource` (`permissions/permission-source.ts`) is the
+  seam shared by `HookServer` and `AssistantConfirmer`; the bridge gives every
+  source one id counter. Assistant write tools (`terminals_start`, `_start_all`,
+  `_stop`, `_open_shell`, `_close_shell`, `_write`) call `summarize` and then the
+  confirmer, which shows the permission bubble (`source: 'assistant'`) and
+  refuses on deny, abort, `turnDone`/`error` (`dismissAll`) or after 120 s.
+  Assistant requests keep the room open (hook requests still collapse it) and
+  can be answered by voice (sí/dale/no on the next push-to-talk, `yes-no.ts`).
+  `rendererReady` resets only on `did-navigate` (the commit of a new document,
+  `window/ascua-window.ts`), so aborted navigations and hash navigations
+  (`did-navigate-in-page`) do not drop bubbles; `did-finish-load` sets it.
+- UI knowledge: the renderer pushes the real labels (`UI_LABEL_KEYS`, resolved
+  by `core/i18n/labels.ts`) and the route (`AssistantContext`) to main
+  (`UiContextStore`); the `ui_guide` tool quotes them and `window_state`
+  reports the current screen.
+- Voice permissions: `media-permission.ts` grants only audio from our own
+  renderer (plus the `clipboard-sanitized-write` exception for the device-code
+  copy); `autoplayPolicy: 'no-user-gesture-required'`; `setVoiceActive` keeps the
+  window interactive (like `permissions.active`) only while listening, not
+  while transcribing or speaking. The status text next to the avatar
+  (`layout/voice-status`) is non-interactive. `autoSpeak` defaults to false.
+- Push-to-talk: avatar long press (450 ms, no movement), Ctrl+Space held in the
+  room (capture phase, so xterm/CodeMirror never see it), or the composer mic.
+- STT is Whisper (transformers.js) in a Web Worker. The model comes from
+  `whisperProfile(device)` in `voice-models.ts`: with WebGPU and `shader-f16`
+  `whisper-large-v3-turbo` q4f16 (~566 MB), otherwise `whisper-small` q8
+  (~252 MB). `detectDevice()` falls back to wasm (Xvfb and Linux without
+  WebGPU). No Chromium WebGPU switch on purpose (`enable-unsafe-webgpu` would
+  bypass the Linux blocklist). The vocabulary prompt (project, pista and UI
+  names) goes through `decoder_input_ids` (`whisper-prompt.ts`), because
+  transformers.js 3.8.1 does not use `prompt_ids`. TTS is Supertonic 3 (ONNX in
+  a worker, es+en, fp32 ~398 MB, ~0.8 GB RSS while loaded, unloaded after 5 min
+  idle) and it is the only TTS: there are no OS voices on purpose. Kokoro was
+  dropped: kokoro-js is English-only and full espeak-ng is GPL-3.0. The
+  Supertonic revision is pinned in `core/voice/voice-models.ts`; attribution in
+  `THIRD_PARTY_NOTICES.md`.
+- Cache Storage fails on `file://`, so models are cached in IndexedDB
+  (`ascua-voice-models`, `core/voice/runtime/model-cache.ts`). There is one
+  `onnxruntime-web`, pinned to the exact version transformers depends on (bump
+  them together), with its wasm served from the `voice-runtime/` asset.
+- Wasm threads: `main.ts` appends `enable-features=SharedArrayBuffer`
+  (`chromium-switches.ts`) on every platform, which gives the renderer and its
+  workers SharedArrayBuffer on `file://`, and `wasmThreads()` sets ORT
+  `numThreads` to cores - 1 (1 without SAB, as in the browser preview).
+  `crossOriginIsolated` stays false on purpose: COOP/COEP needs a custom
+  protocol, which changes the origin (fresh IndexedDB, a 650-960 MB
+  re-download) and touches `loadFile`, `ASCUA_RENDERER=dist`,
+  `isOwnRendererUrl`, `will-navigate` and the reload path. That is the fallback
+  if a future Electron drops the feature; the ui-drive `wasm threads` test
+  fails first.
+- CSP: `apps/renderer/src/index.html` has a `<meta http-equiv>` policy and the
+  SharedArrayBuffer switch relies on it (no injected script may run). Sources:
+  `script-src 'self' 'wasm-unsafe-eval'` (Angular bundle, ORT wasm; no inline
+  or eval scripts), `worker-src 'self' blob:` (module workers, ORT pthreads,
+  the ui-drive blob worker), `connect-src` `'self'` + Hugging Face
+  (`huggingface.co`, `*.huggingface.co`, `*.hf.co` for the CDN redirects) +
+  `localhost:4200` http/ws (dev server), `img-src 'self' data: blob:`,
+  `media-src blob:` (TTS audio), `style-src 'self' 'unsafe-inline'` (xterm,
+  CodeMirror and Angular inject `<style>`/style attributes; styles only, no
+  scripts), everything else `'none'`. GitHub is fetched from main, so no
+  GitHub origin is allowed. `optimization.styles.inlineCritical` is off in
+  `apps/renderer/project.json` (its `onload` handler is blocked). To add an
+  origin, extend the matching directive in that meta and run `node
+tools/ui-drive.cjs dist/ui-drive` watching the console for "Refused to".
+- Dev logs: `[ascua:timing]` (renderer, per voice turn), `[ascua:voice]`
+  (engine, device, threads) and `[assistant:timing]` (main: warm, spawn, first
+  delta, done), only in development.
+- Worker builds print the browser-esbuild warning "webWorkerTsConfig not yet
+  supported". It is harmless: the worker chunks are emitted.
+- Test seams: `ASCUA_VOICE_FAKE=<phrase|phrase>` (scripted recognizer and fake
+  synthesizer recording `window.__ascuaSpoken`),
+  `--use-fake-device-for-media-stream` (via `Seed.args`), `Seed.env`,
+  `Seed.voice` (seeded `autoSpeak: false` by default so no scenario downloads
+  models), `--grep assistant` and `--grep voice`.
 
 ## i18n
 

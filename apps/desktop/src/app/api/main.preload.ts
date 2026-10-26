@@ -3,6 +3,8 @@ import {
   IPC,
   type AscuaApi,
   type AscuaError,
+  type AssistantSnapshot,
+  type NavigateTarget,
   type BloomOrigin,
   type FileContent,
   type SaveFileResult,
@@ -21,6 +23,7 @@ import {
   type DeviceCodePrompt,
   type SourceControlStatus,
 } from '@ascua/ipc';
+import type { AssistantEvent } from '@ascua/assistant';
 import type {
   Branch,
   Commit,
@@ -51,6 +54,8 @@ const api: AscuaApi = {
     ipcRenderer.invoke(IPC.updateSettings, patch) as Promise<Settings>,
   onSettingsChanged: (callback) =>
     listen<Settings>(IPC.settingsChanged, callback),
+  setVoiceActive: (active) =>
+    ipcRenderer.invoke(IPC.voiceActive, active) as Promise<void>,
   onFullscreenChanged: (callback) =>
     listen<FullscreenState>(IPC.fullscreenChanged, callback),
   onLayoutChanged: (callback) => listen<Layout>(IPC.layoutChanged, callback),
@@ -205,6 +210,27 @@ const api: AscuaApi = {
     ipcRenderer.invoke(IPC.sourceControlOpenUrl, provider, url) as Promise<
       AscuaError | undefined
     >,
+  assistantSend: (text) =>
+    ipcRenderer.invoke(IPC.assistantSend, text) as Promise<void>,
+  assistantCancel: () =>
+    ipcRenderer.invoke(IPC.assistantCancel) as Promise<void>,
+  assistantReset: () => ipcRenderer.invoke(IPC.assistantReset) as Promise<void>,
+  assistantWarm: () => ipcRenderer.invoke(IPC.assistantWarm) as Promise<void>,
+  assistantContext: (context) =>
+    ipcRenderer.send(IPC.assistantContext, context),
+  startProjectTerminals: (projectId) =>
+    ipcRenderer.invoke(IPC.startProjectTerminals, projectId) as Promise<
+      TerminalSession[]
+    >,
+  assistantStatus: (refresh) =>
+    ipcRenderer.invoke(
+      IPC.assistantStatus,
+      refresh,
+    ) as Promise<AssistantSnapshot>,
+  onAssistantEvent: (callback) =>
+    listen<AssistantEvent>(IPC.assistantEvent, callback),
+  onAssistantNavigate: (callback) =>
+    listen<NavigateTarget>(IPC.assistantNavigate, callback),
 };
 
 contextBridge.exposeInMainWorld('ascua', api);

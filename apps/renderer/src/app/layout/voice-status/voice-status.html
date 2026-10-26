@@ -1,0 +1,9 @@
+<div id="voice-status" role="status" [hidden]="!visible()">
+  @if (failure(); as e) {
+    {{ e.key | transloco: e.params }}
+  } @else if (voice.download(); as d) {
+    {{ 'voice.downloading.' + d.engine | transloco }} {{ percent(d) }}%
+  } @else if (voice.state() !== 'idle') {
+    {{ 'voice.state.' + voice.state() | transloco }}
+  }
+</div>

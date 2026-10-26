@@ -7,7 +7,8 @@
     "edit": "Editar",
     "settings": "Ajustes",
     "repositories": "Repositorios",
-    "spaces": "Espacios"
+    "spaces": "Espacios",
+    "assistant": "Asistente"
   },
   "room": {
     "minimize": "Minimizar",
@@ -17,7 +18,31 @@
     "approve": "Aprobar",
     "reject": "Rechazar",
     "inTerminal": "En la terminal",
-    "queued": "+{{count}} en espera"
+    "queued": "+{{count}} en espera",
+    "tool": {
+      "terminals_start": "Iniciar la pista {{pista}} de {{project}}",
+      "terminals_start_all": "Iniciar las pistas de {{project}}",
+      "terminals_stop": "Detener {{name}} de {{project}}",
+      "terminals_open_shell": "Abrir una terminal en {{project}}",
+      "terminals_close_shell": "Cerrar {{name}} de {{project}}",
+      "terminals_write": "Escribir en {{name}} de {{project}}",
+      "other": "Ascua quiere usar {{tool}}"
+    }
+  },
+  "voice": {
+    "mic": "Mantén pulsado para hablar",
+    "mute": "Silenciar la voz",
+    "hold": "Mantén pulsado el micrófono, o Ctrl+Espacio, para hablar.",
+    "state": {
+      "listening": "Escuchando…",
+      "loadingModel": "Cargando el modelo de voz…",
+      "transcribing": "Transcribiendo…",
+      "speaking": "Hablando…"
+    },
+    "downloading": {
+      "stt": "Descargando el reconocimiento de voz",
+      "tts": "Descargando la síntesis de voz"
+    }
   },
   "side": {
     "heading": "PROYECTOS",
@@ -33,6 +58,21 @@
   "errors": {
     "unknown": "Error inesperado: {{detail}}",
     "noDesktop": "Solo disponible en la app de escritorio.",
+    "assistant": {
+      "notInstalled": "No se encontró Claude Code en este equipo.",
+      "notLoggedIn": "Claude Code no tiene la sesión iniciada.",
+      "crashed": "El asistente se detuvo inesperadamente.",
+      "busy": "El asistente sigue respondiendo.",
+      "failed": "El asistente no pudo responder."
+    },
+    "voice": {
+      "micDenied": "No hay permiso para usar el micrófono.",
+      "micUnavailable": "No se encontró un micrófono.",
+      "modelFailed": "No se pudo cargar el modelo de voz.",
+      "noSpeech": "No se escuchó nada.",
+      "answerYesNo": "Hay una confirmación pendiente: decí sí o no.",
+      "ttsUnavailable": "No se pudo reproducir la voz."
+    },
     "sourceControl": {
       "notConnected": "No estás conectado al proveedor.",
       "authExpired": "La sesión expiró o fue revocada. Conéctate de nuevo.",

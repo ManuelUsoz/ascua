@@ -8,7 +8,13 @@ import { AVATAR, COMPACT } from './geometry';
 import { FullscreenController } from './fullscreen';
 import { fullscreenModeFor } from './fullscreen-mode';
 import { PositionStore } from './position-store';
-import { hardenWebContents, loadRenderer } from './renderer-page';
+import { grantMicrophoneOnly } from './media-permission';
+import { isOwnRendererUrl } from './renderer-target';
+import {
+  currentRendererTarget,
+  hardenWebContents,
+  loadRenderer,
+} from './renderer-page';
 
 const ZERO_ORIGIN: BloomOrigin = {
   x: 0,
@@ -32,6 +38,7 @@ export class AscuaWindow {
   private clickThrough: ClickThrough | null = null;
   private drag: WindowDrag | null = null;
   private fullscreen: FullscreenController | null = null;
+  private voiceActive = false;
 
   create(): BrowserWindow {
     const positions = new PositionStore(
@@ -67,9 +74,14 @@ export class AscuaWindow {
         spellcheck: false,
         // The companion is always visible; throttling it would freeze the life loop.
         backgroundThrottling: false,
+        // A spoken reply arrives seconds after the user's gesture.
+        autoplayPolicy: 'no-user-gesture-required',
       },
     });
     this.win = win;
+    grantMicrophoneOnly(win.webContents.session, (url) =>
+      isOwnRendererUrl(url, currentRendererTarget(), process.platform),
+    );
 
     const clickThrough = new ClickThrough({
       win,
@@ -78,7 +90,8 @@ export class AscuaWindow {
       forced: () =>
         (this.fullscreen?.expanded ?? false) ||
         (this.drag?.active ?? false) ||
-        (this.permissions?.active ?? false),
+        (this.permissions?.active ?? false) ||
+        this.voiceActive,
     });
     this.clickThrough = clickThrough;
     this.drag = new WindowDrag({
@@ -122,11 +135,13 @@ export class AscuaWindow {
     // while main still thinks the room is open, leaving a stuck fullscreen
     // window. Hash routing only fires did-navigate-in-page, so tab switches
     // never land here. `expanded` is false on the initial load.
+    // did-navigate fires on the commit of a new document, so an aborted or
+    // failed navigation never leaves the renderer unready; did-finish-load
+    // sets it back. Hash navigations (did-navigate-in-page) never reset it.
     win.webContents.on('did-navigate', () => {
-      if (fullscreen.expanded) fullscreen.exit();
-    });
-    win.webContents.on('did-start-loading', () => {
       this.rendererReady = false;
+      this.voiceActive = false;
+      if (fullscreen.expanded) fullscreen.exit();
     });
     win.webContents.on('did-fail-load', (_event, code, description, url) => {
       console.error('[ascua] renderer failed', code, description, url);
@@ -177,12 +192,23 @@ export class AscuaWindow {
     this.clickThrough?.apply();
   }
 
+  /** Voice capture/playback keeps the window interactive (pointerup safety). */
+  setVoiceActive(active: boolean): void {
+    this.voiceActive = active;
+    this.refreshInteraction();
+  }
+
   toggleFullscreen(): BloomOrigin {
     return this.fullscreen?.toggle() ?? ZERO_ORIGIN;
   }
 
   exitFullscreen(): void {
     this.fullscreen?.exit();
+  }
+
+  /** The source of truth for "the room is open" (isFullScreen() can lag on Windows). */
+  isExpanded(): boolean {
+    return this.fullscreen?.expanded ?? false;
   }
 
   isFullscreen(): boolean {

@@ -1,6 +1,6 @@
 import type { Act, Ascua } from "./ascua";
 
-export type Need = "alert" | "warn" | "ask";
+export type Need = "alert" | "warn" | "ask" | "think" | "read" | "listen" | "talk";
 
 export interface Life {
   need(act: Need): void;

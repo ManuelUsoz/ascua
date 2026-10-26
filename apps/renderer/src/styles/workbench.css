@@ -303,13 +303,15 @@ app-project-form-page::-webkit-scrollbar,
 app-projects-index-page::-webkit-scrollbar,
 app-settings-page::-webkit-scrollbar,
 app-repositories-page::-webkit-scrollbar,
+.as-assistant__scroll::-webkit-scrollbar,
 .as-repos__main::-webkit-scrollbar,
 .as-repos__side::-webkit-scrollbar,
 .as-pr__main::-webkit-scrollbar,
 .as-diff__side::-webkit-scrollbar,
 .as-files__scroll::-webkit-scrollbar,
 .as-files__body::-webkit-scrollbar,
-.as-files__editor .cm-scroller::-webkit-scrollbar {
+.as-files__editor .cm-scroller::-webkit-scrollbar,
+#summary::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
@@ -320,13 +322,15 @@ app-project-form-page::-webkit-scrollbar-button,
 app-projects-index-page::-webkit-scrollbar-button,
 app-settings-page::-webkit-scrollbar-button,
 app-repositories-page::-webkit-scrollbar-button,
+.as-assistant__scroll::-webkit-scrollbar-button,
 .as-repos__main::-webkit-scrollbar-button,
 .as-repos__side::-webkit-scrollbar-button,
 .as-pr__main::-webkit-scrollbar-button,
 .as-diff__side::-webkit-scrollbar-button,
 .as-files__scroll::-webkit-scrollbar-button,
 .as-files__body::-webkit-scrollbar-button,
-.as-files__editor .cm-scroller::-webkit-scrollbar-button {
+.as-files__editor .cm-scroller::-webkit-scrollbar-button,
+#summary::-webkit-scrollbar-button {
   display: none;
 }
 .as-term-grid::-webkit-scrollbar-thumb,
@@ -336,13 +340,15 @@ app-project-form-page::-webkit-scrollbar-thumb,
 app-projects-index-page::-webkit-scrollbar-thumb,
 app-settings-page::-webkit-scrollbar-thumb,
 app-repositories-page::-webkit-scrollbar-thumb,
+.as-assistant__scroll::-webkit-scrollbar-thumb,
 .as-repos__main::-webkit-scrollbar-thumb,
 .as-repos__side::-webkit-scrollbar-thumb,
 .as-pr__main::-webkit-scrollbar-thumb,
 .as-diff__side::-webkit-scrollbar-thumb,
 .as-files__scroll::-webkit-scrollbar-thumb,
 .as-files__body::-webkit-scrollbar-thumb,
-.as-files__editor .cm-scroller::-webkit-scrollbar-thumb {
+.as-files__editor .cm-scroller::-webkit-scrollbar-thumb,
+#summary::-webkit-scrollbar-thumb {
   background: var(--line-mid);
   border-radius: 4px;
 }
@@ -353,6 +359,7 @@ app-project-form-page::-webkit-scrollbar-track,
 app-projects-index-page::-webkit-scrollbar-track,
 app-settings-page::-webkit-scrollbar-track,
 app-repositories-page::-webkit-scrollbar-track,
+.as-assistant__scroll::-webkit-scrollbar-track,
 .as-repos__main::-webkit-scrollbar-track,
 .as-repos__side::-webkit-scrollbar-track,
 .as-pr__main::-webkit-scrollbar-track,
@@ -362,7 +369,8 @@ app-repositories-page::-webkit-scrollbar-track,
 .as-files__body::-webkit-scrollbar-track,
 .as-files__body::-webkit-scrollbar-corner,
 .as-files__editor .cm-scroller::-webkit-scrollbar-track,
-.as-files__editor .cm-scroller::-webkit-scrollbar-corner {
+.as-files__editor .cm-scroller::-webkit-scrollbar-corner,
+#summary::-webkit-scrollbar-track {
   background: transparent;
 }
 

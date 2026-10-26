@@ -3,6 +3,11 @@
 // three worlds.
 
 import type {
+  AssistantEvent,
+  AssistantStatus,
+  TranscriptMessage,
+} from '@ascua/assistant';
+import type {
   Account,
   Branch,
   Commit,
@@ -70,16 +75,114 @@ export const IPC = {
   sourceControlDiff: 'ascua:source-control:diff',
   sourceControlReview: 'ascua:source-control:review',
   sourceControlOpenUrl: 'ascua:source-control:open-url',
+  assistantSend: 'ascua:assistant:send',
+  assistantCancel: 'ascua:assistant:cancel',
+  assistantReset: 'ascua:assistant:reset',
+  assistantStatus: 'ascua:assistant:status',
+  assistantEvent: 'ascua:assistant:event',
+  assistantNavigate: 'ascua:assistant:navigate',
+  assistantWarm: 'ascua:assistant:warm',
+  assistantContext: 'ascua:assistant:context',
+  startProjectTerminals: 'ascua:terminal:start-project',
+  voiceActive: 'ascua:voice:active',
 } as const;
+
+export const NAVIGATE_SCREENS = [
+  'projects',
+  'project',
+  'repositories',
+  'settings',
+  'assistant',
+] as const;
+export type NavigateScreen = (typeof NAVIGATE_SCREENS)[number];
+
+export const PROJECT_TABS = ['terminals', 'files'] as const;
+export type ProjectTab = (typeof PROJECT_TABS)[number];
+
+/** Where main asks the renderer to go (the assistant's `navigate` tool). */
+export type NavigateTarget =
+  | { screen: Exclude<NavigateScreen, 'project'> }
+  | { screen: 'project'; projectId: string; tab?: ProjectTab };
+
+/** Catalog keys whose live text the renderer shares with the assistant. */
+export const UI_LABEL_KEYS = [
+  'nav.projects',
+  'nav.terminals',
+  'nav.files',
+  'nav.settings',
+  'nav.repositories',
+  'nav.assistant',
+  'side.startAll',
+  'side.newProject',
+  'projects.page.addPista',
+  'projects.page.addTerminal',
+  'projects.page.stopAll',
+  'projects.page.edit',
+  'terminals.pista.name',
+  'terminals.pista.port',
+  'terminals.pista.command',
+  'terminals.pista.folder',
+  'room.minimize',
+  'room.close',
+  'bubble.approve',
+  'bubble.reject',
+  'settings.language.title',
+  'settings.voice.title',
+  'settings.voice.enabled',
+  'settings.voice.autoSpeak',
+  'settings.voice.style',
+  'settings.voice.prepare',
+  'repositories.disconnected.connect',
+] as const;
+export type UiLabelKey = (typeof UI_LABEL_KEYS)[number];
+export type UiLabels = Partial<Record<UiLabelKey, string>>;
+
+/** What the renderer tells main about its UI: real labels and current route. */
+export interface UiContext {
+  labels: UiLabels;
+  route?: NavigateTarget;
+}
 
 export const LANGUAGES = ['es', 'en'] as const;
 export type Language = (typeof LANGUAGES)[number];
 
-export interface Settings {
-  language: Language;
+/** Supertonic 3 preset voices; they speak every language. */
+export const VOICE_STYLES = [
+  'F1',
+  'F2',
+  'F3',
+  'F4',
+  'F5',
+  'M1',
+  'M2',
+  'M3',
+  'M4',
+  'M5',
+] as const;
+export type VoiceStyle = (typeof VOICE_STYLES)[number];
+
+export interface VoiceSettings {
+  enabled: boolean;
+  autoSpeak: boolean;
+  style: VoiceStyle;
 }
 
-export type SettingsPatch = Partial<Settings>;
+export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
+  enabled: true,
+  // Off by default: speaking triggers a ~400 MB model download. Opt in from Ajustes.
+  autoSpeak: false,
+  style: 'F1',
+};
+
+export interface Settings {
+  language: Language;
+  voice: VoiceSettings;
+}
+
+export interface SettingsPatch {
+  language?: Language;
+  voice?: Partial<VoiceSettings>;
+}
 
 export const COMMON_ERROR_CODES = ['unknown', 'noDesktop'] as const;
 
@@ -139,8 +242,28 @@ export const SOURCE_CONTROL_ERROR_CODES = [
   'sourceControl.rejected',
 ] as const;
 
+export const ASSISTANT_ERROR_CODES = [
+  'assistant.notInstalled',
+  'assistant.notLoggedIn',
+  'assistant.crashed',
+  'assistant.busy',
+  'assistant.failed',
+] as const;
+
+/** Raised by the renderer, kept here so `errorText` handles them unchanged. */
+export const VOICE_ERROR_CODES = [
+  'voice.micDenied',
+  'voice.micUnavailable',
+  'voice.modelFailed',
+  'voice.noSpeech',
+  'voice.answerYesNo',
+  'voice.ttsUnavailable',
+] as const;
+
 /** Every error code the renderer translates as `errors.<code>`. */
 export type ErrorCode =
+  | (typeof VOICE_ERROR_CODES)[number]
+  | (typeof ASSISTANT_ERROR_CODES)[number]
   | (typeof COMMON_ERROR_CODES)[number]
   | (typeof PROJECT_ERROR_CODES)[number]
   | (typeof TERMINAL_ERROR_CODES)[number]
@@ -210,6 +333,9 @@ export interface FullscreenState {
 /** A Claude Code permission request forwarded from the hook socket. */
 export interface PermissionRequest {
   id: number;
+  source: 'hook' | 'assistant';
+  /** Names for the assistant's bubble title; data, not prose. */
+  params?: Record<string, string>;
   tool: string;
   summary: string;
   input: unknown;
@@ -354,6 +480,12 @@ export function terminalKey(projectId: string, terminalId: string): string {
   return `${projectId}:${terminalId}`;
 }
 
+/** The assistant's status and the transcript so far. */
+export interface AssistantSnapshot {
+  status: AssistantStatus;
+  messages: TranscriptMessage[];
+}
+
 /** The API exposed by the preload script as `window.ascua`. */
 export interface AscuaApi {
   toggleFullscreen(): Promise<BloomOrigin>;
@@ -367,6 +499,8 @@ export interface AscuaApi {
   getSettings(): Promise<Settings>;
   updateSettings(patch: SettingsPatch): Promise<Settings>;
   onSettingsChanged(callback: (settings: Settings) => void): () => void;
+  /** Tells main the mic/voice is in use so the window stays interactive. */
+  setVoiceActive(active: boolean): Promise<void>;
   onFullscreenChanged(callback: (state: FullscreenState) => void): () => void;
   onLayoutChanged(callback: (layout: Layout) => void): () => void;
   onPermissionRequest(
@@ -480,4 +614,18 @@ export interface AscuaApi {
     provider: ProviderId,
     url: string,
   ): Promise<AscuaError | undefined>;
+  assistantSend(text: string): Promise<void>;
+  assistantCancel(): Promise<void>;
+  assistantReset(): Promise<void>;
+  /** Spawns the assistant process ahead of the first turn. */
+  assistantWarm(): Promise<void>;
+  /** Publishes the live UI labels and route for the assistant. */
+  assistantContext(context: UiContext): void;
+  /** Starts every pista of a project; resolves to the resulting sessions. */
+  startProjectTerminals(projectId: string): Promise<TerminalSession[]>;
+  /** `refresh` re-checks that the CLI is installed and signed in. */
+  assistantStatus(refresh?: boolean): Promise<AssistantSnapshot>;
+  onAssistantEvent(callback: (event: AssistantEvent) => void): () => void;
+  /** Main asks the renderer to route to a screen. */
+  onAssistantNavigate(callback: (target: NavigateTarget) => void): () => void;
 }

@@ -4,16 +4,10 @@ import {
   type PermissionDecision,
   type PermissionRequest,
 } from '@ascua/ipc';
-import type { HookServer } from './hook-server';
-
-/** The slice of HookServer the bridge uses, so tests can fake it. */
-export type HookPort = Pick<
-  HookServer,
-  'start' | 'stop' | 'resolve' | 'pendingCount' | 'pendingRequests'
->;
+import type { PermissionSource } from './permission-source';
 
 export interface PermissionBridgeOptions {
-  hooks: HookPort;
+  sources: PermissionSource[];
   send(channel: string, payload: unknown): void;
   rendererReady(): boolean;
   /** `active` changed: the window must re-evaluate click-through. */
@@ -26,6 +20,7 @@ export interface PermissionBridgeOptions {
  */
 export class PermissionBridge {
   private bubble = false;
+  private nextId = 1;
 
   constructor(private readonly options: PermissionBridgeOptions) {}
 
@@ -34,23 +29,27 @@ export class PermissionBridge {
   }
 
   start(): void {
-    this.options.hooks.start({
-      onRequest: (request) => this.show(request),
-      onResolved: (id) => this.resolved(id),
-    });
+    const sink = {
+      onRequest: (request: PermissionRequest) => this.show(request),
+      onResolved: (id: number) => this.resolved(id),
+      nextId: () => this.nextId++,
+    };
+    for (const source of this.options.sources) source.start(sink);
   }
 
   stop(): void {
-    this.options.hooks.stop();
+    for (const source of this.options.sources) source.stop();
   }
 
   resolve(id: number, decision: PermissionDecision): void {
-    this.options.hooks.resolve(id, decision);
+    for (const source of this.options.sources) source.resolve(id, decision);
   }
 
   /** Re-sends the pending requests after the renderer (re)loaded. */
   resendPending(): void {
-    for (const request of this.options.hooks.pendingRequests) {
+    for (const request of this.options.sources.flatMap(
+      (source) => source.pendingRequests,
+    )) {
       this.options.send(IPC.permissionRequest, request);
     }
   }
@@ -69,7 +68,11 @@ export class PermissionBridge {
     // Covers both a decision and a hook that disconnected early; the renderer
     // removes the card by id either way.
     this.options.send(IPC.permissionDismissed, id);
-    if (this.options.hooks.pendingCount > 0) return;
+    const waiting = this.options.sources.reduce(
+      (sum, source) => sum + source.pendingRequests.length,
+      0,
+    );
+    if (waiting > 0) return;
     this.bubble = false;
     this.options.onActiveChange();
   }

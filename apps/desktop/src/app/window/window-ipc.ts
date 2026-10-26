@@ -11,4 +11,7 @@ export function registerWindowIpc(window: AscuaWindow): void {
   ipcMain.handle(IPC.getLayout, () => window.layout);
   ipcMain.handle(IPC.dragStart, () => window.startDrag());
   ipcMain.handle(IPC.dragEnd, () => window.endDrag());
+  ipcMain.handle(IPC.voiceActive, (_e, active: unknown) =>
+    window.setVoiceActive(active === true),
+  );
 }

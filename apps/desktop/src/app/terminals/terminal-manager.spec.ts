@@ -63,6 +63,14 @@ describe('TerminalManager', () => {
     expect(spawn.type === 'spawn' && spawn.env['CHERE_INVOKING']).toBe('1');
   });
 
+  it('starts every pista of a project and ignores unknown projects', async () => {
+    const { manager, requests } = setup();
+    const started = await manager.startProject('p1');
+    expect(started.map((s) => s.terminalId)).toEqual(['t1', 't2']);
+    expect(requests.filter((r) => r.type === 'spawn')).toHaveLength(2);
+    expect(await manager.startProject('nope')).toEqual([]);
+  });
+
   it('does not respawn a running terminal', async () => {
     const { manager, requests } = setup();
     await manager.start('p1', 't1');

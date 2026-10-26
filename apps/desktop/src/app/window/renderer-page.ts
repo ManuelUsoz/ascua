@@ -1,12 +1,24 @@
 import { app, type BrowserWindow } from 'electron';
-import { join } from 'node:path';
-import { rendererAppName, rendererAppPort } from '../constants';
+import {
+  rendererTarget,
+  targetUrl,
+  type RendererTarget,
+} from './renderer-target';
+
+export function currentRendererTarget(): RendererTarget {
+  return rendererTarget({
+    packaged: app.isPackaged,
+    env: process.env,
+    dir: __dirname,
+  });
+}
 
 export function loadRenderer(win: BrowserWindow): void {
-  if (!app.isPackaged && process.env['ASCUA_RENDERER'] !== 'dist') {
-    win.loadURL(`http://localhost:${rendererAppPort}`);
+  const target = currentRendererTarget();
+  if (target.kind === 'url') {
+    win.loadURL(targetUrl(target));
   } else {
-    win.loadFile(join(__dirname, '..', rendererAppName, 'index.html'));
+    win.loadFile(target.path, { query: target.query });
   }
 }
 

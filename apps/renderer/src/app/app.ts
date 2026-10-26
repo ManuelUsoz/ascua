@@ -3,6 +3,7 @@ import { RoomState } from './core/room/room-state';
 import { Avatar } from './layout/avatar/avatar';
 import { PermissionBubble } from './layout/permission-bubble/permission-bubble';
 import { Room } from './layout/room/room';
+import { VoiceStatus } from './layout/voice-status/voice-status';
 
 /**
  * The one window's content: the permission bubble and the avatar in compact
@@ -12,7 +13,7 @@ import { Room } from './layout/room/room';
  */
 @Component({
   selector: 'app-root',
-  imports: [PermissionBubble, Room, Avatar],
+  imports: [PermissionBubble, Room, Avatar, VoiceStatus],
   templateUrl: './app.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {

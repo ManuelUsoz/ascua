@@ -9,5 +9,32 @@
   "languages": {
     "es": "Español",
     "en": "English"
+  },
+  "voice": {
+    "title": "Voz",
+    "hint": "Hablas con Ascua y te responde en voz alta. Todo se procesa en este equipo: solo el texto llega al asistente.",
+    "enabled": "Activar la voz",
+    "autoSpeak": "Leer las respuestas en voz alta",
+    "style": "Estilo de voz",
+    "styleHint": "Se usa para español e inglés.",
+    "styles": {
+      "F1": "Femenina 1",
+      "F2": "Femenina 2",
+      "F3": "Femenina 3",
+      "F4": "Femenina 4",
+      "F5": "Femenina 5",
+      "M1": "Masculina 1",
+      "M2": "Masculina 2",
+      "M3": "Masculina 3",
+      "M4": "Masculina 4",
+      "M5": "Masculina 5"
+    },
+    "sample": "Hola, soy Ascua. Así sueno.",
+    "test": "Probar voz",
+    "prepare": "Preparar voz",
+    "prepareHint": "Descarga los modelos de voz (unos 960 MB con GPU, unos 650 MB sin ella) para usarlos sin esperar.",
+    "downloading": "Descargando… {{percent}}%",
+    "clear": "Borrar modelos descargados",
+    "credit": "Voz: Supertonic 3 de Supertone (Open RAIL-M), descargada de Hugging Face. Reconocimiento: Whisper."
   }
 }

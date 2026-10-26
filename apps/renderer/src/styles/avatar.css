@@ -74,6 +74,54 @@ body:not(.is-open):not(.is-closing) #ascua-host:hover .ascua {
   transform: rotate(-6deg) translateY(-4px) scale(1.04);
 }
 
+/* Push-to-talk: a ring around the avatar while the mic is open. */
+body[data-voice='listening'] #ascua-host {
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--oro) 70%, transparent);
+}
+
+/* Voice status: text only, never needs a click (the window is click-through). */
+#voice-status {
+  position: fixed;
+  z-index: 2;
+  right: 16px;
+  bottom: 126px;
+  max-width: 300px;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink);
+  background: var(--bubble);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+#voice-status[hidden],
+body.is-closing #voice-status {
+  display: none;
+}
+
+body[data-x='left'] #voice-status {
+  left: 16px;
+  right: auto;
+}
+
+body[data-y='top'] #voice-status {
+  top: 126px;
+  bottom: auto;
+}
+
+/* In the room the avatar is gone: sit at the bottom centre. */
+body.is-open #voice-status {
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: 16px;
+  transform: translateX(-50%);
+}
+
 body.is-waking #ascua-host .ascua {
   animation: room-anticipate calc(260ms * var(--spd)) var(--soft) forwards;
 }
