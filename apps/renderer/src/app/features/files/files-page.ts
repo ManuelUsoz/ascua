@@ -12,6 +12,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { errorText } from '../../core/i18n/app-error';
 import { text } from '../../core/i18n/text';
 import { UnsavedChanges } from '../../core/unsaved/unsaved-changes';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { CodeEditor } from './code-editor';
 import { FileBrowser } from './file-browser';
@@ -19,7 +20,7 @@ import { FileBrowser } from './file-browser';
 /** Archivos tab: tree, "Ir a archivo…" filter and an in-place CodeMirror editor. */
 @Component({
   selector: 'app-files-page',
-  imports: [Icon, CodeEditor, TranslocoPipe],
+  imports: [Button, Icon, CodeEditor, TranslocoPipe],
   templateUrl: './files-page.html',
   providers: [FileBrowser],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,9 +1,20 @@
 {
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete"
+  },
+  "breadcrumb": {
+    "label": "Path",
+    "showHidden": "Show hidden levels"
+  },
   "nav": {
     "projects": "Projects",
     "terminals": "Terminals",
     "files": "Files",
+    "chats": "Chats",
     "newProject": "New project",
+    "cloneProject": "Clone repository",
     "edit": "Edit",
     "settings": "Settings",
     "repositories": "Repositories",
@@ -44,20 +55,36 @@
       "tts": "Downloading speech synthesis"
     }
   },
+  "notice": {
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "dismiss": "Dismiss"
+  },
   "side": {
     "heading": "PROJECTS",
     "newProject": "New project",
-    "startAll": "Start all"
+    "startAll": "Start all",
+    "untitledChat": "Untitled chat",
+    "deleteChatTitle": "Delete chat",
+    "deleteChatBody": "\"{{name}}\" and its history will be deleted. This cannot be undone.",
+    "deleteChatConfirm": "Delete chat"
+  },
+  "status": {
+    "working": "Working",
+    "running": "Running",
+    "waiting": "Waiting for your reply",
+    "stuck": "Stuck",
+    "crashed": "Crashed",
+    "stopped": "Stopped"
   },
   "state": {
-    "running": "Running",
-    "stopped": "Stopped",
-    "failed": "Failed",
     "failedCode": "Failed (code {{code}})"
   },
   "errors": {
     "unknown": "Unexpected error: {{detail}}",
     "noDesktop": "Only available in the desktop app.",
+<<<<<<< HEAD
     "assistant": {
       "notInstalled": "Claude Code was not found on this computer.",
       "notLoggedIn": "Claude Code is not signed in.",
@@ -72,6 +99,22 @@
       "noSpeech": "Nothing was heard.",
       "answerYesNo": "A confirmation is pending: say yes or no.",
       "ttsUnavailable": "The voice could not be played."
+=======
+    "invalidLink": "This link cannot be opened.",
+    "chat": {
+      "providerNotConfigured": "No chat provider is configured.",
+      "providerDisabled": "This provider is not available yet.",
+      "authRequired": "Sign in to the provider to continue.",
+      "agentMissing": "The provider's agent was not found.",
+      "notFound": "The chat or request no longer exists.",
+      "invalidInput": "That model, effort or mode is not valid.",
+      "busy": "The chat is busy. Wait for it to finish.",
+      "startFailed": "Could not start the chat.",
+      "promptFailed": "Could not send the message.",
+      "exited": "The agent exited unexpectedly.",
+      "saveFailed": "Could not save the chat.",
+      "unknown": "Unexpected chat error."
+>>>>>>> origin/master
     },
     "sourceControl": {
       "notConnected": "You are not connected to the provider.",
@@ -84,6 +127,15 @@
       "forbidden": "Access is forbidden (organization policy or SSO).",
       "unavailable": "The device flow is disabled on the provider's app.",
       "rejected": "GitHub rejected the review (you cannot approve or request changes on your own pull request)."
+    },
+    "clone": {
+      "gitMissing": "Git is not installed or is not on the PATH.",
+      "authFailed": "Git could not authenticate. Reconnect the provider.",
+      "failed": "The clone failed.",
+      "targetExists": "The target folder already exists and is not empty.",
+      "folderNameInvalid": "The folder name is not valid.",
+      "parentMissing": "The parent folder does not exist.",
+      "busy": "This repository is already being cloned there."
     },
     "project": {
       "notFound": "The project does not exist.",
@@ -100,6 +152,7 @@
       "terminalPortInvalid": "The port of \"{{name}}\" must be an integer between 1 and 65535.",
       "idMissing": "An id is missing",
       "folderOutside": "The folder must be inside the project.",
+      "repositoryInvalid": "Invalid repository link.",
       "saveFailed": "Could not save the project",
       "deleteFailed": "Could not delete the project"
     },

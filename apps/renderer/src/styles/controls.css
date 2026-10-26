@@ -154,6 +154,9 @@ a.as-btn {
 [data-tone='ok'] {
   --tone: var(--ok);
 }
+[data-tone='merged'] {
+  --tone: var(--violeta);
+}
 [data-tone='ask'] {
   --tone: var(--ask);
 }
@@ -347,6 +350,102 @@ a.as-btn {
 .as-select option:checked {
   background: var(--violeta-wash);
   color: var(--violeta);
+}
+
+app-select {
+  position: relative;
+  display: inline-block;
+}
+.as-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  white-space: nowrap;
+}
+.as-menu {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  min-width: 100%;
+  width: max-content;
+  max-width: 340px;
+  padding: var(--space-1);
+  background: var(--surface-raised);
+  border: 1px solid var(--line-mid);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-pop);
+  z-index: 10;
+}
+.as-menu--up {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+.as-menu__option {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  column-gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  color: var(--ink);
+}
+.as-menu__option:hover,
+.as-menu__option--active {
+  background: var(--line);
+}
+.as-menu__option--selected .as-menu__label {
+  color: var(--violeta);
+}
+.as-menu__label {
+  grid-column: 2;
+  font: 600 13px/18px var(--font-sans);
+}
+.as-menu__option app-icon {
+  grid-column: 1;
+  grid-row: 1;
+}
+.as-menu--context {
+  position: fixed;
+  top: 0;
+  left: 0;
+  min-width: 160px;
+  z-index: 50;
+}
+.as-menu__option--danger,
+.as-menu__option--danger .as-menu__label {
+  color: var(--alert);
+}
+.as-modal {
+  width: min(360px, calc(100vw - 32px));
+  padding: var(--space-3, 16px);
+  background: var(--surface-raised);
+  color: var(--ink);
+  border: 1px solid var(--line-mid);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-pop);
+}
+.as-modal::backdrop {
+  background: rgb(0 0 0 / 0.35);
+}
+.as-modal__title {
+  margin: 0 0 8px;
+  font: 600 14px/20px var(--font-sans);
+}
+.as-modal__body {
+  margin: 0 0 16px;
+  font: 400 13px/18px var(--font-sans);
+  color: var(--ink-muted);
+}
+.as-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.as-menu__hint {
+  grid-column: 2;
+  font: 400 12px/17px var(--font-sans);
+  color: var(--ink-muted);
 }
 
 .as-row {

@@ -15,6 +15,7 @@ import {
   type PermissionDecision,
   type PickTerminalFolderResult,
   type Project,
+  type RepositoryLink,
   type SaveProjectResult,
   type Settings,
   type TerminalOutput,
@@ -22,13 +23,22 @@ import {
   type TerminalSession,
   type DeviceCodePrompt,
   type SourceControlStatus,
+  type StartChatResult,
 } from '@ascua/ipc';
 import type { AssistantEvent } from '@ascua/assistant';
+import type {
+  ChatEvent,
+  ChatSession,
+  ChatTranscript,
+  ProviderAuth,
+  ProviderInfo,
+} from '@ascua/chat';
 import type {
   Branch,
   Commit,
   Page,
   PullRequest,
+  CommitDiff,
   PullRequestDiff,
   Repository,
 } from '@ascua/source-control';
@@ -45,9 +55,13 @@ const api: AscuaApi = {
     ipcRenderer.invoke(IPC.toggleFullscreen) as Promise<BloomOrigin>,
   exitFullscreen: () => ipcRenderer.invoke(IPC.exitFullscreen) as Promise<void>,
   isFullscreen: () => ipcRenderer.invoke(IPC.isFullscreen) as Promise<boolean>,
+  getWindowState: () =>
+    ipcRenderer.invoke(IPC.getWindowState) as Promise<FullscreenState>,
   quit: () => ipcRenderer.invoke(IPC.quit) as Promise<void>,
   dragStart: () => ipcRenderer.invoke(IPC.dragStart) as Promise<void>,
   dragEnd: () => ipcRenderer.invoke(IPC.dragEnd) as Promise<void>,
+  openLink: (url) =>
+    ipcRenderer.invoke(IPC.openLink, url) as Promise<AscuaError | undefined>,
   getLayout: () => ipcRenderer.invoke(IPC.getLayout) as Promise<Layout>,
   getSettings: () => ipcRenderer.invoke(IPC.getSettings) as Promise<Settings>,
   updateSettings: (patch) =>
@@ -82,8 +96,20 @@ const api: AscuaApi = {
     ) as Promise<SaveProjectResult>,
   deleteProject: (id) =>
     ipcRenderer.invoke(IPC.deleteProject, id) as Promise<void>,
-  pickProjectFolder: () =>
-    ipcRenderer.invoke(IPC.pickProjectFolder) as Promise<string | undefined>,
+  pickProjectFolder: (defaultPath) =>
+    ipcRenderer.invoke(IPC.pickProjectFolder, defaultPath) as Promise<
+      string | undefined
+    >,
+  getRepositoryLink: (ref) =>
+    ipcRenderer.invoke(IPC.repositoryLink, ref) as Promise<RepositoryLink>,
+  linkProjectRepository: (projectId, ref) =>
+    ipcRenderer.invoke(
+      IPC.linkProjectRepository,
+      projectId,
+      ref,
+    ) as Promise<SaveProjectResult>,
+  cloneProject: (input) =>
+    ipcRenderer.invoke(IPC.cloneProject, input) as Promise<SaveProjectResult>,
   pickTerminalFolder: (projectId) =>
     ipcRenderer.invoke(IPC.pickTerminalFolder, projectId) as Promise<
       PickTerminalFolderResult | undefined
@@ -198,6 +224,14 @@ const api: AscuaApi = {
       number,
       query,
     ) as Promise<PullRequestDiff>,
+  getCommitDiff: (provider, repoId, sha, query) =>
+    ipcRenderer.invoke(
+      IPC.sourceControlCommitDiff,
+      provider,
+      repoId,
+      sha,
+      query,
+    ) as Promise<CommitDiff>,
   submitPullRequestReview: (provider, repoId, number, review) =>
     ipcRenderer.invoke(
       IPC.sourceControlReview,
@@ -231,6 +265,58 @@ const api: AscuaApi = {
     listen<AssistantEvent>(IPC.assistantEvent, callback),
   onAssistantNavigate: (callback) =>
     listen<NavigateTarget>(IPC.assistantNavigate, callback),
+  listChatProviders: () =>
+    ipcRenderer.invoke(IPC.chatProviders) as Promise<ProviderInfo[]>,
+  getChatProviderAuth: (id) =>
+    ipcRenderer.invoke(IPC.chatProviderAuth, id) as Promise<ProviderAuth>,
+  loginChatProvider: (projectId, id) =>
+    ipcRenderer.invoke(IPC.chatProviderLogin, projectId, id) as Promise<
+      TerminalSession | AscuaError
+    >,
+  selectChatProvider: (id) =>
+    ipcRenderer.invoke(IPC.chatSelectProvider, id) as Promise<Settings>,
+  listChatSessions: (projectId) =>
+    ipcRenderer.invoke(IPC.listChatSessions, projectId) as Promise<
+      ChatSession[]
+    >,
+  startChat: (projectId, prompt, options) =>
+    ipcRenderer.invoke(
+      IPC.startChat,
+      projectId,
+      prompt,
+      options,
+    ) as Promise<StartChatResult>,
+  listChatCommands: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.chatCommands, projectId, sessionId),
+  listChatModels: (projectId) => ipcRenderer.invoke(IPC.chatModels, projectId),
+  clearChat: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.clearChat, projectId, sessionId),
+  deleteChat: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.deleteChat, projectId, sessionId),
+  updateChatSession: (projectId, sessionId, patch) =>
+    ipcRenderer.invoke(IPC.updateChatSession, projectId, sessionId, patch),
+  getChatTranscript: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.chatTranscript, projectId, sessionId) as Promise<
+      ChatTranscript | undefined
+    >,
+  sendChatPrompt: (projectId, sessionId, text) =>
+    ipcRenderer.invoke(
+      IPC.sendChatPrompt,
+      projectId,
+      sessionId,
+      text,
+    ) as Promise<AscuaError | undefined>,
+  abortChat: (projectId, sessionId) =>
+    ipcRenderer.invoke(IPC.abortChat, projectId, sessionId) as Promise<void>,
+  resolveChatPermission: (projectId, sessionId, requestId, allow) =>
+    ipcRenderer.invoke(
+      IPC.resolveChatPermission,
+      projectId,
+      sessionId,
+      requestId,
+      allow,
+    ) as Promise<AscuaError | undefined>,
+  onChatEvent: (callback) => listen<ChatEvent>(IPC.chatEvent, callback),
 };
 
 contextBridge.exposeInMainWorld('ascua', api);

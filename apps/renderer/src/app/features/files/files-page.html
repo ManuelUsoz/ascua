@@ -125,10 +125,12 @@
         @if (browser.baseline()?.editable) {
           <button
             type="button"
-            class="as-btn as-btn--quiet as-btn--s"
+            appButton
+            variant="quiet"
+            size="s"
             id="file-save"
             [disabled]="!browser.dirty() || browser.saving()"
-            (click)="browser.save(editorText())"
+            (clicked)="browser.save(editorText())"
           >
             {{ 'files.save' | transloco }}
           </button>
@@ -136,16 +138,20 @@
         @if (openable()) {
           <button
             type="button"
-            class="as-btn as-btn--quiet as-btn--s"
-            (click)="browser.openInEditor()"
+            appButton
+            variant="quiet"
+            size="s"
+            (clicked)="browser.openInEditor()"
           >
             {{ 'files.openInEditor' | transloco }}<app-icon name="external" />
           </button>
         } @else {
           <button
             type="button"
-            class="as-btn as-btn--quiet as-btn--s"
-            (click)="browser.reveal()"
+            appButton
+            variant="quiet"
+            size="s"
+            (clicked)="browser.reveal()"
           >
             {{ 'files.reveal' | transloco }}<app-icon name="external" />
           </button>
@@ -156,15 +162,19 @@
           <span>{{ 'files.conflict' | transloco }}</span>
           <button
             type="button"
-            class="as-btn as-btn--quiet as-btn--s"
-            (click)="browser.save(editorText(), true)"
+            appButton
+            variant="quiet"
+            size="s"
+            (clicked)="browser.save(editorText(), true)"
           >
             {{ 'files.overwrite' | transloco }}
           </button>
           <button
             type="button"
-            class="as-btn as-btn--quiet as-btn--s"
-            (click)="browser.reload()"
+            appButton
+            variant="quiet"
+            size="s"
+            (clicked)="browser.reload()"
           >
             {{ 'files.reload' | transloco }}
           </button>
@@ -175,15 +185,19 @@
           <span>{{ 'files.unsaved' | transloco }}</span>
           <button
             type="button"
-            class="as-btn as-btn--quiet as-btn--s"
-            (click)="unsaved.answer(true)"
+            appButton
+            variant="quiet"
+            size="s"
+            (clicked)="unsaved.answer(true)"
           >
             {{ 'files.discard' | transloco }}
           </button>
           <button
             type="button"
-            class="as-btn as-btn--quiet as-btn--s"
-            (click)="unsaved.answer(false)"
+            appButton
+            variant="quiet"
+            size="s"
+            (clicked)="unsaved.answer(false)"
           >
             {{ 'files.keepEditing' | transloco }}
           </button>

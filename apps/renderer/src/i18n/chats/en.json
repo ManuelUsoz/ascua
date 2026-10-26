@@ -1,0 +1,118 @@
+{
+  "onboarding": {
+    "title": "Pick a provider",
+    "hint": "This project's chats use a coding agent. Choose which one to work with.",
+    "comingSoon": "Coming soon",
+    "checking": "Checking the login",
+    "loggedIn": "Signed in",
+    "loggedInAs": "Signed in as {{email}}",
+    "loggedOut": "Signed out",
+    "unavailable": "Unavailable",
+    "signIn": "Sign in",
+    "signInHint": "A terminal opens to finish signing in. Then check again.",
+    "checkAgain": "Check again",
+    "use": "Use {{provider}}"
+  },
+  "provider": {
+    "claude": "Claude",
+    "codex": "Codex",
+    "gemini": "Gemini"
+  },
+  "newChat": {
+    "title": "New chat",
+    "hint": "Write a message to start a conversation in this project."
+  },
+  "composer": {
+    "label": "Message",
+    "placeholder": "Write your message. Enter sends, Shift+Enter adds a line.",
+    "stop": "Stop",
+    "send": "Send",
+    "attach": "Attach file",
+    "attachSoon": "Attaching files is coming soon",
+    "permission": {
+      "label": "Permissions",
+      "supervised": "Supervised",
+      "supervisedHint": "Ask before commands and file changes.",
+      "acceptEdits": "Auto-accept edits",
+      "acceptEditsHint": "Auto-approve edits, ask before other actions.",
+      "auto": "Auto",
+      "autoHint": "A classifier approves routine actions; others still ask.",
+      "fullAccess": "Full access",
+      "fullAccessHint": "Allow commands and edits without prompts."
+    },
+    "model": {
+      "label": "Model",
+      "default": "Provider default"
+    },
+    "effort": {
+      "label": "Reasoning effort",
+      "default": "Default effort",
+      "minimal": "Minimal",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "xhigh": "Extra high",
+      "max": "Max"
+    },
+    "mode": {
+      "locate": "Locate",
+      "make": "Make",
+      "review": "Review"
+    },
+    "exitMode": "Exit mode"
+  },
+  "commands": {
+    "label": "Commands",
+    "keys": {
+      "move": "↑↓ move",
+      "complete": "Tab complete",
+      "run": "Enter run",
+      "close": "Esc close"
+    },
+    "clear": "Clears the conversation and starts fresh",
+    "locate": "Finds where something lives and reports path:line, without edits",
+    "make": "Plans in batches, then implements and verifies",
+    "review": "Reviews files or a PR and reports findings, without edits",
+    "group": {
+      "builtin": "Built-in",
+      "nxy": "nxy modes",
+      "custom": "Project"
+    }
+  },
+  "session": {
+    "loading": "Loading the chat",
+    "responding": "Responding…",
+    "untitled": "Untitled chat"
+  },
+  "working": "Working",
+  "workingOn": "Working · {{tool}} {{target}}",
+  "activity": {
+    "subagents": {
+      "one": "{{count}} subagent",
+      "other": "{{count}} subagents"
+    },
+    "errors": {
+      "one": "{{count}} error",
+      "other": "{{count}} errors"
+    },
+    "running": "running",
+    "seconds": "{{count}} s"
+  },
+  "part": {
+    "thinking": "Thinking",
+    "toolRunning": "Running",
+    "toolDone": "Done",
+    "toolFailed": "Failed"
+  },
+  "permission": {
+    "title": "Permission requested",
+    "allow": "Allow",
+    "deny": "Deny",
+    "allowed": "Allowed",
+    "denied": "Denied"
+  },
+  "usage": {
+    "tokens": "{{count}} tokens",
+    "cost": "US$ {{cost}}"
+  }
+}

@@ -15,7 +15,11 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "paths": {
+<<<<<<< HEAD
       "@ascua/assistant": ["libs/assistant/src/index.ts"],
+=======
+      "@ascua/chat": ["libs/chat/src/index.ts"],
+>>>>>>> origin/master
       "@ascua/character": ["libs/character/src/index.ts"],
       "@ascua/ipc": ["libs/ascua-ipc/src/index.ts"],
       "@ascua/source-control": ["libs/source-control/src/index.ts"]

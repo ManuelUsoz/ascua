@@ -1,6 +1,11 @@
 import { app, BrowserWindow, screen } from 'electron';
 import { join } from 'node:path';
-import { IPC, type BloomOrigin, type Layout } from '@ascua/ipc';
+import {
+  IPC,
+  type BloomOrigin,
+  type FullscreenState,
+  type Layout,
+} from '@ascua/ipc';
 import type { PermissionBridge } from '../permissions/permission-bridge';
 import { ClickThrough } from './click-through';
 import { WindowDrag } from './drag';
@@ -65,6 +70,7 @@ export class AscuaWindow {
       maximizable: false,
       fullscreenable: true,
       title: 'Ascua',
+      icon: join(__dirname, 'assets', 'icon.png'),
       webPreferences: {
         preload: join(__dirname, 'main.preload.js'),
         contextIsolation: true,
@@ -121,7 +127,12 @@ export class AscuaWindow {
     win.setIgnoreMouseEvents(true, { forward: true });
 
     win.once('ready-to-show', () => {
-      win.showInactive();
+      if (fullscreen.expanded) {
+        win.show();
+        win.focus();
+      } else {
+        win.showInactive();
+      }
       win.moveTop();
     });
 
@@ -134,11 +145,25 @@ export class AscuaWindow {
     // A full renderer load (Ctrl+R, dev-server reload) boots the compact UI
     // while main still thinks the room is open, leaving a stuck fullscreen
     // window. Hash routing only fires did-navigate-in-page, so tab switches
+<<<<<<< HEAD
     // never land here. `expanded` is false on the initial load.
     // did-navigate fires on the commit of a new document, so an aborted or
     // failed navigation never leaves the renderer unready; did-finish-load
     // sets it back. Hash navigations (did-navigate-in-page) never reset it.
     win.webContents.on('did-navigate', () => {
+=======
+    // never land here. The first navigation is the launch itself, when the
+    // room is already open on purpose.
+    let initialNavigation = true;
+    win.webContents.on('did-navigate', () => {
+      if (initialNavigation) {
+        initialNavigation = false;
+        return;
+      }
+      if (fullscreen.expanded) fullscreen.exit();
+    });
+    win.webContents.on('did-start-loading', () => {
+>>>>>>> origin/master
       this.rendererReady = false;
       this.voiceActive = false;
       if (fullscreen.expanded) fullscreen.exit();
@@ -167,6 +192,9 @@ export class AscuaWindow {
     });
 
     hardenWebContents(win);
+    // Launch into the room: the compact avatar is the collapsed state.
+    fullscreen.startExpanded();
+    clickThrough.apply();
     loadRenderer(win);
     clickThrough.start();
     this.send(IPC.layoutChanged, this.layout);
@@ -213,6 +241,11 @@ export class AscuaWindow {
 
   isFullscreen(): boolean {
     return this.fullscreen?.isFullscreen() ?? false;
+  }
+
+  /** The room state a renderer reads when it boots. */
+  state(): FullscreenState {
+    return this.fullscreen?.state() ?? { fullscreen: false };
   }
 
   startDrag(): void {

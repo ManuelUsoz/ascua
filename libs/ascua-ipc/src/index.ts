@@ -3,14 +3,31 @@
 // three worlds.
 
 import type {
+<<<<<<< HEAD
   AssistantEvent,
   AssistantStatus,
   TranscriptMessage,
 } from '@ascua/assistant';
+=======
+  AgentProviderId,
+  ChatCommand,
+  ChatErrorKind,
+  ChatEvent,
+  ChatModeId,
+  ChatSession,
+  ChatTranscript,
+  ModelCatalog,
+  PermissionMode,
+  ProviderAuth,
+  ProviderInfo,
+  ReasoningEffort,
+} from '@ascua/chat';
+>>>>>>> origin/master
 import type {
   Account,
   Branch,
   Commit,
+  CommitDiff,
   CommitQuery,
   Page,
   PageQuery,
@@ -26,10 +43,12 @@ export const IPC = {
   toggleFullscreen: 'ascua:window:toggle-fullscreen',
   exitFullscreen: 'ascua:window:exit-fullscreen',
   isFullscreen: 'ascua:window:is-fullscreen',
+  getWindowState: 'ascua:window:get-state',
   fullscreenChanged: 'ascua:window:fullscreen-changed',
   quit: 'ascua:app:quit',
   dragStart: 'ascua:window:drag-start',
   dragEnd: 'ascua:window:drag-end',
+  openLink: 'ascua:app:open-link',
   getLayout: 'ascua:window:get-layout',
   layoutChanged: 'ascua:window:layout-changed',
   permissionRequest: 'ascua:permission:request',
@@ -41,6 +60,9 @@ export const IPC = {
   removePista: 'ascua:projects:remove-pista',
   deleteProject: 'ascua:projects:delete',
   pickProjectFolder: 'ascua:projects:pick-folder',
+  repositoryLink: 'ascua:projects:repository-link',
+  linkProjectRepository: 'ascua:projects:link-repository',
+  cloneProject: 'ascua:projects:clone',
   pickTerminalFolder: 'ascua:projects:pick-terminal-folder',
   listTerminals: 'ascua:terminals:list',
   startTerminal: 'ascua:terminals:start',
@@ -73,8 +95,10 @@ export const IPC = {
   sourceControlBranches: 'ascua:source-control:branches',
   sourceControlCommits: 'ascua:source-control:commits',
   sourceControlDiff: 'ascua:source-control:diff',
+  sourceControlCommitDiff: 'ascua:source-control:commit-diff',
   sourceControlReview: 'ascua:source-control:review',
   sourceControlOpenUrl: 'ascua:source-control:open-url',
+<<<<<<< HEAD
   assistantSend: 'ascua:assistant:send',
   assistantCancel: 'ascua:assistant:cancel',
   assistantReset: 'ascua:assistant:reset',
@@ -85,6 +109,24 @@ export const IPC = {
   assistantContext: 'ascua:assistant:context',
   startProjectTerminals: 'ascua:terminal:start-project',
   voiceActive: 'ascua:voice:active',
+=======
+  chatProviders: 'ascua:chats:providers',
+  chatProviderAuth: 'ascua:chats:provider-auth',
+  chatProviderLogin: 'ascua:chats:provider-login',
+  chatSelectProvider: 'ascua:chats:select-provider',
+  listChatSessions: 'ascua:chats:list',
+  startChat: 'ascua:chats:start',
+  chatCommands: 'ascua:chats:commands',
+  chatModels: 'ascua:chats:models',
+  clearChat: 'ascua:chats:clear',
+  deleteChat: 'ascua:chats:delete',
+  updateChatSession: 'ascua:chats:update-session',
+  chatTranscript: 'ascua:chats:transcript',
+  sendChatPrompt: 'ascua:chats:send',
+  abortChat: 'ascua:chats:abort',
+  resolveChatPermission: 'ascua:chats:resolve-permission',
+  chatEvent: 'ascua:chats:event',
+>>>>>>> origin/master
 } as const;
 
 export const NAVIGATE_SCREENS = [
@@ -146,6 +188,7 @@ export interface UiContext {
 export const LANGUAGES = ['es', 'en'] as const;
 export type Language = (typeof LANGUAGES)[number];
 
+<<<<<<< HEAD
 /** Supertonic 3 preset voices; they speak every language. */
 export const VOICE_STYLES = [
   'F1',
@@ -165,6 +208,25 @@ export interface VoiceSettings {
   enabled: boolean;
   autoSpeak: boolean;
   style: VoiceStyle;
+=======
+export interface Settings {
+  language: Language;
+  /** Last parent folder used to clone a repository. */
+  cloneDir?: string;
+  /** Agent provider chosen for project chats. */
+  chatProvider?: AgentProviderId;
+  /** Last runtime selection per provider, seeding new chats. */
+  chatDefaults?: Partial<
+    Record<
+      AgentProviderId,
+      {
+        permissionMode?: PermissionMode;
+        model?: string;
+        effort?: ReasoningEffort;
+      }
+    >
+  >;
+>>>>>>> origin/master
 }
 
 export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
@@ -184,7 +246,11 @@ export interface SettingsPatch {
   voice?: Partial<VoiceSettings>;
 }
 
-export const COMMON_ERROR_CODES = ['unknown', 'noDesktop'] as const;
+export const COMMON_ERROR_CODES = [
+  'unknown',
+  'noDesktop',
+  'invalidLink',
+] as const;
 
 export const PROJECT_ERROR_CODES = [
   'project.notFound',
@@ -201,6 +267,7 @@ export const PROJECT_ERROR_CODES = [
   'project.terminalPortInvalid',
   'project.idMissing',
   'project.folderOutside',
+  'project.repositoryInvalid',
   'project.saveFailed',
   'project.deleteFailed',
   'pista.saveFailed',
@@ -229,6 +296,16 @@ export const FILE_ERROR_CODES = [
   'file.openFailed',
 ] as const;
 
+export const CLONE_ERROR_CODES = [
+  'clone.gitMissing',
+  'clone.authFailed',
+  'clone.failed',
+  'clone.targetExists',
+  'clone.folderNameInvalid',
+  'clone.parentMissing',
+  'clone.busy',
+] as const;
+
 export const SOURCE_CONTROL_ERROR_CODES = [
   'sourceControl.notConnected',
   'sourceControl.authExpired',
@@ -242,6 +319,7 @@ export const SOURCE_CONTROL_ERROR_CODES = [
   'sourceControl.rejected',
 ] as const;
 
+<<<<<<< HEAD
 export const ASSISTANT_ERROR_CODES = [
   'assistant.notInstalled',
   'assistant.notLoggedIn',
@@ -259,6 +337,22 @@ export const VOICE_ERROR_CODES = [
   'voice.answerYesNo',
   'voice.ttsUnavailable',
 ] as const;
+=======
+export const CHAT_ERROR_CODES = [
+  'chat.providerNotConfigured',
+  'chat.providerDisabled',
+  'chat.authRequired',
+  'chat.agentMissing',
+  'chat.notFound',
+  'chat.invalidInput',
+  'chat.busy',
+  'chat.startFailed',
+  'chat.promptFailed',
+  'chat.exited',
+  'chat.saveFailed',
+  'chat.unknown',
+] as const satisfies readonly `chat.${ChatErrorKind}`[];
+>>>>>>> origin/master
 
 /** Every error code the renderer translates as `errors.<code>`. */
 export type ErrorCode =
@@ -266,9 +360,11 @@ export type ErrorCode =
   | (typeof ASSISTANT_ERROR_CODES)[number]
   | (typeof COMMON_ERROR_CODES)[number]
   | (typeof PROJECT_ERROR_CODES)[number]
+  | (typeof CLONE_ERROR_CODES)[number]
   | (typeof TERMINAL_ERROR_CODES)[number]
   | (typeof FILE_ERROR_CODES)[number]
-  | (typeof SOURCE_CONTROL_ERROR_CODES)[number];
+  | (typeof SOURCE_CONTROL_ERROR_CODES)[number]
+  | (typeof CHAT_ERROR_CODES)[number];
 
 /** A failure main (or the renderer) reports as a code plus parameters. */
 export interface AscuaError {
@@ -357,6 +453,14 @@ export interface TerminalSpec {
   port?: number;
 }
 
+/** The repository a project is linked to. */
+export interface RepositoryRef {
+  provider: ProviderId;
+  id: string;
+  name: string;
+  fullName: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -365,6 +469,20 @@ export interface Project {
   /** `#rrggbb` */
   color?: string;
   terminals: TerminalSpec[];
+  repository?: RepositoryRef;
+}
+
+export type RepositoryLink =
+  | { state: 'linked'; project: Project; path: string }
+  | { state: 'match'; project: Project; path: string }
+  | { state: 'none'; path: string; folderExists: boolean };
+
+export interface CloneProjectInput {
+  repository: RepositoryRef;
+  name: string;
+  color?: string;
+  parentDir: string;
+  folderName: string;
 }
 
 /** A terminal spec as submitted by the form: new ones have no id yet. */
@@ -471,6 +589,24 @@ export type SourceControlStatus =
       persisted: boolean;
     };
 
+export interface ChatStartOptions {
+  permissionMode?: PermissionMode;
+  model?: string;
+  effort?: ReasoningEffort;
+}
+
+export interface ChatSessionPatch {
+  permissionMode?: PermissionMode;
+  /** null clears the selection (provider default). */
+  model?: string | null;
+  effort?: ReasoningEffort | null;
+  mode?: ChatModeId;
+}
+
+export type StartChatResult =
+  | { ok: true; session: ChatSession }
+  | { ok: false; error: AscuaError };
+
 /** `refresh` bypasses main's in-memory cache. */
 export interface Refreshable {
   refresh?: boolean;
@@ -491,10 +627,14 @@ export interface AscuaApi {
   toggleFullscreen(): Promise<BloomOrigin>;
   exitFullscreen(): Promise<void>;
   isFullscreen(): Promise<boolean>;
+  /** The room's state at renderer boot: main may open it before the page loads. */
+  getWindowState(): Promise<FullscreenState>;
   /** The user pressed the room's close button: quit Ascua entirely. */
   quit(): Promise<void>;
   dragStart(): Promise<void>;
   dragEnd(): Promise<void>;
+  /** Opens an http(s)/mailto link in the system browser; main validates it. */
+  openLink(url: string): Promise<AscuaError | undefined>;
   getLayout(): Promise<Layout>;
   getSettings(): Promise<Settings>;
   updateSettings(patch: SettingsPatch): Promise<Settings>;
@@ -522,7 +662,13 @@ export interface AscuaApi {
   ): Promise<SaveProjectResult>;
   deleteProject(id: string): Promise<void>;
   /** Native folder picker; `undefined` when cancelled. */
-  pickProjectFolder(): Promise<string | undefined>;
+  pickProjectFolder(defaultPath?: string): Promise<string | undefined>;
+  getRepositoryLink(ref: RepositoryRef): Promise<RepositoryLink>;
+  linkProjectRepository(
+    projectId: string,
+    ref: RepositoryRef,
+  ): Promise<SaveProjectResult>;
+  cloneProject(input: CloneProjectInput): Promise<SaveProjectResult>;
   /** Folder picker starting at the project root; `undefined` when cancelled. */
   pickTerminalFolder(
     projectId: string,
@@ -603,6 +749,12 @@ export interface AscuaApi {
     number: number,
     query?: Refreshable,
   ): Promise<PullRequestDiff>;
+  getCommitDiff(
+    provider: ProviderId,
+    repoId: string,
+    sha: string,
+    query?: Refreshable,
+  ): Promise<CommitDiff>;
   submitPullRequestReview(
     provider: ProviderId,
     repoId: string,
@@ -614,6 +766,7 @@ export interface AscuaApi {
     provider: ProviderId,
     url: string,
   ): Promise<AscuaError | undefined>;
+<<<<<<< HEAD
   assistantSend(text: string): Promise<void>;
   assistantCancel(): Promise<void>;
   assistantReset(): Promise<void>;
@@ -628,4 +781,60 @@ export interface AscuaApi {
   onAssistantEvent(callback: (event: AssistantEvent) => void): () => void;
   /** Main asks the renderer to route to a screen. */
   onAssistantNavigate(callback: (target: NavigateTarget) => void): () => void;
+=======
+  listChatProviders(): Promise<ProviderInfo[]>;
+  getChatProviderAuth(id: AgentProviderId): Promise<ProviderAuth>;
+  /** Opens a terminal running the provider's login command. */
+  loginChatProvider(
+    projectId: string,
+    id: AgentProviderId,
+  ): Promise<TerminalSession | AscuaError>;
+  selectChatProvider(id: AgentProviderId): Promise<Settings>;
+  listChatSessions(projectId: string): Promise<ChatSession[]>;
+  /** Creates the session and sends the first prompt; the reply streams. */
+  startChat(
+    projectId: string,
+    prompt: string,
+    options?: ChatStartOptions,
+  ): Promise<StartChatResult>;
+  listChatModels(projectId: string): Promise<ModelCatalog>;
+  listChatCommands(
+    projectId: string,
+    sessionId?: string,
+  ): Promise<ChatCommand[]>;
+  /** Empties the transcript and resets the conversation in place. */
+  clearChat(
+    projectId: string,
+    sessionId: string,
+  ): Promise<AscuaError | undefined>;
+  /** Deletes the chat session and its transcript. */
+  deleteChat(
+    projectId: string,
+    sessionId: string,
+  ): Promise<AscuaError | undefined>;
+  updateChatSession(
+    projectId: string,
+    sessionId: string,
+    patch: ChatSessionPatch,
+  ): Promise<AscuaError | undefined>;
+  getChatTranscript(
+    projectId: string,
+    sessionId: string,
+  ): Promise<ChatTranscript | undefined>;
+  /** Resolves once accepted; the reply streams through `onChatEvent`. */
+  sendChatPrompt(
+    projectId: string,
+    sessionId: string,
+    text: string,
+  ): Promise<AscuaError | undefined>;
+  abortChat(projectId: string, sessionId: string): Promise<void>;
+  /** `chat.notFound` when the request is no longer pending. */
+  resolveChatPermission(
+    projectId: string,
+    sessionId: string,
+    requestId: string,
+    allow: boolean,
+  ): Promise<AscuaError | undefined>;
+  onChatEvent(callback: (event: ChatEvent) => void): () => void;
+>>>>>>> origin/master
 }

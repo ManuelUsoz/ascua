@@ -42,12 +42,14 @@ function setup(
   const provider = {
     id: 'github' as const,
     webOrigin: 'https://github.com',
+    cloneUrl: vi.fn((id: string) => `https://github.com/${id}.git`),
     getAccount: vi.fn(over.getAccount ?? (async () => account)),
     listRepositories: vi.fn(async () => ({ items: [] })),
     listPullRequests: vi.fn(),
     listBranches: vi.fn(async () => ({ items: [] })),
     listCommits: vi.fn(),
     getPullRequestDiff: vi.fn(),
+    getCommitDiff: vi.fn(async () => ({ files: [], truncated: false })),
     submitReview: vi.fn(),
   };
   const authorizer = {
@@ -75,6 +77,27 @@ function setup(
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 describe('SourceControlService', () => {
+  it('builds a clone source with the token only in env', async () => {
+    const { service } = setup();
+    const source = await service.cloneSource('github', 'me/app');
+    expect(source.url).toBe('https://github.com/me/app.git');
+    expect(source.url).not.toContain('t@');
+    expect(source.env.GIT_CONFIG_COUNT).toBe('1');
+    expect(source.env.GIT_CONFIG_KEY_0).toBe(
+      'http.https://github.com/.extraheader',
+    );
+    expect(source.env.GIT_CONFIG_VALUE_0).toBe(
+      `AUTHORIZATION: basic ${Buffer.from('x-access-token:t').toString('base64')}`,
+    );
+  });
+
+  it('refuses a clone source when not connected', async () => {
+    const { service } = setup({ stored: undefined });
+    await expect(service.cloneSource('github', 'me/app')).rejects.toMatchObject(
+      { kind: 'notConnected' },
+    );
+  });
+
   it('is disconnected without a credential', async () => {
     const { service } = setup({ stored: undefined });
     expect(await service.status('github')).toEqual({
@@ -224,6 +247,22 @@ describe('SourceControlService', () => {
     expect(provider.listBranches).toHaveBeenCalledTimes(1);
     await service.listBranches('github', 'o/r', { refresh: true });
     expect(provider.listBranches).toHaveBeenCalledTimes(2);
+  });
+
+  it('caches a commit diff until refresh', async () => {
+    const { service, provider } = setup();
+    await service.getCommitDiff('github', 'o/r', 'abc1234');
+    await service.getCommitDiff('github', 'o/r', 'abc1234');
+    expect(provider.getCommitDiff).toHaveBeenCalledTimes(1);
+    await service.getCommitDiff('github', 'o/r', 'abc1234', { refresh: true });
+    expect(provider.getCommitDiff).toHaveBeenCalledTimes(2);
+  });
+
+  it('caches pull request commits apart from branch commits', async () => {
+    const { service, provider } = setup();
+    await service.listCommits('github', 'o/r', { pullRequest: 7 });
+    await service.listCommits('github', 'o/r', { branch: 'dev' });
+    expect(provider.listCommits).toHaveBeenCalledTimes(2);
   });
 
   it('disconnect removes the credential and clears the cache', async () => {

@@ -1,12 +1,22 @@
 {
   "$schema": "../../../../../node_modules/nx-electron/src/validation/maker.schema.json",
   "npmRebuild": false,
-  "asarUnpack": ["node_modules/node-pty/**"],
+  "asarUnpack": ["node_modules/node-pty/**", "node_modules/@anthropic-ai/**"],
+  "directories": {
+    "buildResources": "apps/desktop/buildResources"
+  },
+  "win": {
+    "icon": "icon.ico"
+  },
+  "mac": {
+    "icon": "icon.icns"
+  },
   "linux": {
     "target": ["AppImage"],
     "executableName": "ascua",
     "category": "Development",
-    "executableArgs": ["--ozone-platform=x11"]
+    "executableArgs": ["--ozone-platform=x11"],
+    "icon": "icon.png"
   },
   "files": [{ "from": "desktop", "to": "desktop", "filter": ["pty-host.js"] }]
 }

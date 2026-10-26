@@ -13,6 +13,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { errorText } from '../../core/i18n/app-error';
 import { text, type Text } from '../../core/i18n/text';
 import { ProjectStore } from '../../core/projects/project-store';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import {
   createProjectForm,
@@ -24,7 +25,7 @@ import {
 /** Create (`nuevo`) or edit (`:projectId/editar`) a project; pistas live in the terminals tab. */
 @Component({
   selector: 'app-project-form-page',
-  imports: [ReactiveFormsModule, RouterLink, TranslocoPipe, Icon],
+  imports: [ReactiveFormsModule, RouterLink, TranslocoPipe, Icon, Button],
   templateUrl: './project-form-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

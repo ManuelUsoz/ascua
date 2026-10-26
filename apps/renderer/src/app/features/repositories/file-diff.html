@@ -1,0 +1,73 @@
+<section class="as-diff" [class.as-diff--viewed]="viewed()">
+  <header class="as-diff__file">
+    <span
+      ><span class="as-diff__dir">{{ dir() }}</span
+      >{{ base() }}</span
+    >
+    <span class="add">+{{ file().additions }}</span>
+    <span class="del">−{{ file().deletions }}</span>
+    @if (file().status === 'added') {
+      <span class="as-state" data-tone="ok">{{
+        'repositories.pr.file.added' | transloco
+      }}</span>
+    } @else if (file().status === 'removed') {
+      <span class="as-state" data-tone="alert">{{
+        'repositories.pr.file.removed' | transloco
+      }}</span>
+    } @else if (file().status === 'renamed') {
+      <span class="as-state">{{
+        'repositories.pr.file.renamed' | transloco
+      }}</span>
+    }
+    @if (author(); as login) {
+      <span class="as-source"
+        ><span class="as-mono">{{ mono }}</span
+        >{{ login }}</span
+      >
+    }
+    @if (viewable()) {
+      <button
+        type="button"
+        class="viewed"
+        role="checkbox"
+        [attr.aria-checked]="viewed()"
+        [attr.aria-label]="
+          'repositories.pr.viewed.toggle' | transloco: { file: base() }
+        "
+        (click)="toggleViewed.emit()"
+      >
+        <span class="viewed__box"
+          ><svg class="as-ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12l4.5 4.5L19 7" /></svg
+        ></span>
+        {{ 'repositories.pr.viewed.state' | transloco }}
+      </button>
+    }
+  </header>
+  @if (viewed()) {
+    <!-- viewed: header only -->
+  } @else if (hunks(); as hunks) {
+    @if (file().status === 'added') {
+      <p class="as-faint">{{ 'repositories.pr.newFile' | transloco }}</p>
+    }
+    @for (h of hunks; track $index) {
+      <div class="as-diff__hunk">{{ h.header }} {{ h.context }}</div>
+      <div class="as-diff__side">
+        @for (l of h.left; track $index) {
+          <div class="as-diff__ln" [class.as-diff__ln--del]="l.kind === 'del'">
+            <span>{{ l.n }}</span> {{ l.kind === 'pad' ? '' : l.text }}
+          </div>
+        }
+      </div>
+      <div class="as-diff__side">
+        @for (l of h.right; track $index) {
+          <div class="as-diff__ln" [class.as-diff__ln--add]="l.kind === 'add'">
+            <span>{{ l.n }}</span> {{ l.kind === 'pad' ? '' : l.text }}
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    <p class="as-repos__muted">{{ 'repositories.pr.binary' | transloco }}</p>
+  }
+</section>

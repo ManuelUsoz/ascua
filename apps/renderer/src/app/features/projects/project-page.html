@@ -13,24 +13,33 @@
     </span>
     <div class="as-page-head__tools">
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--quiet as-btn--s"
-        (click)="editor.create()"
+        variant="quiet"
+        size="s"
+        (clicked)="editor.create()"
       >
         <app-icon name="plus" />{{ 'projects.page.addPista' | transloco }}
       </button>
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--quiet as-btn--s"
-        (click)="openShell()"
+        variant="quiet"
+        size="s"
+        (clicked)="openShell()"
       >
         <app-icon name="plus" />{{ 'projects.page.addTerminal' | transloco }}
       </button>
+      <a class="as-btn as-btn--quiet as-btn--s" routerLink="chats/nuevo">
+        <app-icon name="chat" />{{ 'projects.page.newChat' | transloco }}
+      </a>
       <button
+        appButton
         type="button"
-        class="as-btn as-btn--danger as-btn--s"
+        variant="danger"
+        size="s"
         [disabled]="counts().running === 0"
-        (click)="sessions.stopAll(p)"
+        (clicked)="sessions.stopAll(p)"
       >
         <app-icon name="stop" />{{ 'projects.page.stopAll' | transloco }}
       </button>
@@ -91,6 +100,18 @@
     >
       <app-icon name="file" />{{ 'nav.files' | transloco }}
     </a>
+    <a
+      id="tab-chats"
+      class="as-tab"
+      role="tab"
+      aria-controls="tabpanel-project"
+      routerLink="chats"
+      routerLinkActive
+      #rlaChats="routerLinkActive"
+      [attr.aria-selected]="rlaChats.isActive"
+    >
+      <app-icon name="chat" />{{ 'nav.chats' | transloco }}
+    </a>
   </nav>
 
   <div
@@ -98,7 +119,11 @@
     class="as-tabpanel"
     role="tabpanel"
     [attr.aria-labelledby]="
-      rlaFiles.isActive ? 'tab-archivos' : 'tab-terminales'
+      rlaChats.isActive
+        ? 'tab-chats'
+        : rlaFiles.isActive
+          ? 'tab-archivos'
+          : 'tab-terminales'
     "
   >
     <router-outlet />

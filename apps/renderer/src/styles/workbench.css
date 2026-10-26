@@ -11,6 +11,7 @@ app-room-bar {
 .as-bar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-3);
   height: var(--bar-h);
   padding: 0 14px;
@@ -19,17 +20,66 @@ app-room-bar {
   box-shadow: var(--shadow-highlight);
   box-sizing: border-box;
 }
-.as-bar__crumbs {
+.as-workbench__crumbs {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 10px 16px 0;
+}
+.as-crumbs {
+  min-width: 0;
+  font-size: 13px;
+}
+.as-crumbs__list {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  color: var(--ink-muted);
+  margin: 0;
+  padding: 0;
+  list-style: none;
   white-space: nowrap;
 }
-.as-bar__crumbs b {
+.as-crumbs__list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.as-crumbs__list li + li::before {
+  content: '\203A';
+  color: var(--ink-faint);
+}
+.as-crumb__link,
+.as-crumb__more,
+.as-crumb__current {
+  min-width: 0;
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: inherit;
+}
+.as-crumb__link,
+.as-crumb__more {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.as-crumb__link:disabled {
+  cursor: default;
+}
+.as-crumb__current {
   color: var(--ink);
   font-weight: 600;
+}
+.as-crumb__mono {
+  font-family: var(--font-mono);
+}
+.as-crumb__link:focus-visible,
+.as-crumb__more:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
 }
 
 /* Rail */
@@ -88,6 +138,7 @@ app-room-bar {
   overflow-y: auto;
 }
 .as-side__head {
+  text-transform: uppercase;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -294,6 +345,7 @@ app-settings-page {
 .as-page-head__error {
   flex-basis: 100%;
 }
+<<<<<<< HEAD
 /* Thin dark scrollbars, no arrow buttons (webkit pseudo-elements only: scrollbar-width/color would disable them).
    Every scroll area in the room goes in this one list. */
 .as-term-grid::-webkit-scrollbar,
@@ -371,6 +423,25 @@ app-repositories-page::-webkit-scrollbar-track,
 .as-files__editor .cm-scroller::-webkit-scrollbar-track,
 .as-files__editor .cm-scroller::-webkit-scrollbar-corner,
 #summary::-webkit-scrollbar-track {
+=======
+/* Thin scrollbars for every scroll area, styled from the design system: the thumb is line-strong (controls need 3:1), neutral ink-faint on hover, pill radius. Webkit pseudo-elements only: scrollbar-width/color would disable them. */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-button {
+  display: none;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--radius-pill);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-faint);
+}
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+>>>>>>> origin/master
   background: transparent;
 }
 

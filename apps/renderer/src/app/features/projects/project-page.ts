@@ -18,6 +18,7 @@ import { errorText } from '../../core/i18n/app-error';
 import type { Text } from '../../core/i18n/text';
 import { ProjectStore } from '../../core/projects/project-store';
 import { TerminalSessions } from '../../core/terminals/terminal-sessions';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { PistaEditor } from '../terminals/pista-editor';
 import { PistaForm } from '../terminals/pista-form';
@@ -31,6 +32,7 @@ import { PistaForm } from '../terminals/pista-form';
     RouterOutlet,
     TranslocoPipe,
     Icon,
+    Button,
     PistaForm,
   ],
   templateUrl: './project-page.html',

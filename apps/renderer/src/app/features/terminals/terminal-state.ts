@@ -1,29 +1,29 @@
 import type { TerminalSession } from '@ascua/ipc';
 import { errorText } from '../../core/i18n/app-error';
 import { text, type Text } from '../../core/i18n/text';
+import type { StatusState } from '../../shared/status/status';
 
 export interface TerminalStateView {
-  label: Text;
-  tone: 'ok' | 'idle' | 'alert';
+  state: StatusState;
+  label?: Text;
 }
 
-/** Label and tone the pane shows for a terminal's session. */
+/** Status state (and optional detail label) the pane shows for a session. */
 export function terminalStateView(
   session?: TerminalSession,
 ): TerminalStateView {
   switch (session?.status) {
     case 'running':
-      return { label: text('state.running'), tone: 'ok' };
-    case 'failed':
-      return {
-        label: session.error
-          ? errorText(session.error)
-          : session.exitCode === undefined
-            ? text('state.failed')
-            : text('state.failedCode', { code: session.exitCode }),
-        tone: 'alert',
-      };
+      return { state: 'running' };
+    case 'failed': {
+      const label = session.error
+        ? errorText(session.error)
+        : session.exitCode === undefined
+          ? undefined
+          : text('state.failedCode', { code: session.exitCode });
+      return label ? { state: 'crashed', label } : { state: 'crashed' };
+    }
     default:
-      return { label: text('state.stopped'), tone: 'idle' };
+      return { state: 'stopped' };
   }
 }

@@ -300,8 +300,18 @@ app-repository-browser {
 .as-repos__pr .as-row {
   gap: 8px;
 }
+.as-repos__pr .as-item__kind[data-tone] {
+  color: var(--tone);
+}
 
 /* PR viewer */
+app-pull-request-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
 .as-pr__head {
   padding: 20px 32px 16px;
   display: flex;
@@ -329,6 +339,12 @@ app-repository-browser {
   gap: 6px;
   font: 500 11.5px/1 var(--font-mono);
 }
+.as-pr__stat.add {
+  color: var(--ok);
+}
+.as-pr__stat.del {
+  color: var(--alert);
+}
 .as-pr__body {
   margin: 0;
   max-width: 780px;
@@ -352,6 +368,132 @@ app-repository-browser {
   flex-direction: column;
   gap: 20px;
   overflow-y: auto;
+}
+
+/* Files tab: changed-files column + diffs */
+.as-commit__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+}
+.as-commit__head > .as-btn {
+  flex-basis: 100%;
+  justify-content: flex-start;
+}
+/* .as-mono is a 16px monogram box; the sha text overflowed it onto the title. */
+.as-commit__head .as-repos__sha {
+  flex: none;
+  white-space: nowrap;
+  display: inline;
+  width: auto;
+  height: auto;
+  border: 0;
+  background: none;
+}
+.as-commit__head .as-repos__msg {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.as-pr__split {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  min-height: 0;
+}
+.as-pr__side {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 100%;
+  min-height: 0;
+}
+.as-pr__tree {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  box-sizing: border-box;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+.as-tree__row[data-viewed] {
+  opacity: 0.6;
+}
+.as-pr__diffs {
+  position: relative;
+  max-height: 70vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+.as-pr__review {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.as-pr__progress-text {
+  font: 500 12px/17px var(--font-mono);
+  color: var(--ink-muted);
+}
+.as-progress {
+  display: block;
+  flex: 0 1 240px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.as-progress__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--violeta);
+  transform-origin: left;
+  transition: transform 200ms ease-out;
+}
+.as-progress__fill[data-complete] {
+  background: var(--ok);
+}
+@media (prefers-reduced-motion: reduce) {
+  .as-progress__fill {
+    transition: none;
+  }
+}
+ul.as-repos__commits {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+button.as-repos__commit {
+  width: 100%;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+button.as-repos__commit:hover {
+  background: var(--surface-raised);
+}
+.as-diff--viewed .as-diff__file {
+  border-bottom: 0;
+}
+.as-status__add {
+  color: var(--ok);
+}
+.as-status__del {
+  color: var(--alert);
 }
 
 /* Diff */
@@ -382,6 +524,61 @@ app-repository-browser {
 }
 .as-diff__file .as-source {
   margin-left: auto;
+}
+.as-diff--viewed .as-diff__file > :not(.viewed) {
+  opacity: 0.7;
+}
+.viewed {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px 0 4px;
+  border: 1px solid var(--line-mid);
+  border-radius: var(--radius-s);
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+  font: 500 11.5px/1 var(--font-sans);
+  cursor: pointer;
+}
+.viewed:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.viewed[aria-checked='true'] {
+  border-color: color-mix(in srgb, var(--ok) 50%, var(--line));
+  color: var(--ink);
+}
+.viewed:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
+}
+.viewed__box {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--line-strong);
+  box-sizing: border-box;
+}
+.viewed__box svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+.viewed[aria-checked='true'] .viewed__box {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--surface-sunken);
+}
+.viewed[aria-checked='true'] .viewed__box svg {
+  opacity: 1;
 }
 .as-diff__dir {
   color: var(--ink-faint);

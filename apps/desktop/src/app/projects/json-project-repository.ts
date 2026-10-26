@@ -103,11 +103,24 @@ export class JsonProjectRepository implements ProjectRepository {
       const valid: Project[] = [];
       for (const entry of data.projects) {
         try {
-          valid.push(
-            normalizeProject(entry as ProjectInput, () => {
-              throw new ProjectInputError('project.idMissing');
-            }),
-          );
+          const ids = () => {
+            throw new ProjectInputError('project.idMissing');
+          };
+          let project: Project;
+          try {
+            project = normalizeProject(entry as ProjectInput, ids);
+          } catch (error) {
+            if (
+              !(error instanceof ProjectInputError) ||
+              error.error.code !== 'project.repositoryInvalid'
+            ) {
+              throw error;
+            }
+            // A bad link is dropped; the rest of the project is kept.
+            const { repository: _dropped, ...rest } = entry as ProjectInput;
+            project = normalizeProject(rest, ids);
+          }
+          valid.push(project);
         } catch (invalid) {
           console.warn(
             '[ascua] proyecto inválido ignorado en projects.json',

@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import type { DeviceCodePrompt } from '@ascua/ipc';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
 import { PROVIDER_OPTIONS } from './providers';
@@ -16,7 +17,7 @@ import { PROVIDER_OPTIONS } from './providers';
 /** The user code of a pending device authorization. */
 @Component({
   selector: 'app-device-code',
-  imports: [TranslocoPipe, Icon],
+  imports: [TranslocoPipe, Icon, Button],
   templateUrl: './device-code.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

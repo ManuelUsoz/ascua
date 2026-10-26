@@ -1,0 +1,61 @@
+<div class="as-commit__head">
+  <button type="button" appButton variant="ghost" (clicked)="back.emit()">
+    <app-icon name="chevron-left" />{{
+      'repositories.pr.commit.back' | transloco
+    }}
+  </button>
+  <code class="as-repos__sha as-mono">{{ commit().sha.slice(0, 7) }}</code>
+  <span class="as-repos__msg">{{ commit().title }}</span>
+  <span class="as-source"
+    ><span class="as-mono">{{ mono }}</span
+    >{{ commit().author.login ?? commit().author.name }}</span
+  >
+  <span class="as-repos__when">{{
+    commit().authoredAt | relativeTime: lang()
+  }}</span>
+  @if (diff()) {
+    <span class="as-pr__stat add">+{{ totals().add }}</span>
+    <span class="as-pr__stat del">−{{ totals().del }}</span>
+  }
+</div>
+@if (error(); as e) {
+  <p class="as-form__error" role="alert">{{ e.key | transloco: e.params }}</p>
+}
+@if (loading()) {
+  <app-spinner
+    mode="withHorizText"
+    [label]="'repositories.loading' | transloco"
+  />
+}
+@if (diff(); as d) {
+  @if (d.files.length) {
+    <div class="as-pr__split">
+      <div class="as-pr__side">
+        <app-diff-file-list
+          [files]="d.files"
+          [active]="activeFile()"
+          [label]="'repositories.pr.commit.files' | transloco"
+          (fileSelect)="goTo($event)"
+        />
+      </div>
+      <div class="as-pr__diffs">
+        @for (file of d.files; track file.path; let i = $index) {
+          <app-file-diff
+            [id]="'commit-file-' + i"
+            [file]="file"
+            [author]="commit().author.login"
+          />
+        }
+        @if (d.truncated) {
+          <p class="as-repos__muted">
+            {{ 'repositories.pr.truncated' | transloco }}
+          </p>
+        }
+      </div>
+    </div>
+  } @else {
+    <p class="as-repos__muted">
+      {{ 'repositories.pr.commit.empty' | transloco }}
+    </p>
+  }
+}

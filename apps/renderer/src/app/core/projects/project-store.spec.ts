@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import type { AscuaApi, Project } from '@ascua/ipc';
 import { ASCUA_API } from '../bridge/ascua-api';
-import { ProjectStore } from './project-store';
+import { ProjectStore, projectInput } from './project-store';
 
 const alpha: Project = { id: 'a', name: 'Alpha', path: '/a', terminals: [] };
 const beta: Project = { id: 'b', name: 'Beta', path: '/b', terminals: [] };
@@ -113,6 +113,52 @@ describe('ProjectStore', () => {
   it('picks a folder', async () => {
     const store = setup(api);
     expect(await store.pickFolder()).toBe('/picked');
+    await store.pickFolder('/start');
+    expect(api.pickProjectFolder).toHaveBeenLastCalledWith('/start');
+  });
+
+  it('upserts on link and clone, and projectInput keeps the repository', async () => {
+    const repository = {
+      provider: 'github' as const,
+      id: 'o/r',
+      name: 'r',
+      fullName: 'o/r',
+    };
+    const linked: Project = { ...alpha, repository };
+    const cloned: Project = { ...beta, repository };
+    const store = setup({
+      ...api,
+      linkProjectRepository: vi.fn(async () => ({
+        ok: true as const,
+        project: linked,
+      })),
+      cloneProject: vi.fn(async () => ({
+        ok: true as const,
+        project: cloned,
+      })),
+    });
+    await store.reload();
+    await store.linkRepository('a', repository);
+    expect(store.byId('a')?.repository).toEqual(repository);
+    await store.clone({
+      repository,
+      name: 'Beta',
+      parentDir: '/p',
+      folderName: 'r',
+    });
+    expect(store.projects().map((p) => p.id)).toEqual(['a', 'b']);
+    expect(projectInput(linked).repository).toEqual(repository);
+  });
+
+  it('link and clone fail without the bridge', async () => {
+    const store = setup(undefined);
+    const ref = {
+      provider: 'github' as const,
+      id: 'o/r',
+      name: 'r',
+      fullName: 'o/r',
+    };
+    expect((await store.linkRepository('a', ref)).ok).toBe(false);
   });
 
   it('stays empty but loaded in the browser preview', async () => {

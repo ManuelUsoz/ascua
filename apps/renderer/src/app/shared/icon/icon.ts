@@ -40,12 +40,25 @@ export const ICONS = {
   'chevron-left': ['M15 5l-7 7 7 7'],
   check: ['M5 12l4.5 4.5L19 7'],
   refresh: ['M20 11a8 8 0 0 0-14-4M4 4v4h4M4 13a8 8 0 0 0 14 4M20 20v-4h-4'],
+<<<<<<< HEAD
   chat: ['M4 5h16v11H10l-5 4v-4H4z'],
   mic: ['M9 4h6v8a3 3 0 0 1-6 0zM6 11a6 6 0 0 0 12 0M12 17v3'],
   volume: ['M4 10h4l5-4v12l-5-4H4zM16 9a4 4 0 0 1 0 6'],
   'volume-off': ['M4 10h4l5-4v12l-5-4H4zM16 10l5 5M21 10l-5 5'],
+=======
+  chat: ['M4 5h16v11H9l-5 4z'],
+>>>>>>> origin/master
   minimize: ['M5 18h14'],
   close: ['M6 6l12 12M18 6L6 18'],
+  lock: ['M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3'],
+  unlock: ['M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 6.8-1.2'],
+  sparkles: [
+    'M12 4l1.8 4.7L18.5 10.5l-4.7 1.8L12 17l-1.8-4.7L5.5 10.5l4.7-1.8zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z',
+  ],
+  'arrow-up': ['M12 19V5M6 11l6-6 6 6'],
+  paperclip: [
+    'M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 17.5a2 2 0 0 1-3-3L14.5 7',
+  ],
 } as const satisfies Record<string, readonly string[]>;
 
 export type IconName = keyof typeof ICONS;

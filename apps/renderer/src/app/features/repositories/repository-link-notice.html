@@ -1,0 +1,40 @@
+@if (visible() && link(); as l) {
+  <app-notice type="info" [title]="titleKey()">
+    <app-status noticeStatus [state]="status()" [label]="statusLabel()" />
+    <p>{{ bodyKey() | transloco: bodyParams() }}</p>
+    @if (error(); as e) {
+      <p class="as-form__error" role="alert">
+        {{ e.key | transloco: e.params }}
+      </p>
+    }
+    <ng-container noticeActions>
+      @switch (l.state) {
+        @case ('linked') {
+          <button
+            type="button"
+            appButton
+            size="s"
+            (clicked)="open(l.project.id)"
+          >
+            {{ 'repositories.link.open' | transloco }}
+          </button>
+        }
+        @case ('match') {
+          <button
+            type="button"
+            appButton
+            size="s"
+            (clicked)="linkTo(l.project.id)"
+          >
+            {{ 'repositories.link.link' | transloco: { name: l.project.name } }}
+          </button>
+        }
+        @default {
+          <button type="button" appButton size="s" (clicked)="create()">
+            {{ 'repositories.link.create' | transloco }}
+          </button>
+        }
+      }
+    </ng-container>
+  </app-notice>
+}

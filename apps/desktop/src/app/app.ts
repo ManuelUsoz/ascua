@@ -1,5 +1,6 @@
 import { BrowserWindow, net, safeStorage, shell } from 'electron';
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { ToolRegistry } from '@ascua/assistant';
 import { IPC } from '@ascua/ipc';
@@ -26,6 +27,16 @@ import {
 } from './assistant/engines/claude-code/claude-code-engine';
 import { McpHttpServer } from './assistant/mcp/mcp-http-server';
 import { join } from 'node:path';
+import { DIRECT_MODE } from '@ascua/chat';
+import { LOCATE_MODE, MAKE_MODE, REVIEW_MODE } from './chats/harness/nxy-modes';
+import { bridgeToRenderer, ChatEventBus } from './chats/chat-event-bus';
+import { ChatService } from './chats/chat-service';
+import { registerChatIpc } from './chats/chats-ipc';
+import { ClaudeProvider } from './chats/claude/claude-provider';
+import { HarnessHost } from './chats/harness/harness-host';
+import { JsonChatSessionStore } from './chats/json-chat-session-store';
+import { JsonUsageLedger } from './chats/json-usage-ledger';
+import { ProviderRegistry } from './chats/provider-registry';
 import { environment } from '../environments/environment';
 import { registerFileIpc } from './files/files-ipc';
 import { ProjectFiles } from './files/project-files';
@@ -40,6 +51,8 @@ import {
 } from './permissions/permission-bridge';
 import { JsonProjectRepository } from './projects/json-project-repository';
 import { registerProjectIpc } from './projects/project-ipc';
+import { registerRepositoryLinkIpc } from './projects/repository-link-ipc';
+import { nodeGit, RepositoryLinks } from './projects/repository-links';
 import {
   SafeStorageCredentialStore,
   electronCipher,
@@ -125,10 +138,6 @@ export default class App {
         (channel, payload) => App.controller.send(channel, payload),
         resolveShell(process.platform, process.env, existsSync),
       );
-      registerProjectIpc(repository, {
-        window: () => App.controller.window,
-        listener: manager,
-      });
       registerTerminalIpc(manager);
       const files = new ProjectFiles(repository);
       registerFileIpc(files);
@@ -214,6 +223,65 @@ export default class App {
       });
       registerAssistantIpc(assistant, uiContext);
       App.application.on('will-quit', () => void mcp.stop());
+      registerRepositoryLinkIpc(
+        new RepositoryLinks(repository, settings, sourceControl, nodeGit, () =>
+          App.application.getPath('home'),
+        ),
+        manager,
+      );
+      const userData = App.application.getPath('userData');
+      const chatBus = new ChatEventBus();
+      bridgeToRenderer(
+        chatBus,
+        (channel, payload) => App.controller.send(channel, payload),
+        IPC.chatEvent,
+      );
+      const chatRegistry = new ProviderRegistry({
+        providers: { claude: new ClaudeProvider() },
+        settings,
+      });
+      const chats = new ChatService({
+        store: new JsonChatSessionStore(join(userData, 'chats')),
+        ledger: new JsonUsageLedger(join(userData, 'usage')),
+        registry: chatRegistry,
+        harness: new HarnessHost([
+          DIRECT_MODE,
+          LOCATE_MODE,
+          MAKE_MODE,
+          REVIEW_MODE,
+        ]),
+        projects: repository,
+        bus: chatBus,
+        ids: randomUUID,
+        now: Date.now,
+      });
+      // Warm capabilities after first paint so the SDK load never competes with it.
+      setTimeout(() => {
+        void repository
+          .list()
+          .then((projects) => {
+            if (projects[0]) chats.warm(projects[0].id);
+          })
+          .catch(() => undefined);
+      }, 1500);
+      registerChatIpc(
+        chats,
+        chatRegistry,
+        manager,
+        (channel, payload) => App.controller.send(channel, payload),
+        () => settings.get(),
+      );
+      registerProjectIpc(repository, {
+        window: () => App.controller.window,
+        listener: {
+          saved: (project) => manager.saved(project),
+          removed: async (id) => {
+            await manager.removed(id);
+            await chats.removedProject(id);
+          },
+        },
+      });
+      App.application.on('will-quit', () => chats.dispose());
       guardQuit({
         text,
         manager,

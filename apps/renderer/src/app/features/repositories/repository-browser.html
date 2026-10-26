@@ -8,7 +8,16 @@
         [diffLoading]="sel.diffLoading()"
         [diffError]="sel.diffError()"
         [account]="store.account()"
-        (back)="sel.back()"
+        [commits]="sel.prCommits()"
+        [commitsLoading]="sel.prCommitsLoading()"
+        [commitsError]="sel.prCommitsError()"
+        [commit]="sel.selectedCommit()"
+        [commitDiff]="sel.commitDiff()"
+        [commitDiffLoading]="sel.commitDiffLoading()"
+        [commitDiffError]="sel.commitDiffError()"
+        (openCommit)="openCommit($event)"
+        (closeCommit)="closeCommit()"
+        (back)="leavePr()"
       />
     }
   } @else {
@@ -68,137 +77,141 @@
           </div>
           <button
             type="button"
-            class="as-btn as-btn--quiet"
-            (click)="openRepo(repo.webUrl)"
+            appButton
+            variant="quiet"
+            (clicked)="openRepo(repo.webUrl)"
           >
             <app-icon name="external" />{{
               'repositories.browser.openRepo' | transloco
             }}
           </button>
         </header>
+        <app-repository-link-notice [repo]="repo" />
         @if (openError(); as e) {
           <p class="as-form__error" role="alert">
             {{ e.key | transloco: e.params }}
           </p>
         }
 
-        <section class="as-repos__section" aria-labelledby="repos-prs-title">
-          <div class="as-repos__section-head">
-            <h2 id="repos-prs-title">
-              {{
-                'repositories.browser.prsTitle'
-                  | transloco: { term: (term | transloco) }
-              }}
-            </h2>
-            <span class="as-count as-count--quiet">{{ sel.prs().length }}</span>
-          </div>
-          @if (sel.prsError(); as e) {
-            <p class="as-form__error" role="alert">
-              {{ e.key | transloco: e.params }}
-            </p>
-          }
-          @if (sel.prsLoading()) {
-            <app-spinner
-              mode="withHorizText"
-              [label]="'repositories.loading' | transloco"
-            />
-          }
-          @if (sel.prs().length) {
-            <div class="as-stack">
-              @for (pr of sel.prs(); track pr.number) {
-                <button
-                  type="button"
-                  class="as-item as-repos__pr"
-                  [attr.aria-selected]="pr.number === sel.selectedPr()?.number"
-                  (click)="sel.selectPr(pr)"
-                >
-                  <span class="as-item__kind"
-                    ><app-icon name="pull-request"
-                  /></span>
-                  <span class="as-item__title">{{ pr.title }}</span>
-                  <span
-                    class="as-state"
-                    [attr.data-tone]="pr.draft ? 'idle' : 'ok'"
-                    >{{
-                      (pr.draft
-                        ? 'repositories.browser.draft'
-                        : 'repositories.pr.state.' + pr.state
-                      ) | transloco
-                    }}</span
+        @if (sel.selectedCommit(); as c) {
+          <app-commit-diff-view
+            [commit]="c"
+            [diff]="sel.commitDiff()"
+            [loading]="sel.commitDiffLoading()"
+            [error]="sel.commitDiffError()"
+            (back)="closeCommit()"
+          />
+        } @else {
+          <section class="as-repos__section" aria-labelledby="repos-prs-title">
+            <div class="as-repos__section-head">
+              <h2 id="repos-prs-title">
+                {{
+                  'repositories.browser.prsTitle'
+                    | transloco: { term: (term | transloco) }
+                }}
+              </h2>
+              <span class="as-count as-count--quiet">{{
+                sel.prs().length
+              }}</span>
+            </div>
+            @if (sel.prsError(); as e) {
+              <p class="as-form__error" role="alert">
+                {{ e.key | transloco: e.params }}
+              </p>
+            }
+            @if (sel.prsLoading()) {
+              <app-spinner
+                mode="withHorizText"
+                [label]="'repositories.loading' | transloco"
+              />
+            }
+            @if (sel.prs().length) {
+              <div class="as-stack">
+                @for (pr of sel.prs(); track pr.number) {
+                  <button
+                    type="button"
+                    class="as-item as-repos__pr"
+                    [attr.aria-selected]="
+                      pr.number === sel.selectedPr()?.number
+                    "
+                    (click)="openPr(pr)"
                   >
-                  <span class="as-item__meta">
-                    <span class="as-item__id">#{{ pr.number }}</span>
-                    <span class="as-source"
-                      ><span class="as-mono">{{ mono }}</span
-                      >{{ pr.author.login }}</span
-                    >
-                    <span>{{ pr.updatedAt | relativeTime: lang() }}</span>
-                    <span class="as-chip"
-                      ><app-icon name="git-branch" />{{ pr.sourceBranch }} →
-                      {{ pr.targetBranch }}</span
-                    >
-                  </span>
-                </button>
-              }
-            </div>
-          } @else if (!sel.prsLoading() && !sel.prsError()) {
-            <div class="as-repos__empty">
-              <strong>{{ 'repositories.browser.noPrs' | transloco }}</strong>
-              <span>{{ 'repositories.browser.noPrsHint' | transloco }}</span>
-            </div>
-          }
-        </section>
+                    <span class="as-item__kind" [attr.data-tone]="prTone(pr)"
+                      ><app-icon name="pull-request"
+                    /></span>
+                    <span class="as-item__title">{{ pr.title }}</span>
+                    <span class="as-state" [attr.data-tone]="prTone(pr)">{{
+                      prStateKey(pr) | transloco
+                    }}</span>
+                    <span class="as-item__meta">
+                      <span class="as-item__id">#{{ pr.number }}</span>
+                      <span class="as-source"
+                        ><span class="as-mono">{{ mono }}</span
+                        >{{ pr.author.login }}</span
+                      >
+                      <span>{{ pr.updatedAt | relativeTime: lang() }}</span>
+                      <span class="as-chip"
+                        ><app-icon name="git-branch" />{{ pr.sourceBranch }} →
+                        {{ pr.targetBranch }}</span
+                      >
+                    </span>
+                  </button>
+                }
+              </div>
+            } @else if (!sel.prsLoading() && !sel.prsError()) {
+              <div class="as-repos__empty">
+                <strong>{{ 'repositories.browser.noPrs' | transloco }}</strong>
+                <span>{{ 'repositories.browser.noPrsHint' | transloco }}</span>
+              </div>
+            }
+          </section>
 
-        <section
-          class="as-repos__section"
-          aria-labelledby="repos-commits-title"
-        >
-          <div class="as-repos__section-head">
-            <h2 id="repos-commits-title">
-              {{ 'repositories.browser.commitsTitle' | transloco }}
-            </h2>
-            <span class="as-count as-count--quiet">{{
-              sel.commits().length
-            }}</span>
-          </div>
-          @if (sel.branchesError(); as e) {
-            <p class="as-form__error" role="alert">
-              {{ e.key | transloco: e.params }}
-            </p>
-          }
-          @if (sel.commitsError(); as e) {
-            <p class="as-form__error" role="alert">
-              {{ e.key | transloco: e.params }}
-            </p>
-          }
-          @if (sel.commitsLoading()) {
-            <app-spinner
-              mode="withHorizText"
-              [label]="'repositories.loading' | transloco"
-            />
-          }
-          @if (sel.commits().length) {
-            <div class="as-repos__commits">
-              @for (c of sel.commits(); track c.sha) {
-                <div class="as-repos__commit">
-                  <code class="as-repos__sha">{{ c.sha.slice(0, 7) }}</code>
-                  <span class="as-repos__msg">{{ c.title }}</span>
-                  <span class="as-source"
-                    ><span class="as-mono">{{ mono }}</span
-                    >{{ c.author.name }}</span
-                  >
-                  <span class="as-repos__when">{{
-                    c.authoredAt | relativeTime: lang()
-                  }}</span>
-                </div>
-              }
+          <section
+            class="as-repos__section"
+            aria-labelledby="repos-commits-title"
+          >
+            <div class="as-repos__section-head">
+              <h2 id="repos-commits-title">
+                {{ 'repositories.browser.commitsTitle' | transloco }}
+              </h2>
+              <span class="as-count as-count--quiet">{{
+                sel.commits().length
+              }}</span>
             </div>
-          } @else if (!sel.commitsLoading() && !sel.commitsError()) {
-            <p class="as-repos__muted">
-              {{ 'repositories.browser.noCommits' | transloco }}
-            </p>
-          }
-        </section>
+            @if (sel.branchesError(); as e) {
+              <p class="as-form__error" role="alert">
+                {{ e.key | transloco: e.params }}
+              </p>
+            }
+            @if (sel.commitsError(); as e) {
+              <p class="as-form__error" role="alert">
+                {{ e.key | transloco: e.params }}
+              </p>
+            }
+            @if (sel.commitsLoading()) {
+              <app-spinner
+                mode="withHorizText"
+                [label]="'repositories.loading' | transloco"
+              />
+            }
+            @if (sel.commits().length) {
+              <ul class="as-repos__commits">
+                @for (c of sel.commits(); track c.sha) {
+                  <li>
+                    <app-commit-row
+                      [commit]="c"
+                      (chosen)="openCommit($event)"
+                    />
+                  </li>
+                }
+              </ul>
+            } @else if (!sel.commitsLoading() && !sel.commitsError()) {
+              <p class="as-repos__muted">
+                {{ 'repositories.browser.noCommits' | transloco }}
+              </p>
+            }
+          </section>
+        }
       } @else if (!sel.reposLoading() && !sel.reposError()) {
         <p class="as-repos__muted">
           {{ 'repositories.browser.noRepos' | transloco }}
@@ -214,10 +227,10 @@
   <span>{{ store.account()?.login }}</span>
   <span class="as-statusbar__end">
     @if (sel.selectedPr() && sel.diff(); as d) {
-      {{
-        'repositories.status.files'
-          | transloco: { count: d.files.length, add: add(d), del: del(d) }
-      }}
+      {{ 'repositories.status.files' | transloco: { count: d.files.length } }}
+      ·
+      <span class="as-status__add">+{{ add(d) }}</span>
+      <span class="as-status__del">−{{ del(d) }}</span>
     } @else if (sel.loadedAt(); as at) {
       {{
         'repositories.status.updated'
@@ -226,9 +239,12 @@
     }
     <button
       type="button"
-      class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+      appButton
+      variant="ghost"
+      size="s"
+      icon
       [attr.aria-label]="'repositories.refresh' | transloco"
-      (click)="sel.refresh()"
+      (clicked)="sel.refresh()"
     >
       <app-icon name="refresh" />
     </button>

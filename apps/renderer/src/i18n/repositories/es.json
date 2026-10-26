@@ -42,7 +42,7 @@
     "area": "Repositorios",
     "connected": "GitHub conectado",
     "updated": "Actualizado {{time}}",
-    "files": "{{count}} archivos · +{{add}} −{{del}}"
+    "files": "{{count}} archivos"
   },
   "deviceCode": {
     "eyebrow": "Tu código",
@@ -70,13 +70,34 @@
     "fork": "Fork",
     "archived": "Archivado",
     "openRepo": "Abrir en GitHub",
-    "prsTitle": "{{term}} abiertos",
-    "noPrs": "No hay pull requests abiertos",
-    "noPrsHint": "Todo tranquilo por aquí: no hay nada esperando revisión.",
+    "prsTitle": "{{term}} de la rama",
+    "noPrs": "No hay pull requests en esta rama",
+    "noPrsHint": "Nadie ha abierto uno desde esta rama todavía.",
     "commitsTitle": "Últimos commits",
     "branchLabel": "Rama",
     "noCommits": "No hay commits.",
     "draft": "Borrador"
+  },
+  "link": {
+    "title": {
+      "linked": "Esta copia está vinculada",
+      "match": "Hay un proyecto para esta copia",
+      "none": "No hay una copia local de este repo"
+    },
+    "status": {
+      "linked": "Vinculado",
+      "match": "Sin vincular",
+      "none": "Sin proyecto"
+    },
+    "body": {
+      "linked": "Esta copia ya está vinculada al proyecto {{name}}.",
+      "match": "Coincide con el proyecto {{name}}. Vincúlalo para que Ascua use esta copia.",
+      "none": "Todavía no hay un proyecto para esta copia. Crea uno para usarla en Ascua."
+    },
+    "path": "Ruta posible",
+    "open": "Abrir proyecto",
+    "link": "Vincular a {{name}}",
+    "create": "Crear proyecto"
   },
   "pr": {
     "state": {
@@ -84,12 +105,10 @@
       "closed": "Cerrado",
       "merged": "Fusionado"
     },
-    "back": "Pull requests de {{repo}}",
     "opened": "{{author}} abrió {{time}}",
     "actions": {
       "approve": "Aprobar",
-      "requestChanges": "Pedir cambios",
-      "comment": "Comentar"
+      "requestChanges": "Pedir cambios"
     },
     "composer": {
       "label": "Comentario de la revisión",
@@ -103,15 +122,26 @@
       "comment": "Comentario enviado"
     },
     "tabs": {
-      "files": "Archivos cambiados"
+      "files": "Archivos cambiados",
+      "commits": "Commits"
     },
-    "side": {
-      "title": "Archivos"
+    "commits": {
+      "empty": "Este pull request no tiene commits."
     },
-    "summary": {
-      "title": "Resumen",
-      "lines": "+{{add}} agregadas −{{del}} borradas",
-      "files": "en {{count}} archivos"
+    "commit": {
+      "back": "Volver a los commits",
+      "files": "Archivos del commit",
+      "empty": "Este commit no cambia archivos."
+    },
+    "tree": {
+      "label": "Archivos cambiados"
+    },
+    "viewed": {
+      "bar": "Progreso de revisión",
+      "all": "Todo visto",
+      "toggle": "Marcar {{file}} como visto",
+      "progress": "{{done}}/{{total}} vistos",
+      "state": "Visto"
     },
     "newFile": "archivo nuevo",
     "binary": "Binario o demasiado grande para mostrar.",

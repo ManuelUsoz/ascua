@@ -4,9 +4,11 @@ import type {
   ErrorCode,
   Project,
   ProjectInput,
+  RepositoryRef,
   TerminalSpec,
   TerminalSpecInput,
 } from '@ascua/ipc';
+import { isProviderId } from '@ascua/source-control';
 
 /** A rejected input: the renderer translates `error` (`errors.<code>`). */
 export class ProjectInputError extends Error {
@@ -184,5 +186,26 @@ export function normalizeProject(
     terminals,
   };
   if (color) project.color = color;
+  if (input.repository !== undefined && input.repository !== null) {
+    const repository = parseRepository(input.repository);
+    if (!repository) throw new ProjectInputError('project.repositoryInvalid');
+    project.repository = repository;
+  }
   return project;
+}
+
+function parseRepository(raw: unknown): RepositoryRef | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const { provider, id, name, fullName } = raw as Record<string, unknown>;
+  const filled = (value: unknown): value is string =>
+    typeof value === 'string' && value.trim() !== '';
+  if (
+    !isProviderId(provider) ||
+    !filled(id) ||
+    !filled(name) ||
+    !filled(fullName)
+  ) {
+    return undefined;
+  }
+  return { provider, id, name, fullName };
 }

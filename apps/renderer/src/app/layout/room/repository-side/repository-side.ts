@@ -1,23 +1,23 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import type { Repository } from '@ascua/source-control';
 import { RepositorySelection } from '../../../core/source-control/repository-selection';
 import { SourceControlStore } from '../../../core/source-control/source-control-store';
 import { PROVIDER_OPTIONS } from '../../../features/repositories/providers';
+import { repositoryUrl } from '../../../features/repositories/repository-path';
+import { Button } from '../../../shared/button/button';
 import { Icon } from '../../../shared/icon/icon';
 import { Spinner } from '../../../shared/spinner/spinner';
 
 /**
- * Side slot of Repositorios: the repos list and the account box. Its keys use
+ * Side slot of Repositorios: always the repos list (also with a PR open) and
+ * the account box. Its keys use
  * the `repositories.` scope, loaded by the route that is active meanwhile.
  */
 @Component({
   selector: 'app-repository-side',
-  imports: [TranslocoPipe, Icon, Spinner],
+  imports: [TranslocoPipe, Button, Icon, Spinner],
   templateUrl: './repository-side.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -25,23 +25,9 @@ export class RepositorySide {
   protected readonly provider = PROVIDER_OPTIONS[0];
   protected readonly store = inject(SourceControlStore);
   protected readonly selection = inject(RepositorySelection);
+  private readonly router = inject(Router);
 
-  protected readonly files = computed(() =>
-    (this.selection.diff()?.files ?? []).map((f) => ({
-      path: f.path,
-      base: f.path.slice(f.path.lastIndexOf('/') + 1),
-      additions: f.additions,
-      deletions: f.deletions,
-    })),
-  );
-
-  protected readonly totals = computed(() => ({
-    add: this.files().reduce((s, f) => s + f.additions, 0),
-    del: this.files().reduce((s, f) => s + f.deletions, 0),
-  }));
-
-  protected goTo(i: number): void {
-    this.selection.activeFile.set(i);
-    document.getElementById(`pr-file-${i}`)?.scrollIntoView();
+  protected openRepo(repo: Repository): void {
+    void this.router.navigate(repositoryUrl(repo.id));
   }
 }

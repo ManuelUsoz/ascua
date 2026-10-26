@@ -22,10 +22,21 @@
     "confirmDelete": "Sure? Delete",
     "delete": "Delete project"
   },
+  "clone": {
+    "title": "Clone and create project",
+    "parent": "Target folder",
+    "folderName": "Folder name",
+    "folderNameHint": "You can rename the folder it is cloned into.",
+    "target": "Will be cloned to",
+    "submit": "Clone and create project",
+    "cloning": "Cloning…",
+    "repoMissing": "I could not find that repository. Open it from the repository list."
+  },
   "page": {
     "running": "{{running}} of {{total}} running",
     "addPista": "Track",
     "addTerminal": "Terminal",
+    "newChat": "New chat",
     "stopAll": "Stop all",
     "edit": "Edit project",
     "sections": "Project sections"

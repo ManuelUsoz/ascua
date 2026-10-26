@@ -141,6 +141,56 @@ describe('GitHubProvider', () => {
     expect(await p.listCommits(cred, 'o/r', {})).toEqual({ items: [] });
   });
 
+  it('lists the commits of a pull request without sha; rejects a bad number', async () => {
+    const { fn, calls } = fakeFetch([
+      {
+        body: [
+          {
+            sha: 'a',
+            commit: {
+              message: 'pr one\n\nx',
+              author: { name: 'N', date: 'd' },
+            },
+          },
+        ],
+      },
+    ]);
+    const p = new GitHubProvider(fn);
+    const page = await p.listCommits(cred, 'o/r', {
+      pullRequest: 7,
+      branch: 'dev',
+    });
+    expect(page.items[0].title).toBe('pr one');
+    expect(calls[0].url).toContain('/repos/o/r/pulls/7/commits');
+    expect(calls[0].url).not.toContain('sha=');
+    expect(calls[0].url).toContain('per_page=100');
+    expect(await kind(p.listCommits(cred, 'o/r', { pullRequest: 0 }))).toBe(
+      'notFound',
+    );
+  });
+
+  it('follows the pages of a pull request up to the cap', async () => {
+    const commit = (sha: string) => ({
+      sha,
+      commit: { message: sha, author: { name: 'N', date: 'd' } },
+    });
+    const link = (n: number) => ({
+      link: `<https://api.github.com/x/commits?page=${n}>; rel="next"`,
+    });
+    const { fn, calls } = fakeFetch([
+      { body: [commit('a')], headers: link(2) },
+      { body: [commit('b')], headers: link(3) },
+      { body: [commit('c')], headers: link(4) },
+    ]);
+    const page = await new GitHubProvider(fn).listCommits(cred, 'o/r', {
+      pullRequest: 7,
+    });
+    expect(page.items.map((c) => c.title)).toEqual(['a', 'b', 'c']);
+    expect(calls).toHaveLength(3);
+    expect(calls[1].url).toContain('page=2');
+    expect(page.next).toBe('4');
+  });
+
   it('maps branches, passes the page and the next cursor; 409 is empty', async () => {
     const { fn, calls } = fakeFetch([
       {
@@ -260,6 +310,55 @@ describe('GitHubProvider', () => {
         }),
       ),
     ).toBe('rejected');
+  });
+
+  it('reads the files of a commit', async () => {
+    const { fn, calls } = fakeFetch([
+      {
+        body: {
+          files: [
+            {
+              filename: 'a.ts',
+              status: 'modified',
+              additions: 2,
+              deletions: 1,
+              patch: '@@ -1 +1 @@',
+            },
+          ],
+        },
+      },
+    ]);
+    const diff = await new GitHubProvider(fn).getCommitDiff(
+      cred,
+      'a/b',
+      'abc1234',
+    );
+    expect(calls[0].url).toContain('/repos/a/b/commits/abc1234');
+    expect(calls[0].url).toContain('per_page=100');
+    expect(calls[0].url).toContain('page=1');
+    expect(diff.files).toHaveLength(1);
+    expect(diff.files[0].path).toBe('a.ts');
+    expect(diff.files[0].additions).toBe(2);
+    expect(diff.files[0].patch).toBe('@@ -1 +1 @@');
+  });
+
+  it('gives no files when a commit body has none', async () => {
+    const { fn } = fakeFetch([{ body: {} }]);
+    const diff = await new GitHubProvider(fn).getCommitDiff(
+      cred,
+      'a/b',
+      'abc1234',
+    );
+    expect(diff.files).toEqual([]);
+    expect(diff.truncated).toBe(false);
+  });
+
+  it('rejects an invalid commit sha', async () => {
+    const { fn, calls } = fakeFetch([]);
+    const p = new GitHubProvider(fn);
+    expect(await kind(p.getCommitDiff(cred, 'a/b', '../x'))).toBe('notFound');
+    expect(await kind(p.getCommitDiff(cred, 'a/b', ''))).toBe('notFound');
+    expect(calls).toHaveLength(0);
   });
 
   it('truncates the diff after 3 pages', async () => {

@@ -5,6 +5,7 @@ import {
   Injectable,
   signal,
 } from '@angular/core';
+<<<<<<< HEAD
 import {
   DEFAULT_VOICE_SETTINGS,
   LANGUAGES,
@@ -12,6 +13,10 @@ import {
   type Settings,
   type VoiceSettings,
 } from '@ascua/ipc';
+=======
+import type { AgentProviderId } from '@ascua/chat';
+import { LANGUAGES, type Language, type Settings } from '@ascua/ipc';
+>>>>>>> origin/master
 import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { ASCUA_API } from '../bridge/ascua-api';
@@ -78,6 +83,20 @@ export class SettingsStore {
             ...this.state(),
             voice: { ...this.state().voice, ...patch },
           },
+    );
+  }
+
+  /** Remembers the last chat runtime choices of a provider. */
+  async setChatDefaults(
+    provider: AgentProviderId,
+    defaults: NonNullable<Settings['chatDefaults']>[AgentProviderId],
+  ): Promise<void> {
+    const chatDefaults = { ...this.state().chatDefaults, [provider]: defaults };
+    const api = this.api;
+    await this.apply(
+      api
+        ? await api.updateSettings({ chatDefaults })
+        : { ...this.state(), chatDefaults },
     );
   }
 

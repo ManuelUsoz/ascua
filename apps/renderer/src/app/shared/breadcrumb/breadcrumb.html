@@ -1,0 +1,38 @@
+<nav class="as-crumbs" [attr.aria-label]="'breadcrumb.label' | transloco">
+  <ol class="as-crumbs__list">
+    @for (e of entries(); track $index) {
+      <li>
+        @if (e.kind === 'more') {
+          <button
+            type="button"
+            class="as-crumb__more"
+            [attr.aria-label]="'breadcrumb.showHidden' | transloco"
+            (click)="expanded.set(true)"
+          >
+            <!-- i18n-ignore -->
+            …
+          </button>
+        } @else if (e.last) {
+          <span
+            class="as-crumb__current"
+            aria-current="page"
+            [class.as-crumb__mono]="e.item.mono"
+            [attr.title]="e.item.label"
+            >{{ e.item.label }}</span
+          >
+        } @else {
+          <button
+            type="button"
+            class="as-crumb__link"
+            [class.as-crumb__mono]="e.item.mono"
+            [attr.title]="e.item.label"
+            [disabled]="!e.item.go"
+            (click)="open(e.item)"
+          >
+            {{ e.item.label }}
+          </button>
+        }
+      </li>
+    }
+  </ol>
+</nav>

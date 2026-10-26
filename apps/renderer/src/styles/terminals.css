@@ -43,7 +43,7 @@
 .as-term__bar .as-term__cmd + .as-btn {
   margin-left: var(--space-2);
 }
-.as-term__bar .as-state + .as-btn:last-child {
+.as-term__bar app-status + .as-btn:last-child {
   margin-left: auto;
 }
 .as-term__body {

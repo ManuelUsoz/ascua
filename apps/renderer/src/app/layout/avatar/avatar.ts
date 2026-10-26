@@ -23,7 +23,7 @@ const HOLD_MS = 450;
 /**
  * The avatar. In compact mode main keeps the window click-through except over
  * this square, so every gesture lands here: poke, drag, double-click to open
- * the room. Dragging is custom (see AGENTS.md); never use an app-region.
+ * the room. Dragging is custom (see CLAUDE.md); never use an app-region.
  */
 @Component({
   selector: 'app-avatar',

@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { ProjectStore } from '../../../core/projects/project-store';
 import { RoomState } from '../../../core/room/room-state';
 import { UnsavedChanges } from '../../../core/unsaved/unsaved-changes';
 import { i18nTesting } from '../../../testing/i18n';
@@ -12,11 +11,7 @@ describe('RoomBar', () => {
   function render() {
     TestBed.configureTestingModule({
       imports: [RoomBar, i18nTesting()],
-      providers: [
-        provideRouter([]),
-        { provide: RoomState, useValue: room },
-        { provide: ProjectStore, useValue: { byId: () => undefined } },
-      ],
+      providers: [provideRouter([]), { provide: RoomState, useValue: room }],
     });
     const fixture = TestBed.createComponent(RoomBar);
     fixture.detectChanges();
@@ -28,9 +23,8 @@ describe('RoomBar', () => {
 
   beforeEach(() => vi.clearAllMocks());
 
-  it('names the area and labels the window buttons in Spanish', () => {
-    const { el, button } = render();
-    expect(el.querySelector('b')?.textContent).toContain('Proyectos');
+  it('labels the window buttons in Spanish', () => {
+    const { button } = render();
     expect(button('Minimizar')).not.toBeNull();
     expect(button('Cerrar')).not.toBeNull();
   });

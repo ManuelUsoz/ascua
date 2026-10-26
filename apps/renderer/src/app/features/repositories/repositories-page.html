@@ -68,7 +68,13 @@
         @if (failure(); as e) {
           <div class="as-form__error" role="alert">
             {{ e.key | transloco: e.params }}
-            <button type="button" class="as-btn as-btn--s" (click)="load()">
+            <button
+              appButton
+              type="button"
+              variant="ghost"
+              size="s"
+              (clicked)="load()"
+            >
               {{ 'repositories.retry' | transloco }}
             </button>
           </div>
@@ -82,10 +88,12 @@
             </p>
           }
           <button
+            appButton
             type="button"
-            class="as-btn as-btn--primary as-btn--block"
+            variant="primary"
+            block
             [disabled]="store.busy()"
-            (click)="store.connect()"
+            (clicked)="store.connect()"
           >
             {{ 'repositories.disconnected.connect' | transloco }}
           </button>

@@ -23,6 +23,7 @@ export type SpinnerSize = 12 | 16 | 24 | 40;
       [class.as-spinner--s]="effectiveSize() === 12"
       [class.as-spinner--l]="effectiveSize() === 24"
       [class.as-spinner--xl]="effectiveSize() === 40"
+      [class.as-spinner--violeta]="tone() === 'violeta'"
     ></span>
     @switch (mode()) {
       @case ('withHorizText') {
@@ -38,6 +39,7 @@ export type SpinnerSize = 12 | 16 | 24 | 40;
 export class Spinner {
   readonly mode = input<SpinnerMode>('only');
   readonly size = input<SpinnerSize>(16);
+  readonly tone = input<'oro' | 'violeta'>('oro');
   readonly label = input<string>();
   readonly title = input<string>();
   readonly subtitle = input<string>();

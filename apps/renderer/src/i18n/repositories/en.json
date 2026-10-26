@@ -42,7 +42,7 @@
     "area": "Repositories",
     "connected": "GitHub connected",
     "updated": "Updated {{time}}",
-    "files": "{{count}} files · +{{add}} −{{del}}"
+    "files": "{{count}} files"
   },
   "deviceCode": {
     "eyebrow": "Your code",
@@ -70,13 +70,34 @@
     "fork": "Fork",
     "archived": "Archived",
     "openRepo": "Open on GitHub",
-    "prsTitle": "Open {{term}}",
-    "noPrs": "No open pull requests",
-    "noPrsHint": "All quiet here: nothing is waiting for review.",
+    "prsTitle": "Branch {{term}}",
+    "noPrs": "No pull requests on this branch",
+    "noPrsHint": "Nobody has opened one from this branch yet.",
     "commitsTitle": "Latest commits",
     "branchLabel": "Branch",
     "noCommits": "No commits.",
     "draft": "Draft"
+  },
+  "link": {
+    "title": {
+      "linked": "This copy is linked",
+      "match": "A project matches this copy",
+      "none": "There isn't a local copy of this repo"
+    },
+    "status": {
+      "linked": "Linked",
+      "match": "Not linked",
+      "none": "No project"
+    },
+    "body": {
+      "linked": "This copy is already linked to the project {{name}}.",
+      "match": "It matches the project {{name}}. Link it so Ascua uses this copy.",
+      "none": "There is no project for this copy yet. Create one to use it in Ascua."
+    },
+    "path": "Possible path",
+    "open": "Open project",
+    "link": "Link to {{name}}",
+    "create": "Create project"
   },
   "pr": {
     "state": {
@@ -84,12 +105,10 @@
       "closed": "Closed",
       "merged": "Merged"
     },
-    "back": "Pull requests of {{repo}}",
     "opened": "{{author}} opened {{time}}",
     "actions": {
       "approve": "Approve",
-      "requestChanges": "Request changes",
-      "comment": "Comment"
+      "requestChanges": "Request changes"
     },
     "composer": {
       "label": "Review comment",
@@ -103,17 +122,28 @@
       "comment": "Comment sent"
     },
     "tabs": {
-      "files": "Files changed"
+      "files": "Files changed",
+      "commits": "Commits"
     },
-    "side": {
-      "title": "Files"
+    "commits": {
+      "empty": "This pull request has no commits."
     },
-    "summary": {
-      "title": "Summary",
-      "lines": "+{{add}} added −{{del}} deleted",
-      "files": "in {{count}} files"
+    "commit": {
+      "back": "Back to commits",
+      "files": "Commit files",
+      "empty": "This commit changes no files."
+    },
+    "tree": {
+      "label": "Changed files"
     },
     "newFile": "new file",
+    "viewed": {
+      "bar": "Review progress",
+      "all": "All viewed",
+      "toggle": "Mark {{file}} as viewed",
+      "progress": "{{done}}/{{total}} viewed",
+      "state": "Viewed"
+    },
     "binary": "Binary or too large to show.",
     "truncated": "There are more files than the ones shown.",
     "file": {

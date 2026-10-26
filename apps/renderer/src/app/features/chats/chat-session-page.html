@@ -1,0 +1,31 @@
+<header class="chat-head">
+  <span class="chat-head__title">{{
+    session()?.title || ('chats.session.untitled' | transloco)
+  }}</span>
+  @if (branch(); as b) {
+    <span class="chat-head__branch">{{ b }}</span>
+  }
+</header>
+<app-message-list
+  [messages]="messages()"
+  [projectId]="projectId()"
+  [responding]="status() === 'running'"
+/>
+
+@if (error(); as e) {
+  <app-notice type="error" [title]="e" />
+}
+<app-chat-composer
+  [disabled]="!loaded()"
+  [running]="running()"
+  [commands]="commands()"
+  [permissionMode]="permissionMode()"
+  [model]="model()"
+  [effort]="effort()"
+  [catalog]="catalog()"
+  [mode]="mode()"
+  (submitted)="send($event)"
+  (aborted)="stop()"
+  (runtimeChanged)="changeRuntime($event)"
+  (modeCleared)="exitMode()"
+/>
