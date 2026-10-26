@@ -63,6 +63,12 @@
   },
   "commands": {
     "label": "Commands",
+    "keys": {
+      "move": "↑↓ move",
+      "complete": "Tab complete",
+      "run": "Enter run",
+      "close": "Esc close"
+    },
     "clear": "Clears the conversation and starts fresh",
     "locate": "Finds where something lives and reports path:line, without edits",
     "make": "Plans in batches, then implements and verifies",
@@ -75,7 +81,22 @@
   },
   "session": {
     "loading": "Loading the chat",
-    "responding": "Responding…"
+    "responding": "Responding…",
+    "untitled": "Untitled chat"
+  },
+  "working": "Working",
+  "workingOn": "Working · {{tool}} {{target}}",
+  "activity": {
+    "subagents": {
+      "one": "{{count}} subagent",
+      "other": "{{count}} subagents"
+    },
+    "errors": {
+      "one": "{{count}} error",
+      "other": "{{count}} errors"
+    },
+    "running": "running",
+    "seconds": "{{count}} s"
   },
   "part": {
     "thinking": "Thinking",

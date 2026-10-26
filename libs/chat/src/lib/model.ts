@@ -71,6 +71,14 @@ export type ToolUsePart = {
   tool: ToolKind;
   title: string;
   status: 'running' | 'done' | 'failed';
+  /** Set when a subagent issued this call. */
+  parentToolUseId?: string;
+  /** Subagent type for Task/Agent calls. */
+  agent?: string;
+  /** File target of the call. */
+  path?: string;
+  startedAt?: number;
+  endedAt?: number;
 };
 
 export type ToolResultPart = {

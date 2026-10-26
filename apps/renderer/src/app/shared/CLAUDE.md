@@ -21,6 +21,9 @@ Renderer-wide rules (signals, zoneless, i18n, strict templates) are in
 | `ConfirmModal`     | `app-confirm-modal` | `modal/modal.ts`               | Native `<dialog>` confirm. Inputs `open`, `title`, `body`, `bodyParams`, `confirmLabel`, `cancelLabel`, `tone`; outputs `confirmed`, `cancelled`.                                                            |
 | `Spinner`          | `app-spinner`       | `spinner/spinner.ts`           | Loading indicator.                                                                                                                                                                                           |
 | `Breadcrumb`       | `app-breadcrumb`    | `breadcrumb/breadcrumb.ts`     | `visibleCrumbs()` decides what fits.                                                                                                                                                                         |
+| `CollapsibleCard` | `app-collapsible-card` | `collapsible-card/collapsible-card.ts` | Two-way `expanded` model; slots `[summary]`, `[meta]`, default body. Styled by `styles/shared-ui.css`. |
+| `Swatch` | `app-swatch` | `swatch/swatch.ts` | 8px colour square (`color`, optional `pulse`). |
+| `WorkingIndicator` | `app-working-indicator` | `working-indicator/working-indicator.ts` | Violeta `Spinner` + `Text` label that fades in on change. |
 | `RelativeTimePipe` | pipe                | `time/relative-time.pipe.ts`   | Relative time display.                                                                                                                                                                                       |
 
 ## The `as-*` controls are CSS, not components

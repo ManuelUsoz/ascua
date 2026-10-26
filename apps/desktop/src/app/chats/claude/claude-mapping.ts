@@ -237,9 +237,17 @@ interface Block {
   content?: unknown;
 }
 
+interface ToolInfo {
+  tool: ToolKind;
+  title: string;
+  parentToolUseId?: string;
+  agent?: string;
+  path?: string;
+}
+
 /** Maps SDK messages of one session to domain events. */
 export class TurnMapper {
-  private readonly tools = new Map<string, { tool: ToolKind; title: string }>();
+  private readonly tools = new Map<string, ToolInfo>();
 
   map(msg: SDKMessage): AgentEvent[] {
     const m = msg as unknown as {
@@ -251,7 +259,8 @@ export class TurnMapper {
       };
       message?: { content?: unknown };
     };
-    if (m.parent_tool_use_id) return [];
+    const parent = m.parent_tool_use_id || undefined;
+    if (parent && m.type !== 'assistant' && m.type !== 'user') return [];
     if (m.type === 'system') {
       const s = msg as unknown as {
         subtype?: string;
@@ -282,10 +291,22 @@ export class TurnMapper {
     const out: AgentEvent[] = [];
     for (const b of content as Block[]) {
       if (m.type === 'assistant' && b.type === 'tool_use' && b.id) {
-        const info = {
+        const input = b.input ?? {};
+        const info: ToolInfo = {
           tool: toolKind(b.name ?? ''),
-          title: toolTitle(b.name ?? '', b.input ?? {}),
+          title: toolTitle(b.name ?? '', input),
         };
+        if (parent) info.parentToolUseId = parent;
+        const agent =
+          b.name === 'Task' || b.name === 'Agent'
+            ? str(input['subagent_type'])
+            : undefined;
+        if (agent) info.agent = agent;
+        const path =
+          str(input['file_path']) ??
+          str(input['path']) ??
+          str(input['notebook_path']);
+        if (path) info.path = path;
         this.tools.set(b.id, info);
         out.push({
           type: 'toolUpdated',

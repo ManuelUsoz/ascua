@@ -19,6 +19,8 @@ import {
 import { ChatStore } from '../../core/chats/chat-store';
 import { errorText } from '../../core/i18n/app-error';
 import { type Text } from '../../core/i18n/text';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { RepositorySelection } from '../../core/source-control/repository-selection';
 import { Notice } from '../../shared/notice/notice';
 import { ChatComposer } from './composer/chat-composer';
 import { MessageList } from './message-list/message-list';
@@ -28,7 +30,7 @@ const NO_MESSAGES: readonly never[] = [];
 /** One chat: transcript and composer. */
 @Component({
   selector: 'app-chat-session-page',
-  imports: [Notice, ChatComposer, MessageList],
+  imports: [Notice, ChatComposer, MessageList, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'chat-session' },
   templateUrl: './chat-session-page.html',
@@ -39,6 +41,9 @@ export class ChatSessionPage {
 
   protected readonly store = inject(ChatStore);
   protected readonly error = signal<Text | undefined>(undefined);
+  private readonly selection = inject(RepositorySelection);
+  /** Branch shown in the header; absent when no repository is selected. */
+  protected readonly branch = computed(() => this.selection.branch());
 
   protected readonly messages = computed(
     () => this.store.transcript(this.sessionId()) ?? NO_MESSAGES,

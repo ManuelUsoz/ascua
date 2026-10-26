@@ -59,6 +59,7 @@
   "errors": {
     "unknown": "Unexpected error: {{detail}}",
     "noDesktop": "Only available in the desktop app.",
+    "invalidLink": "This link cannot be opened.",
     "chat": {
       "providerNotConfigured": "No chat provider is configured.",
       "providerDisabled": "This provider is not available yet.",

@@ -4,13 +4,14 @@ import {
   computed,
   input,
 } from '@angular/core';
-import type { Message } from '@ascua/chat';
+import { groupParts, type Message } from '@ascua/chat';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ErrorPart } from '../parts/error-part';
+import { MarkdownPart } from '../parts/markdown-part';
 import { PermissionCard } from '../parts/permission-part';
 import { TextPart } from '../parts/text-part';
 import { ThinkingPart } from '../parts/thinking-part';
-import { ToolPart } from '../parts/tool-part';
+import { ToolGroupView } from '../parts/tool-group';
 
 /** One bubble; each part kind has its own renderer. */
 @Component({
@@ -18,31 +19,32 @@ import { ToolPart } from '../parts/tool-part';
   imports: [
     TranslocoPipe,
     TextPart,
+    MarkdownPart,
     ThinkingPart,
-    ToolPart,
+    ToolGroupView,
     PermissionCard,
     ErrorPart,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'chat-msg', '[attr.data-role]': 'message().role' },
   template: `
-    @for (part of message().parts; track $index) {
+    @for (part of segments(); track $index) {
       @switch (part.kind) {
+        @case ('toolGroup') {
+          <app-tool-group [group]="part" />
+        }
         @case ('text') {
-          <app-text-part [text]="part.text" />
+          @if (message().role === 'assistant') {
+            <app-markdown-part [text]="part.text" />
+          } @else {
+            <app-text-part [text]="part.text" />
+          }
         }
         @case ('thinking') {
           <app-thinking-part [text]="part.text" />
         }
-        @case ('toolUse') {
-          <app-tool-part
-            [tool]="part.tool"
-            [title]="part.title"
-            [status]="part.status"
-          />
-        }
         @case ('toolResult') {
-          @if (part.summary) {
+          @if (part.summary && part.isError) {
             <p class="chat-tool-result" [attr.data-error]="part.isError">
               {{ part.summary }}
             </p>
@@ -73,6 +75,10 @@ import { ToolPart } from '../parts/tool-part';
 export class ChatMessage {
   readonly message = input.required<Message>();
   readonly projectId = input.required<string>();
+
+  protected readonly segments = computed(() =>
+    groupParts(this.message().parts),
+  );
 
   /** Tokens and cost of a completed assistant turn. */
   protected readonly footer = computed(() => {

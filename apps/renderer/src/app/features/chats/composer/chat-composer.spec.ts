@@ -124,7 +124,7 @@ describe('ChatComposer', () => {
     key('Enter');
     expect(submitted).not.toHaveBeenCalled();
     const stop = Array.from(el.querySelectorAll('button')).find(
-      (b) => label(b) === 'Detener',
+      (b) => b.getAttribute('aria-label') === 'Detener',
     );
     stop?.click();
     expect(aborted).toHaveBeenCalledTimes(1);
@@ -180,7 +180,7 @@ describe('ChatComposer', () => {
     expect(options()[4]?.textContent).toContain('Deploy the app');
   });
 
-  it('filters by prefix and Tab completes to /name with a space', () => {
+  it('filters by prefix and Tab turns the command into a chip', () => {
     const { el, area, type, key, options, submitted } = setup({
       commands: COMMANDS,
     });
@@ -189,7 +189,10 @@ describe('ChatComposer', () => {
       expect.stringContaining('/locate'),
     ]);
     expect(key('Tab').defaultPrevented).toBe(true);
-    expect(area.value).toBe('/locate ');
+    expect(area.value).toBe('');
+    expect(el.querySelector('.chat-composer__command-chip')?.textContent).toBe(
+      '/locate',
+    );
     expect(el.querySelector('[role="listbox"]')).toBeNull();
     expect(submitted).not.toHaveBeenCalled();
   });
@@ -203,8 +206,70 @@ describe('ChatComposer', () => {
     key('ArrowUp');
     expect(area.getAttribute('aria-activedescendant')).toBe('chat-commands-4');
     key('Enter');
-    expect(area.value).toBe('/deploy ');
+    expect(area.value).toBe('');
     expect(submitted).not.toHaveBeenCalled();
+  });
+
+  describe('chosen command', () => {
+    const HINTED: ChatCommand = {
+      name: 'ship',
+      source: 'custom',
+      description: 'Ship it',
+      argumentHint: '[env]',
+    };
+
+    it('shows the chip and the argument hint', () => {
+      const { el, area, type, key } = setup({ commands: [HINTED] });
+      type('/sh');
+      key('Tab');
+      expect(area.value).toBe('');
+      expect(el.querySelector('.chat-composer__command-chip')).not.toBeNull();
+      expect(el.querySelector('.chat-composer__command')).toBeNull();
+      expect(area.placeholder).toBe('[env]');
+    });
+
+    it('menu options render no argument hint', () => {
+      const { el, type, options } = setup({ commands: [HINTED] });
+      type('/sh');
+      expect(el.querySelector('.chat-commands__hint')).toBeNull();
+      expect(options()[0]?.textContent).toContain('Ship it');
+      expect(options()[0]?.textContent).not.toContain('[env]');
+    });
+
+    it('Enter emits /name with or without args', () => {
+      const { type, key, submitted } = setup({ commands: [HINTED] });
+      type('/ship');
+      key('Tab');
+      type('prod');
+      key('Enter');
+      expect(submitted).toHaveBeenLastCalledWith('/ship prod');
+      type('/ship');
+      key('Tab');
+      key('Enter');
+      expect(submitted).toHaveBeenLastCalledWith('/ship');
+    });
+
+    it('Backspace at position 0 restores /name with the menu open', () => {
+      const { el, area, type, key } = setup({ commands: [HINTED] });
+      type('/ship');
+      key('Tab');
+      area.setSelectionRange(0, 0);
+      expect(key('Backspace').defaultPrevented).toBe(true);
+      expect(el.querySelector('.chat-composer__command-chip')).toBeNull();
+      expect(area.value).toBe('/ship');
+      expect(el.querySelector('[role="listbox"]')).not.toBeNull();
+    });
+
+    it('renders the keys footer while the menu is open', () => {
+      const { el, type } = setup({ commands: COMMANDS });
+      expect(el.querySelector('.chat-commands__keys')).toBeNull();
+      type('/');
+      const keys = el.querySelector('.chat-commands__keys')!;
+      expect(keys.closest('[role="listbox"]')).toBeNull();
+      expect(label(keys)).toBe(
+        '↑↓ moverseTab completarEnter ejecutarEsc cerrar',
+      );
+    });
   });
 
   it('Escape closes the menu before stopping a run, and typing reopens it', () => {

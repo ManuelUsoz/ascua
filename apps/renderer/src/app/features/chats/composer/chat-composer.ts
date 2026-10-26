@@ -36,78 +36,91 @@ const GROUPS: ChatCommand['source'][] = ['builtin', 'nxy', 'custom'];
   host: { class: 'chat-composer' },
   template: `
     @if (menuOpen()) {
-      <div
-        class="chat-commands"
-        id="chat-commands"
-        role="listbox"
-        [attr.aria-label]="'chats.commands.label' | transloco"
-      >
-        @for (group of groups(); track group.source) {
-          <div
-            role="group"
-            class="chat-commands__group"
-            [attr.aria-label]="
-              'chats.commands.group.' + group.source | transloco
-            "
-          >
-            <span class="chat-commands__heading" aria-hidden="true">
-              {{ 'chats.commands.group.' + group.source | transloco }}
-            </span>
-            @for (item of group.items; track item.command.name) {
-              <div
-                role="option"
-                class="chat-commands__item"
-                [class.chat-commands__item--active]="
-                  item.index === activeIndex()
-                "
-                [id]="'chat-commands-' + item.index"
-                [attr.aria-selected]="item.index === activeIndex()"
-                (mousedown)="pick($event, item.command)"
-              >
-                <span class="chat-commands__name"
-                  >/{{ item.command.name }}</span
+      <div class="chat-commands">
+        <div
+          class="chat-commands__list"
+          id="chat-commands"
+          #commandList
+          role="listbox"
+          [attr.aria-label]="'chats.commands.label' | transloco"
+        >
+          @for (group of groups(); track group.source) {
+            <div
+              role="group"
+              class="chat-commands__group"
+              [attr.aria-label]="
+                'chats.commands.group.' + group.source | transloco
+              "
+            >
+              <span class="chat-commands__heading" aria-hidden="true">
+                {{ 'chats.commands.group.' + group.source | transloco }}
+              </span>
+              @for (item of group.items; track item.command.name) {
+                <div
+                  role="option"
+                  class="chat-commands__item"
+                  [class.chat-commands__item--active]="
+                    item.index === activeIndex()
+                  "
+                  [id]="'chat-commands-' + item.index"
+                  [attr.aria-selected]="item.index === activeIndex()"
+                  (mousedown)="pick($event, item.command)"
                 >
-                @if (item.command.argumentHint) {
-                  <span class="chat-commands__hint">{{
-                    item.command.argumentHint
-                  }}</span>
-                }
-                @if (item.command.source === 'custom') {
-                  <span class="chat-commands__desc">{{
-                    item.command.description
-                  }}</span>
-                } @else {
-                  <span class="chat-commands__desc">{{
-                    'chats.commands.' + item.command.name | transloco
-                  }}</span>
-                }
-              </div>
-            }
-          </div>
-        }
+                  <span class="chat-commands__name"
+                    >/{{ item.command.name }}</span
+                  >
+                  @if (item.command.source === 'custom') {
+                    <span class="chat-commands__desc">{{
+                      item.command.description
+                    }}</span>
+                  } @else {
+                    <span class="chat-commands__desc">{{
+                      'chats.commands.' + item.command.name | transloco
+                    }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="chat-commands__keys">
+          <span>{{ 'chats.commands.keys.move' | transloco }}</span>
+          <span>{{ 'chats.commands.keys.complete' | transloco }}</span>
+          <span>{{ 'chats.commands.keys.run' | transloco }}</span>
+          <span>{{ 'chats.commands.keys.close' | transloco }}</span>
+        </div>
       </div>
     }
     <div class="chat-composer__box">
-      <textarea
-        class="chat-composer__input"
-        rows="3"
-        role="combobox"
-        aria-autocomplete="list"
-        [attr.aria-expanded]="menuOpen()"
-        [attr.aria-controls]="menuOpen() ? 'chat-commands' : null"
-        [attr.aria-activedescendant]="
-          menuOpen() ? 'chat-commands-' + activeIndex() : null
-        "
-        [value]="draft()"
-        [disabled]="disabled()"
-        [attr.aria-label]="'chats.composer.label' | transloco"
-        [placeholder]="'chats.composer.placeholder' | transloco"
-        #prompt
-        (input)="onInput($event)"
-        (keyup)="syncCursor($event)"
-        (click)="syncCursor($event)"
-        (keydown)="onKey($event)"
-      ></textarea>
+      <div class="chat-composer__field">
+        @if (selected(); as command) {
+          <span class="chat-composer__command-chip">/{{ command.name }}</span>
+        }
+        <textarea
+          class="chat-composer__input"
+          rows="3"
+          role="combobox"
+          aria-autocomplete="list"
+          [attr.aria-expanded]="menuOpen()"
+          [attr.aria-controls]="menuOpen() ? 'chat-commands' : null"
+          [attr.aria-activedescendant]="
+            menuOpen() ? 'chat-commands-' + activeIndex() : null
+          "
+          [value]="draft()"
+          [disabled]="disabled()"
+          [attr.aria-label]="'chats.composer.label' | transloco"
+          [placeholder]="
+            selected()
+              ? (selected()?.argumentHint ?? '')
+              : ('chats.composer.placeholder' | transloco)
+          "
+          #prompt
+          (input)="onInput($event)"
+          (keyup)="syncCursor($event)"
+          (click)="syncCursor($event)"
+          (keydown)="onKey($event)"
+        ></textarea>
+      </div>
       <div class="chat-composer__actions">
         <button
           appButton
@@ -148,13 +161,14 @@ const GROUPS: ChatCommand['source'][] = ['builtin', 'nxy', 'custom'];
         @if (running()) {
           <button
             appButton
+            icon
             type="button"
-            variant="danger"
-            size="s"
+            variant="ghost"
             class="chat-composer__stop"
+            [attr.aria-label]="'chats.composer.stop' | transloco"
             (clicked)="aborted.emit()"
           >
-            {{ 'chats.composer.stop' | transloco }}
+            <app-icon name="stop" />
           </button>
         } @else {
           <button
@@ -191,12 +205,18 @@ export class ChatComposer {
 
   private readonly textarea =
     viewChild<ElementRef<HTMLTextAreaElement>>('prompt');
+  private readonly commandList =
+    viewChild<ElementRef<HTMLElement>>('commandList');
   protected readonly draft = signal('');
   protected readonly cursor = signal(0);
   protected readonly dismissed = signal(false);
   protected readonly activeIndex = signal(0);
+  protected readonly selected = signal<ChatCommand | undefined>(undefined);
   protected readonly canSend = computed(
-    () => !this.disabled() && !this.running() && this.draft().trim() !== '',
+    () =>
+      !this.disabled() &&
+      !this.running() &&
+      (this.draft().trim() !== '' || this.selected() !== undefined),
   );
 
   /** Commands whose name starts with the draft's `/prefix`, grouped in order. */
@@ -249,6 +269,14 @@ export class ChatComposer {
       return;
     }
     if (this.menuOpen() && this.navigateMenu(event)) return;
+    if (event.key === 'Backspace' && this.selected()) {
+      const el = event.target as HTMLTextAreaElement;
+      if (el.selectionStart === 0 && el.selectionEnd === 0) {
+        event.preventDefault();
+        this.unselect(el);
+        return;
+      }
+    }
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
       this.submit();
@@ -263,9 +291,29 @@ export class ChatComposer {
 
   protected submit(): void {
     if (!this.canSend()) return;
-    const value = this.draft().trim();
+    const command = this.selected();
+    const value = command
+      ? `/${command.name} ${this.draft()}`.trim() // i18n-ignore: command syntax, not UI text
+      : this.draft().trim();
+    this.selected.set(undefined);
     this.draft.set('');
+    this.cursor.set(0);
     this.submitted.emit(value);
+  }
+
+  /** Turns the chip back into inline `/name` text with the menu open. */
+  private unselect(el: HTMLTextAreaElement): void {
+    const command = this.selected();
+    if (!command) return;
+    const head = `/${command.name}`; // i18n-ignore: command syntax, not UI text
+    const text = this.draft() ? `${head} ${this.draft()}` : head;
+    this.selected.set(undefined);
+    this.draft.set(text);
+    this.cursor.set(head.length);
+    this.dismissed.set(false);
+    this.activeIndex.set(0);
+    el.value = text;
+    el.setSelectionRange(head.length, head.length);
   }
 
   /** Arrows move the highlight; Tab or Enter completes. True when handled. */
@@ -275,6 +323,7 @@ export class ChatComposer {
       event.preventDefault();
       const step = event.key === 'ArrowDown' ? 1 : list.length - 1;
       this.activeIndex.set((this.activeIndex() + step) % list.length);
+      this.revealActive();
       return true;
     }
     if (
@@ -289,9 +338,32 @@ export class ChatComposer {
     return false;
   }
 
+  /** Keeps the keyboard-highlighted option visible inside the scrolling list. */
+  private revealActive(): void {
+    const list = this.commandList()?.nativeElement;
+    const item = list?.querySelector<HTMLElement>(
+      `#chat-commands-${this.activeIndex()}`,
+    );
+    // Optional call: jsdom does not implement scrollIntoView.
+    item?.scrollIntoView?.({ block: 'nearest' });
+  }
+
   private complete(command: ChatCommand): void {
     const trigger = this.trigger();
     if (!trigger) return;
+    if (trigger.rangeStart === 0) {
+      const rest = this.draft().slice(trigger.rangeEnd).trimStart();
+      this.selected.set(command);
+      this.draft.set(rest);
+      this.cursor.set(0);
+      this.activeIndex.set(0);
+      const field = this.textarea()?.nativeElement;
+      if (field) {
+        field.value = rest;
+        field.setSelectionRange(0, 0);
+      }
+      return;
+    }
     const next = replaceRange(
       this.draft(),
       trigger.rangeStart,

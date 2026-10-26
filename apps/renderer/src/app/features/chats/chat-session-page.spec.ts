@@ -79,6 +79,13 @@ describe('ChatSessionPage', () => {
     expect(store.loadCommands).toHaveBeenCalledWith('p1', 's1');
   });
 
+  it('shows the session title in the header', async () => {
+    const { el } = await setup({ title: 'Mi chat' });
+    expect(el.querySelector('.chat-head__title')?.textContent).toContain(
+      'Mi chat',
+    );
+  });
+
   it('/clear clears the chat in place and does not send it', async () => {
     const { store, type, enter } = await setup();
     type('/clear');

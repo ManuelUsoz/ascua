@@ -5,6 +5,8 @@ export * from './lib/permission';
 export * from './lib/model';
 export * from './lib/events';
 export * from './lib/transcript';
+export * from './lib/activity';
+export * from './lib/markdown';
 export * from './lib/harness';
 export * from './lib/ports';
 export * from './lib/commands';

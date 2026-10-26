@@ -118,6 +118,52 @@ describe('TurnMapper', () => {
     const t = new TurnMapper();
     expect(t.map(delta({ type: 'text_delta', text: 'x' }, 'p'))).toEqual([]);
   });
+
+  const toolUse = (
+    id: string,
+    name: string,
+    input: object,
+    parent: string | null = null,
+  ) =>
+    m({
+      type: 'assistant',
+      parent_tool_use_id: parent,
+      message: { content: [{ type: 'tool_use', id, name, input }] },
+    });
+
+  it('keeps parentToolUseId of nested tool calls', () => {
+    const t = new TurnMapper();
+    const out = t.map(toolUse('c1', 'Read', { file_path: '/a' }, 'task1'));
+    expect(out[0]).toMatchObject({
+      part: { toolUseId: 'c1', parentToolUseId: 'task1' },
+    });
+    const top = t.map(toolUse('c2', 'Read', { file_path: '/a' }));
+    expect(top[0]).toMatchObject({ part: { toolUseId: 'c2' } });
+    expect(JSON.stringify(top[0])).not.toContain('parentToolUseId');
+  });
+
+  it('reads agent from Task/Agent subagent_type only', () => {
+    const t = new TurnMapper();
+    expect(
+      t.map(toolUse('a', 'Task', { subagent_type: 'scout' }))[0],
+    ).toMatchObject({ part: { agent: 'scout' } });
+    expect(
+      t.map(toolUse('b', 'Agent', { subagent_type: 'implementer' }))[0],
+    ).toMatchObject({ part: { agent: 'implementer' } });
+    expect(
+      JSON.stringify(t.map(toolUse('c', 'Bash', { subagent_type: 'x' }))[0]),
+    ).not.toContain('agent');
+  });
+
+  it('reads path from file_path, path or notebook_path', () => {
+    const t = new TurnMapper();
+    const path = (input: object) =>
+      t.map(toolUse('p', 'Read', input))[0] as { part: { path?: string } };
+    expect(path({ file_path: '/f' }).part.path).toBe('/f');
+    expect(path({ path: '/g' }).part.path).toBe('/g');
+    expect(path({ notebook_path: '/n' }).part.path).toBe('/n');
+    expect(path({}).part.path).toBeUndefined();
+  });
 });
 
 describe('runtime mapping', () => {

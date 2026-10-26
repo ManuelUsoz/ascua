@@ -36,6 +36,17 @@ describe('ChatMessage', () => {
     expect(el.querySelector('b')).toBeNull();
   });
 
+  it('keeps user text literal and renders assistant markdown', () => {
+    const user = render([{ kind: 'text', text: '**a** <b>hola</b>' }], {
+      role: 'user',
+    });
+    expect(user.textContent).toContain('**a** <b>hola</b>');
+    expect(user.querySelector('strong')).toBeNull();
+    const bot = render([{ kind: 'text', text: '**a** y `x`' }]);
+    expect(bot.querySelector('strong')?.textContent).toBe('a');
+    expect(bot.querySelector('code')?.textContent).toBe('x');
+  });
+
   it('renders thinking collapsed', () => {
     const el = render([{ kind: 'thinking', text: 'pienso' }]);
     const details = el.querySelector('details') as HTMLDetailsElement;
@@ -44,13 +55,13 @@ describe('ChatMessage', () => {
     expect(details.textContent).toContain('pienso');
   });
 
-  it('renders a tool with its title and status', () => {
+  it('renders consecutive tools as one group', () => {
     const el = render([
       {
         kind: 'toolUse',
         toolUseId: 't',
         tool: 'read',
-        title: 'Leer a.ts',
+        title: 'Leer: a.ts',
         status: 'done',
       },
       {
@@ -60,9 +71,9 @@ describe('ChatMessage', () => {
         summary: 'ok 3 líneas',
       },
     ]);
-    expect(el.textContent).toContain('Leer a.ts');
-    expect(el.textContent).toContain('Listo');
-    expect(el.textContent).toContain('ok 3 líneas');
+    expect(el.querySelectorAll('app-tool-group')).toHaveLength(1);
+    expect(el.textContent).toContain('Leer ×1');
+    expect(el.textContent).toContain('a.ts');
   });
 
   it('renders a pending permission card', () => {

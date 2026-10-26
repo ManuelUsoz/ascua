@@ -57,6 +57,8 @@ const api: AscuaApi = {
   quit: () => ipcRenderer.invoke(IPC.quit) as Promise<void>,
   dragStart: () => ipcRenderer.invoke(IPC.dragStart) as Promise<void>,
   dragEnd: () => ipcRenderer.invoke(IPC.dragEnd) as Promise<void>,
+  openLink: (url) =>
+    ipcRenderer.invoke(IPC.openLink, url) as Promise<AscuaError | undefined>,
   getLayout: () => ipcRenderer.invoke(IPC.getLayout) as Promise<Layout>,
   getSettings: () => ipcRenderer.invoke(IPC.getSettings) as Promise<Settings>,
   updateSettings: (patch) =>

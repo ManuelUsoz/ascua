@@ -41,6 +41,7 @@ export const IPC = {
   quit: 'ascua:app:quit',
   dragStart: 'ascua:window:drag-start',
   dragEnd: 'ascua:window:drag-end',
+  openLink: 'ascua:app:open-link',
   getLayout: 'ascua:window:get-layout',
   layoutChanged: 'ascua:window:layout-changed',
   permissionRequest: 'ascua:permission:request',
@@ -132,7 +133,11 @@ export interface Settings {
 
 export type SettingsPatch = Partial<Settings>;
 
-export const COMMON_ERROR_CODES = ['unknown', 'noDesktop'] as const;
+export const COMMON_ERROR_CODES = [
+  'unknown',
+  'noDesktop',
+  'invalidLink',
+] as const;
 
 export const PROJECT_ERROR_CODES = [
   'project.notFound',
@@ -484,6 +489,8 @@ export interface AscuaApi {
   quit(): Promise<void>;
   dragStart(): Promise<void>;
   dragEnd(): Promise<void>;
+  /** Opens an http(s)/mailto link in the system browser; main validates it. */
+  openLink(url: string): Promise<AscuaError | undefined>;
   getLayout(): Promise<Layout>;
   getSettings(): Promise<Settings>;
   updateSettings(patch: SettingsPatch): Promise<Settings>;

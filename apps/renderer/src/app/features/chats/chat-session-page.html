@@ -1,3 +1,11 @@
+<header class="chat-head">
+  <span class="chat-head__title">{{
+    session()?.title || ('chats.session.untitled' | transloco)
+  }}</span>
+  @if (branch(); as b) {
+    <span class="chat-head__branch">{{ b }}</span>
+  }
+</header>
 <app-message-list
   [messages]="messages()"
   [projectId]="projectId()"

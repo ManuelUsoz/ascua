@@ -1,0 +1,131 @@
+/* Shared UI: collapsible card, swatch, working indicator. */
+
+/* Spinner tone */
+.as-spinner--violeta {
+  border-top-color: var(--violeta);
+}
+
+/* Collapsible card */
+.as-collapsible {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  transition: border-color calc(160ms * var(--spd)) var(--ease);
+}
+.as-collapsible:hover {
+  border-color: var(--line-mid);
+}
+.as-collapsible__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background calc(160ms * var(--spd)) var(--ease);
+}
+.as-collapsible__head:hover {
+  background: var(--surface-raised);
+}
+.as-collapsible__chev {
+  display: inline-flex;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  transform: rotate(-90deg);
+  transition: transform calc(200ms * var(--spd)) var(--ease);
+}
+.as-collapsible__chev .as-ico {
+  width: 12px;
+  height: 12px;
+}
+.as-collapsible--open .as-collapsible__chev {
+  transform: rotate(0deg);
+}
+.as-collapsible__spacer {
+  flex: 1;
+}
+.as-collapsible__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    grid-template-rows calc(220ms * var(--spd)) var(--ease),
+    opacity calc(180ms * var(--spd)) var(--ease),
+    transform calc(220ms * var(--spd)) var(--ease);
+}
+.as-collapsible--open .as-collapsible__body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: none;
+}
+.as-collapsible__clip {
+  overflow: hidden;
+  min-height: 0;
+}
+.as-collapsible__content {
+  border-top: 1px solid var(--line);
+  padding: 6px 12px 10px;
+}
+
+/* Swatch */
+.as-swatch {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--swatch, var(--violeta));
+}
+.as-swatch--pulse {
+  animation: as-swatch-pulse calc(1400ms * var(--spd)) ease-in-out infinite;
+}
+@keyframes as-swatch-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 6px 1px var(--swatch, var(--violeta));
+  }
+}
+
+/* Working indicator */
+.as-working {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.as-working__label {
+  animation: as-working-in calc(200ms * var(--spd)) var(--ease) both;
+}
+@keyframes as-working-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .as-collapsible,
+  .as-collapsible__head,
+  .as-collapsible__chev,
+  .as-collapsible__body {
+    transition: none !important;
+  }
+  .as-swatch--pulse,
+  .as-working__label {
+    animation: none !important;
+  }
+}

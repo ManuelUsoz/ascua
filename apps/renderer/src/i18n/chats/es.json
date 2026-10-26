@@ -63,6 +63,12 @@
   },
   "commands": {
     "label": "Comandos",
+    "keys": {
+      "move": "↑↓ moverse",
+      "complete": "Tab completar",
+      "run": "Enter ejecutar",
+      "close": "Esc cerrar"
+    },
     "clear": "Borra la conversación y empieza de cero",
     "locate": "Ubica algo y reporta path:line, sin editar",
     "make": "Planifica por lotes, después implementa y verifica",
@@ -75,7 +81,22 @@
   },
   "session": {
     "loading": "Cargando el chat",
-    "responding": "Respondiendo…"
+    "responding": "Respondiendo…",
+    "untitled": "Chat sin título"
+  },
+  "working": "Trabajando",
+  "workingOn": "Trabajando · {{tool}} {{target}}",
+  "activity": {
+    "subagents": {
+      "one": "{{count}} subagente",
+      "other": "{{count}} subagentes"
+    },
+    "errors": {
+      "one": "{{count}} error",
+      "other": "{{count}} errores"
+    },
+    "running": "corriendo",
+    "seconds": "{{count}} s"
   },
   "part": {
     "thinking": "Pensando",

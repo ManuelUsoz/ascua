@@ -1,5 +1,5 @@
 import type { ChatEvent } from './events';
-import type { Message, MessagePart } from './model';
+import type { Message, MessagePart, ToolUsePart } from './model';
 
 function patch(
   messages: Message[],
@@ -35,12 +35,31 @@ export function applyChatEvent(
     case 'toolUpdated':
       return patch(messages, event.messageId, (parts) => {
         const part = event.part;
+        const now = Date.now();
         const i = parts.findIndex(
           (p) => p.kind === part.kind && p.toolUseId === part.toolUseId,
         );
-        if (i < 0) return [...parts, part];
         const next = parts.slice();
-        next[i] = part;
+        if (part.kind === 'toolUse') {
+          const old = i < 0 ? undefined : (parts[i] as ToolUsePart);
+          const merged: ToolUsePart = { ...old, ...part };
+          merged.startedAt = part.startedAt ?? old?.startedAt ?? now;
+          const end = part.endedAt ?? old?.endedAt;
+          if (end !== undefined) merged.endedAt = end;
+          else if (merged.status !== 'running') merged.endedAt = now;
+          if (i < 0) next.push(merged);
+          else next[i] = merged;
+        } else {
+          if (i < 0) next.push(part);
+          else next[i] = part;
+          const j = next.findIndex(
+            (p) => p.kind === 'toolUse' && p.toolUseId === part.toolUseId,
+          );
+          const use = j < 0 ? undefined : (next[j] as ToolUsePart);
+          if (use && use.endedAt === undefined) {
+            next[j] = { ...use, endedAt: now };
+          }
+        }
         return next;
       });
     case 'permissionRequested':

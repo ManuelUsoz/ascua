@@ -59,6 +59,7 @@
   "errors": {
     "unknown": "Error inesperado: {{detail}}",
     "noDesktop": "Solo disponible en la app de escritorio.",
+    "invalidLink": "No se puede abrir este enlace.",
     "chat": {
       "providerNotConfigured": "No hay un proveedor de chat configurado.",
       "providerDisabled": "Este proveedor aún no está disponible.",
