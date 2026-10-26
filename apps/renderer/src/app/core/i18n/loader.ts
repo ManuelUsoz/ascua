@@ -29,6 +29,10 @@ export const CATALOGS: Record<string, () => Promise<Translation>> = {
     import('../../../i18n/repositories/es.json').then((m) => m.default),
   'repositories/en': () =>
     import('../../../i18n/repositories/en.json').then((m) => m.default),
+  'notes/es': () =>
+    import('../../../i18n/notes/es.json').then((m) => m.default),
+  'notes/en': () =>
+    import('../../../i18n/notes/en.json').then((m) => m.default),
 };
 
 @Injectable({ providedIn: 'root' })

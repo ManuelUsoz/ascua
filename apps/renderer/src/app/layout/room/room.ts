@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { RoomState } from '../../core/room/room-state';
 import { injectCrumbs } from './crumbs';
+import { NotesSide } from './notes-side/notes-side';
 import { ProjectSide } from './project-side/project-side';
 import { Rail } from './rail/rail';
 import { RepositorySide } from './repository-side/repository-side';
@@ -13,7 +14,14 @@ import { RoomBar } from './room-bar/room-bar';
  */
 @Component({
   selector: 'app-room',
-  imports: [RouterOutlet, RoomBar, Rail, ProjectSide, RepositorySide],
+  imports: [
+    RouterOutlet,
+    RoomBar,
+    Rail,
+    ProjectSide,
+    RepositorySide,
+    NotesSide,
+  ],
   templateUrl: './room.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

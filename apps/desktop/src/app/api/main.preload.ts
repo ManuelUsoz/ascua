@@ -10,6 +10,9 @@ import {
   type FileIndex,
   type FullscreenState,
   type Layout,
+  type NoteContent,
+  type NoteRenameResult,
+  type NoteSummary,
   type PermissionDecision,
   type PickTerminalFolderResult,
   type Project,
@@ -136,6 +139,28 @@ const api: AscuaApi = {
     ) as Promise<SaveFileResult>,
   revealFile: (projectId, path) =>
     ipcRenderer.invoke(IPC.revealFile, projectId, path) as Promise<
+      AscuaError | undefined
+    >,
+  listNotes: () => ipcRenderer.invoke(IPC.listNotes) as Promise<NoteSummary[]>,
+  readNote: (name) =>
+    ipcRenderer.invoke(IPC.readNote, name) as Promise<NoteContent>,
+  createNote: (name, text) =>
+    ipcRenderer.invoke(IPC.createNote, name, text) as Promise<NoteContent>,
+  saveNote: (name, text, version) =>
+    ipcRenderer.invoke(
+      IPC.saveNote,
+      name,
+      text,
+      version,
+    ) as Promise<SaveFileResult>,
+  deleteNote: (name) =>
+    ipcRenderer.invoke(IPC.deleteNote, name) as Promise<void>,
+  renameNote: (from, to) =>
+    ipcRenderer.invoke(IPC.renameNote, from, to) as Promise<NoteRenameResult>,
+  revealNotes: () =>
+    ipcRenderer.invoke(IPC.revealNotes) as Promise<AscuaError | undefined>,
+  openNoteLink: (url) =>
+    ipcRenderer.invoke(IPC.openNoteLink, url) as Promise<
       AscuaError | undefined
     >,
   getSourceControlStatus: (provider) =>

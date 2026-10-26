@@ -1,0 +1,163 @@
+/* Rendered notes: markdown typography, [[wiki links]] and backlinks. */
+/* display:flex on .as-files__body would otherwise defeat [hidden] */
+.as-files__body[hidden] {
+  display: none;
+}
+.as-note__scroll {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--space-4) var(--space-5);
+}
+.as-md {
+  display: block;
+  max-width: 78ch;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.as-md h1,
+.as-md h2,
+.as-md h3,
+.as-md h4,
+.as-md h5,
+.as-md h6 {
+  margin: var(--space-5) 0 var(--space-2);
+  color: var(--ink);
+  font-weight: 650;
+  line-height: 1.25;
+}
+.as-md > :first-child {
+  margin-top: 0;
+}
+.as-md h1 {
+  font-size: 24px;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--line);
+}
+.as-md h2 {
+  font-size: 19px;
+}
+.as-md h3 {
+  font-size: 16px;
+}
+.as-md h4,
+.as-md h5,
+.as-md h6 {
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+.as-md p,
+.as-md ul,
+.as-md ol,
+.as-md pre,
+.as-md table,
+.as-md blockquote {
+  margin: 0 0 var(--space-3);
+}
+.as-md ul,
+.as-md ol {
+  padding-left: var(--space-5);
+}
+.as-md li + li {
+  margin-top: var(--space-1);
+}
+.as-md a {
+  color: var(--violeta);
+}
+.as-md code {
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-raised);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.as-md pre {
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--surface-sunken);
+  overflow: auto;
+}
+.as-md pre code {
+  padding: 0;
+  background: none;
+}
+.as-md blockquote {
+  padding: 0 var(--space-3);
+  border-left: 3px solid var(--line-mid);
+  color: var(--ink-muted);
+}
+.as-md table {
+  border-collapse: collapse;
+}
+.as-md th,
+.as-md td {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  text-align: left;
+}
+.as-md th {
+  background: var(--surface-raised);
+}
+.as-md hr {
+  margin: var(--space-4) 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+.as-md img {
+  max-width: 100%;
+}
+.as-md a.as-note-link {
+  color: var(--oro);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oro-wash);
+}
+.as-md a.as-note-link:hover {
+  border-bottom-color: var(--oro);
+}
+.as-md a.as-note-link.is-missing {
+  color: var(--ink-faint);
+  border-bottom: 1px dashed var(--line-strong);
+}
+.as-note__backlinks {
+  max-width: 78ch;
+  margin-top: var(--space-8);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+.as-note__backlinks h2 {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.as-note__backlinks ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.as-note__backlinks a {
+  color: var(--oro);
+  font-size: 13px;
+}
+.as-note__rename {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.as-note__rename .as-input {
+  flex: 1;
+  min-width: 0;
+}
+.as-note__notice {
+  color: var(--ink-muted);
+  font: 400 11.5px/1 var(--font-sans);
+  white-space: nowrap;
+}

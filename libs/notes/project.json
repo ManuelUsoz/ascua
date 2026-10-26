@@ -1,0 +1,16 @@
+{
+  "name": "ascua-notes",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/notes/src",
+  "projectType": "library",
+  "tags": ["type:shared", "scope:notes"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "coverage/libs/notes"
+      }
+    }
+  }
+}

@@ -19,6 +19,11 @@ export const appRoutes: Route[] = [
     data: { area: 'nav.repositories', side: 'repositories' },
   },
   {
+    path: 'notas',
+    loadChildren: () => import('./features/notes/notes.routes'),
+    data: { area: 'nav.notes', side: 'notes' },
+  },
+  {
     path: 'ajustes',
     loadChildren: () => import('./features/settings/settings.routes'),
     data: { area: 'nav.settings' },

@@ -1,0 +1,41 @@
+{
+  "side": {
+    "heading": "MY NOTES",
+    "newNote": "New note"
+  },
+  "index": {
+    "emptyTitle": "You have no notes yet",
+    "emptyHint": "Write notes in markdown and link them with [[Note#Heading]].",
+    "selectHint": "Pick a note or create a new one.",
+    "nameLabel": "Note name",
+    "create": "Create note",
+    "openFolder": "Open folder"
+  },
+  "page": {
+    "loading": "Loading…",
+    "view": "View",
+    "edit": "Edit",
+    "save": "Save",
+    "dirty": "Unsaved changes",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this note? It goes to the trash.",
+    "deleteYes": "Yes, delete",
+    "cancel": "Cancel",
+    "conflict": "The note changed on disk.",
+    "overwrite": "Overwrite",
+    "reload": "Reload",
+    "unsaved": "You have unsaved changes.",
+    "discard": "Discard",
+    "keepEditing": "Keep editing",
+    "empty": "The note is empty.",
+    "backlinks": "Referenced by",
+    "rename": "Rename",
+    "renameLabel": "New name",
+    "renameConfirm": "Rename",
+    "renameUnsaved": "Save your changes before renaming.",
+    "renamed": {
+      "one": "Updated 1 note that linked to it.",
+      "other": "Updated {{count}} notes that linked to it."
+    }
+  }
+}

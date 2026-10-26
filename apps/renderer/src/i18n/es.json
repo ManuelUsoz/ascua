@@ -7,6 +7,7 @@
     "edit": "Editar",
     "settings": "Ajustes",
     "repositories": "Repositorios",
+    "notes": "Mis notas",
     "spaces": "Espacios"
   },
   "room": {
@@ -87,6 +88,18 @@
       "notUtf8": "Ese archivo no está en UTF-8; no se puede guardar desde Ascua.",
       "notOpenable": "Ese archivo no se abre desde Ascua; usá Mostrar en carpeta.",
       "openFailed": "{{detail}}"
+    },
+    "note": {
+      "nameRequired": "La nota necesita un nombre.",
+      "nameInvalid": "Ese nombre no es válido para una nota.",
+      "exists": "Ya existe una nota con ese nombre.",
+      "notFound": "La nota ya no existe.",
+      "tooLarge": "La nota es demasiado grande (máximo 1 MiB).",
+      "readFailed": "No se pudo leer la nota.",
+      "saveFailed": "No se pudo guardar la nota.",
+      "deleteFailed": "No se pudo eliminar la nota.",
+      "renameFailed": "No se pudo renombrar la nota.",
+      "linkRefused": "Ese enlace no se puede abrir desde una nota."
     }
   }
 }

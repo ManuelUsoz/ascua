@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { ProjectStore } from '../../../core/projects/project-store';
 import { RoomState } from '../../../core/room/room-state';
 import { UnsavedChanges } from '../../../core/unsaved/unsaved-changes';
@@ -33,6 +33,31 @@ describe('RoomBar', () => {
     expect(el.querySelector('b')?.textContent).toContain('Proyectos');
     expect(button('Minimizar')).not.toBeNull();
     expect(button('Cerrar')).not.toBeNull();
+  });
+
+  it('shows the note name after the notes area', async () => {
+    TestBed.configureTestingModule({
+      imports: [RoomBar, i18nTesting()],
+      providers: [
+        provideRouter([
+          {
+            path: 'notas',
+            data: { area: 'nav.notes', side: 'notes' },
+            children: [{ path: ':name', children: [] }],
+          },
+        ]),
+        { provide: RoomState, useValue: room },
+        { provide: ProjectStore, useValue: { byId: () => undefined } },
+      ],
+    });
+    await TestBed.inject(Router).navigateByUrl('/notas/Ideas');
+    const fixture = TestBed.createComponent(RoomBar);
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).querySelector(
+      '.as-bar__crumbs',
+    )?.textContent;
+    expect(text).toContain('Mis notas');
+    expect(text).toContain('Ideas');
   });
 
   it('closes at once when nothing is unsaved', async () => {

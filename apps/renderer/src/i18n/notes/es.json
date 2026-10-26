@@ -1,0 +1,41 @@
+{
+  "side": {
+    "heading": "MIS NOTAS",
+    "newNote": "Nueva nota"
+  },
+  "index": {
+    "emptyTitle": "Todavía no tenés notas",
+    "emptyHint": "Escribí notas en markdown y enlazalas con [[Nota#Encabezado]].",
+    "selectHint": "Elegí una nota o creá una nueva.",
+    "nameLabel": "Nombre de la nota",
+    "create": "Crear nota",
+    "openFolder": "Abrir carpeta"
+  },
+  "page": {
+    "loading": "Cargando…",
+    "view": "Ver",
+    "edit": "Editar",
+    "save": "Guardar",
+    "dirty": "Cambios sin guardar",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Eliminar esta nota? Va a la papelera.",
+    "deleteYes": "Sí, eliminar",
+    "cancel": "Cancelar",
+    "conflict": "La nota cambió en disco.",
+    "overwrite": "Sobrescribir",
+    "reload": "Recargar",
+    "unsaved": "Tenés cambios sin guardar.",
+    "discard": "Descartar",
+    "keepEditing": "Seguir editando",
+    "empty": "La nota está vacía.",
+    "backlinks": "Referenciada por",
+    "rename": "Renombrar",
+    "renameLabel": "Nuevo nombre",
+    "renameConfirm": "Renombrar",
+    "renameUnsaved": "Guardá los cambios antes de renombrar.",
+    "renamed": {
+      "one": "Se actualizó 1 nota que la enlazaba.",
+      "other": "Se actualizaron {{count}} notas que la enlazaban."
+    }
+  }
+}

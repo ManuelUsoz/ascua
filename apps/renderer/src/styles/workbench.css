@@ -3,6 +3,7 @@ app-icon,
 app-rail,
 app-project-side,
 app-repository-side,
+app-notes-side,
 app-room-bar {
   display: contents;
 }
@@ -309,6 +310,7 @@ app-repositories-page::-webkit-scrollbar,
 .as-diff__side::-webkit-scrollbar,
 .as-files__scroll::-webkit-scrollbar,
 .as-files__body::-webkit-scrollbar,
+.as-note__scroll::-webkit-scrollbar,
 .as-files__editor .cm-scroller::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -326,6 +328,7 @@ app-repositories-page::-webkit-scrollbar-button,
 .as-diff__side::-webkit-scrollbar-button,
 .as-files__scroll::-webkit-scrollbar-button,
 .as-files__body::-webkit-scrollbar-button,
+.as-note__scroll::-webkit-scrollbar-button,
 .as-files__editor .cm-scroller::-webkit-scrollbar-button {
   display: none;
 }
@@ -342,6 +345,7 @@ app-repositories-page::-webkit-scrollbar-thumb,
 .as-diff__side::-webkit-scrollbar-thumb,
 .as-files__scroll::-webkit-scrollbar-thumb,
 .as-files__body::-webkit-scrollbar-thumb,
+.as-note__scroll::-webkit-scrollbar-thumb,
 .as-files__editor .cm-scroller::-webkit-scrollbar-thumb {
   background: var(--line-mid);
   border-radius: 4px;
@@ -360,6 +364,7 @@ app-repositories-page::-webkit-scrollbar-track,
 .as-diff__side::-webkit-scrollbar-corner,
 .as-files__scroll::-webkit-scrollbar-track,
 .as-files__body::-webkit-scrollbar-track,
+.as-note__scroll::-webkit-scrollbar-track,
 .as-files__body::-webkit-scrollbar-corner,
 .as-files__editor .cm-scroller::-webkit-scrollbar-track,
 .as-files__editor .cm-scroller::-webkit-scrollbar-corner {

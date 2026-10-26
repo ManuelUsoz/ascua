@@ -5,6 +5,8 @@ import { environment } from '../environments/environment';
 import { registerFileIpc } from './files/files-ipc';
 import { ProjectFiles } from './files/project-files';
 import { MainText } from './i18n/main-messages';
+import { NoteStore } from './notes/note-store';
+import { registerNotesIpc } from './notes/notes-ipc';
 import { initialLanguage } from './settings/initial-language';
 import { JsonSettingsRepository } from './settings/json-settings-repository';
 import { registerSettingsIpc } from './settings/settings-ipc';
@@ -105,6 +107,15 @@ export default class App {
       });
       registerTerminalIpc(manager);
       registerFileIpc(new ProjectFiles(repository));
+      registerNotesIpc(
+        new NoteStore(join(App.application.getPath('userData'), 'notes'), (p) =>
+          shell.trashItem(p),
+        ),
+        {
+          openExternal: (url) => shell.openExternal(url),
+          openPath: (path) => shell.openPath(path),
+        },
+      );
       const settings = new JsonSettingsRepository(
         join(App.application.getPath('userData'), 'settings.json'),
         () =>

@@ -2,6 +2,7 @@
 // Angular renderer. Keep this file dependency-free: it is imported from all
 // three worlds.
 
+import type { NoteHeading } from '@ascua/notes';
 import type {
   Account,
   Branch,
@@ -70,6 +71,14 @@ export const IPC = {
   sourceControlDiff: 'ascua:source-control:diff',
   sourceControlReview: 'ascua:source-control:review',
   sourceControlOpenUrl: 'ascua:source-control:open-url',
+  listNotes: 'ascua:notes:list',
+  readNote: 'ascua:notes:read',
+  createNote: 'ascua:notes:create',
+  saveNote: 'ascua:notes:save',
+  deleteNote: 'ascua:notes:delete',
+  renameNote: 'ascua:notes:rename',
+  revealNotes: 'ascua:notes:reveal',
+  openNoteLink: 'ascua:notes:open-link',
 } as const;
 
 export const LANGUAGES = ['es', 'en'] as const;
@@ -139,13 +148,27 @@ export const SOURCE_CONTROL_ERROR_CODES = [
   'sourceControl.rejected',
 ] as const;
 
+export const NOTE_ERROR_CODES = [
+  'note.nameRequired',
+  'note.nameInvalid',
+  'note.exists',
+  'note.notFound',
+  'note.tooLarge',
+  'note.readFailed',
+  'note.saveFailed',
+  'note.deleteFailed',
+  'note.renameFailed',
+  'note.linkRefused',
+] as const;
+
 /** Every error code the renderer translates as `errors.<code>`. */
 export type ErrorCode =
   | (typeof COMMON_ERROR_CODES)[number]
   | (typeof PROJECT_ERROR_CODES)[number]
   | (typeof TERMINAL_ERROR_CODES)[number]
   | (typeof FILE_ERROR_CODES)[number]
-  | (typeof SOURCE_CONTROL_ERROR_CODES)[number];
+  | (typeof SOURCE_CONTROL_ERROR_CODES)[number]
+  | (typeof NOTE_ERROR_CODES)[number];
 
 /** A failure main (or the renderer) reports as a code plus parameters. */
 export interface AscuaError {
@@ -326,6 +349,31 @@ export type SaveFileResult =
   | { ok: true; version: string; size: number }
   | { ok: false; conflict: true };
 
+/** A note in the list: its outline, without the text. */
+export interface NoteSummary {
+  /** File name without `.md`. */
+  name: string;
+  headings: NoteHeading[];
+  /** Names of the notes it links to (`[[Nota#Encabezado]]` -> `Nota`). */
+  links: string[];
+  /** Epoch ms. */
+  updatedAt: number;
+}
+
+export interface NoteContent {
+  name: string;
+  text: string;
+  /** Opaque content hash, sent back on save to detect disk changes. */
+  version: string;
+}
+
+export interface NoteRenameResult {
+  /** The new note name. */
+  name: string;
+  /** Other notes whose `[[links]]` were rewritten. */
+  updatedNotes: number;
+}
+
 /** What the user must do on the provider's page to authorize Ascua. */
 export interface DeviceCodePrompt {
   userCode: string;
@@ -432,6 +480,27 @@ export interface AscuaApi {
   ): Promise<SaveFileResult>;
   /** Show in the file manager; resolves to an error, or undefined. */
   revealFile(projectId: string, path: string): Promise<AscuaError | undefined>;
+  listNotes(): Promise<NoteSummary[]>;
+  readNote(name: string): Promise<NoteContent>;
+  /** Rejects with `note.exists` / `note.nameInvalid`. Defaults to `# <name>`. */
+  createNote(name: string, text?: string): Promise<NoteContent>;
+  /** Without `version` it overwrites; with it, a changed note yields a conflict. */
+  saveNote(
+    name: string,
+    text: string,
+    version?: string,
+  ): Promise<SaveFileResult>;
+  /** Moves the note to the OS trash. */
+  deleteNote(name: string): Promise<void>;
+  /**
+   * Renames a note and rewrites the `[[links]]` to it in every note. Rejects
+   * with `note.exists`, `note.nameInvalid` or `note.notFound`.
+   */
+  renameNote(from: string, to: string): Promise<NoteRenameResult>;
+  /** Show the notes folder in the file manager; resolves to an error, or undefined. */
+  revealNotes(): Promise<AscuaError | undefined>;
+  /** Opens an http(s) link from a note; resolves to an error, or undefined. */
+  openNoteLink(url: string): Promise<AscuaError | undefined>;
   getSourceControlStatus(provider: ProviderId): Promise<SourceControlStatus>;
   /** Starts the device flow; the result is the code the user must enter. */
   connectSourceControl(provider: ProviderId): Promise<DeviceCodePrompt>;

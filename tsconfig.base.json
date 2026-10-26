@@ -17,6 +17,7 @@
     "paths": {
       "@ascua/character": ["libs/character/src/index.ts"],
       "@ascua/ipc": ["libs/ascua-ipc/src/index.ts"],
+      "@ascua/notes": ["libs/notes/src/index.ts"],
       "@ascua/source-control": ["libs/source-control/src/index.ts"]
     }
   },

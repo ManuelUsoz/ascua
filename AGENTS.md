@@ -148,6 +148,16 @@ false`, node-pty ships prebuilds). `shell.ts` resolves Git Bash on Windows
   `@ascua/source-control`) - provider-agnostic model, ports
   (`SourceControlProvider`, `DeviceAuthorizer`) and `SourceControlError`.
   Dependency-free; `@ascua/ipc` only `import type`s from it.
+- `libs/notes` (Nx project `ascua-notes`, import `@ascua/notes`) - heading
+  slugs, `[[wiki link]]` parsing, note-name validation and `renameNoteLinks`
+  (rewrites `[[Old]]` links, skipping code). Dependency-free.
+- `apps/desktop/src/app/notes/` - `NoteStore` over `userData/notes/*.md` and
+  its IPC; `rename` moves the file (case-only renames via a temp name) and
+  rewrites links in all notes, best effort (`renameNote` in the bridge);
+  `apps/renderer/src/app/features/notes/` - "Mis notas" pages
+  (CodeMirror edit, marked + DOMPurify view).
+- `tools/ascua-notes-mcp.mjs` - read-only MCP server so Claude Code can read
+  the notes. Its slug logic is a copy of `@ascua/notes`: keep them in sync.
 - Shared libs are source-only (no build target); they resolve through
   `tsconfig.base.json` paths and are wired with `implicitDependencies`.
 
@@ -286,7 +296,7 @@ No hardcoded UI text. Spanish (`es`) and English (`en`) through Transloco.
 ## Verify
 
 ```sh
-npm run format:check && npm run i18n:check && npx nx lint renderer && npx nx lint desktop && npx nx test renderer --run && npx nx test desktop --run && npx nx build desktop
+npm run format:check && npm run i18n:check && npx nx lint renderer && npx nx lint desktop && npx nx test renderer --run && npx nx test desktop --run && npx nx test ascua-notes --run && node --test tools/ascua-notes-mcp.test.mjs && npx nx build desktop
 node tools/ui-drive.cjs dist/ui-drive
 ```
 

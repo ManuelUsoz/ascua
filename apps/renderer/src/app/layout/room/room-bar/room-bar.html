@@ -5,6 +5,10 @@
     } @else {
       <b>{{ area() | transloco }}</b>
     }
+    @if (note(); as n) {
+      <span>/</span>
+      <span>{{ n }}</span>
+    }
     @if (section(); as s) {
       <span>/</span>
       <span>{{ s | transloco }}</span>

@@ -10,6 +10,8 @@ import filesEn from '../../i18n/files/en.json';
 import filesEs from '../../i18n/files/es.json';
 import settingsEn from '../../i18n/settings/en.json';
 import settingsEs from '../../i18n/settings/es.json';
+import notesEn from '../../i18n/notes/en.json';
+import notesEs from '../../i18n/notes/es.json';
 import repositoriesEn from '../../i18n/repositories/en.json';
 import repositoriesEs from '../../i18n/repositories/es.json';
 
@@ -27,6 +29,8 @@ export function i18nTesting(lang: Language = 'es') {
       'files/en': filesEn,
       'settings/es': settingsEs,
       'settings/en': settingsEn,
+      'notes/es': notesEs,
+      'notes/en': notesEn,
       'repositories/es': repositoriesEs,
       'repositories/en': repositoriesEn,
     },

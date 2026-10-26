@@ -7,6 +7,7 @@
     "edit": "Edit",
     "settings": "Settings",
     "repositories": "Repositories",
+    "notes": "My notes",
     "spaces": "Spaces"
   },
   "room": {
@@ -87,6 +88,18 @@
       "notUtf8": "That file is not UTF-8; it cannot be saved from Ascua.",
       "notOpenable": "That file does not open from Ascua; use Show in folder.",
       "openFailed": "{{detail}}"
+    },
+    "note": {
+      "nameRequired": "The note needs a name.",
+      "nameInvalid": "That name is not valid for a note.",
+      "exists": "A note with that name already exists.",
+      "notFound": "The note no longer exists.",
+      "tooLarge": "The note is too large (1 MiB maximum).",
+      "readFailed": "Could not read the note.",
+      "saveFailed": "Could not save the note.",
+      "deleteFailed": "Could not delete the note.",
+      "renameFailed": "Could not rename the note.",
+      "linkRefused": "That link cannot be opened from a note."
     }
   }
 }

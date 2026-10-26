@@ -138,3 +138,37 @@ absolute path of the script:
 The hook server starts with the Electron main process. In development it uses
 the same endpoint as the packaged app, so only one Ascua instance should be
 running at a time.
+
+## Notes for Claude Code
+
+"Mis notas" are plain `.md` files in `<userData>/notes`. Claude Code reads them
+through a local, read-only MCP server, `tools/ascua-notes-mcp.mjs` (no
+dependencies; it never writes). Like the hook, it runs from the repo checkout.
+
+```sh
+claude mcp add ascua-notes -- node /absolute/path/to/ascua/tools/ascua-notes-mcp.mjs
+```
+
+Without `--dir` the server uses the packaged app's folder:
+
+- Windows: `%APPDATA%\ascua\notes`
+- macOS: `~/Library/Application Support/ascua/notes`
+- Linux: `~/.config/ascua/notes` (or `$XDG_CONFIG_HOME/ascua/notes`)
+
+In development Electron uses its own userData, so point the server at it with
+`--dir` (or `ASCUA_NOTES_DIR`) and an absolute path:
+
+- Windows: `%APPDATA%\Electron\notes`
+- macOS: `~/Library/Application Support/Electron/notes`
+- Linux: `~/.config/Electron/notes`
+
+```sh
+claude mcp add ascua-notes -- node /absolute/path/to/ascua/tools/ascua-notes-mcp.mjs --dir /absolute/path/to/Electron/notes
+```
+
+Tools: `list_notes` (names and heading outline), `read_note` (`name`, optional
+`heading` to read only that section) and `search_notes` (`query`, up to 50 hits
+with the nearest heading and line).
+
+Notes link to each other with `[[Nota#Encabezado]]`, so you can ask Claude Code
+things like "lee [[Nota#Encabezado]] de mis notas".

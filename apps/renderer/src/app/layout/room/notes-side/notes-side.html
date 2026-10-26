@@ -1,0 +1,34 @@
+<aside class="as-side">
+  <div class="as-side__head">
+    {{ 'notes.side.heading' | transloco }}
+    <a
+      class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+      routerLink="/notas"
+      [attr.aria-label]="'notes.side.newNote' | transloco"
+    >
+      <app-icon name="plus" />
+    </a>
+  </div>
+  @for (n of store.notes(); track n.name) {
+    <a
+      class="as-tree__row as-tree__row--project"
+      [routerLink]="['/notas', n.name]"
+      [attr.aria-current]="isActive(n.name) ? 'true' : null"
+    >
+      <app-icon [name]="isActive(n.name) ? 'chevron-down' : 'chevron-right'" />
+      <span class="as-tree__name">{{ n.name }}</span>
+    </a>
+    @if (isActive(n.name)) {
+      @for (h of n.headings; track $index) {
+        <a
+          class="as-tree__row"
+          [routerLink]="['/notas', n.name]"
+          [fragment]="h.slug"
+          [style.padding-left.px]="26 + (h.level - 1) * 12"
+        >
+          <span class="as-tree__name">{{ h.text }}</span>
+        </a>
+      }
+    }
+  }
+</aside>

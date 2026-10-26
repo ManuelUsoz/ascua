@@ -1,0 +1,43 @@
+<div class="as-empty">
+  @if (store.notes().length === 0) {
+    <h1>{{ 'notes.index.emptyTitle' | transloco }}</h1>
+    <p>{{ 'notes.index.emptyHint' | transloco }}</p>
+  } @else {
+    <p>{{ 'notes.index.selectHint' | transloco }}</p>
+  }
+  <form class="as-form__row" (submit)="$event.preventDefault(); create()">
+    <input
+      id="note-name"
+      class="as-input"
+      type="text"
+      autocomplete="off"
+      spellcheck="false"
+      [attr.aria-label]="'notes.index.nameLabel' | transloco"
+      [placeholder]="'notes.index.nameLabel' | transloco"
+      [value]="name()"
+      [disabled]="!available"
+      (input)="onName($event)"
+    />
+    <button
+      type="submit"
+      class="as-btn as-btn--primary"
+      [disabled]="!available"
+    >
+      <app-icon name="plus" />{{ 'notes.index.create' | transloco }}
+    </button>
+  </form>
+  @if (problem(); as err) {
+    @let reason = errorText(err);
+    <p class="as-files__err" role="alert">
+      {{ reason.key | transloco: reason.params }}
+    </p>
+  }
+  <button
+    type="button"
+    class="as-btn as-btn--quiet as-btn--s"
+    [disabled]="!available"
+    (click)="openFolder()"
+  >
+    <app-icon name="folder" />{{ 'notes.index.openFolder' | transloco }}
+  </button>
+</div>

@@ -54,6 +54,30 @@ describe('crumbsFrom', () => {
     ).toEqual({ area: 'nav.repositories', side: 'repositories' });
   });
 
+  it('reads the side context of notas', () => {
+    expect(
+      crumbsFrom(node({}, {}, node({}, { area: 'nav.notes', side: 'notes' }))),
+    ).toEqual({ area: 'nav.notes', side: 'notes' });
+  });
+
+  it('reads the note name of a note route', () => {
+    const notes = node(
+      {},
+      { area: 'nav.notes', side: 'notes' },
+      node({ name: 'Ideas' }, {}),
+    );
+    expect(crumbsFrom(node({}, {}, notes))).toEqual({
+      area: 'nav.notes',
+      side: 'notes',
+      note: 'Ideas',
+    });
+  });
+
+  it('has no note on the notes index', () => {
+    const notes = node({}, { area: 'nav.notes', side: 'notes' }, node({}, {}));
+    expect(crumbsFrom(node({}, {}, notes)).note).toBeUndefined();
+  });
+
   it('keeps a section without a project', () => {
     expect(crumbsFrom(node({}, { section: 'nav.newProject' }))).toEqual({
       section: 'nav.newProject',

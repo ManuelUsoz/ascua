@@ -27,7 +27,9 @@ export interface Crumbs {
   /** A `nav.*` catalog key. */
   section?: string;
   /** Which context the room's side slot shows; projects when absent. */
-  side?: 'projects' | 'repositories';
+  side?: 'projects' | 'repositories' | 'notes';
+  /** The note name a `/notas/<name>` route stands on. */
+  note?: string;
 }
 
 /** Reads the project and section the deepest active route stands on. */
@@ -42,7 +44,12 @@ export function crumbsFrom(root: ActivatedRouteSnapshot): Crumbs {
     const section = route.data['section'];
     if (typeof section === 'string') crumbs.section = section;
     const side = route.data['side'];
-    if (side === 'projects' || side === 'repositories') crumbs.side = side;
+    if (side === 'projects' || side === 'repositories' || side === 'notes')
+      crumbs.side = side;
+    if (crumbs.side === 'notes') {
+      const name = route.params['name'];
+      if (typeof name === 'string') crumbs.note = name;
+    }
     route = route.firstChild;
   }
   return crumbs;

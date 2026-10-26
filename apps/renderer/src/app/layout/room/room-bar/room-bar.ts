@@ -30,6 +30,7 @@ export class RoomBar {
     () => this.crumbs().area ?? 'nav.projects',
   );
   protected readonly section = computed(() => this.crumbs().section);
+  protected readonly note = computed(() => this.crumbs().note);
   private readonly unsaved = inject(UnsavedChanges);
 
   protected async close(): Promise<void> {

@@ -1,0 +1,226 @@
+<div class="as-files">
+  <section class="as-panel as-files__viewer">
+    <div class="as-files__head">
+      <app-icon name="note" />
+      @if (renaming()) {
+        <form
+          class="as-note__rename"
+          (submit)="$event.preventDefault(); confirmRename()"
+        >
+          <input
+            #renameInput
+            id="note-rename-input"
+            class="as-input"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            [attr.aria-label]="'notes.page.renameLabel' | transloco"
+            [value]="newName()"
+            (input)="onRenameInput($event)"
+            (keydown.escape)="$event.stopPropagation(); cancelRename()"
+          />
+          <button
+            type="submit"
+            class="as-btn as-btn--primary as-btn--s"
+            id="note-rename-yes"
+            [disabled]="renamePending()"
+          >
+            {{ 'notes.page.renameConfirm' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            id="note-rename-cancel"
+            (click)="cancelRename()"
+          >
+            {{ 'notes.page.cancel' | transloco }}
+          </button>
+        </form>
+      } @else {
+        <span class="as-files__path" id="note-title">{{ name() }}</span>
+      }
+      @if (dirty()) {
+        <span
+          class="as-files__dirty"
+          role="img"
+          [attr.aria-label]="'notes.page.dirty' | transloco"
+        ></span>
+      }
+      @if (renameProblem(); as err) {
+        @let renError = errorText(err);
+        <span class="as-files__err" role="alert">{{
+          renError.key | transloco: renError.params
+        }}</span>
+      }
+      @if (renameBlocked()) {
+        <span class="as-files__err" role="alert">{{
+          'notes.page.renameUnsaved' | transloco
+        }}</span>
+      }
+      @if (renamedCount(); as count) {
+        <span class="as-note__notice" role="status">{{
+          pluralKey('notes.page.renamed', count) | transloco: { count }
+        }}</span>
+      }
+      @if (deleteError(); as err) {
+        @let delError = errorText(err);
+        <span class="as-files__err" role="alert">{{
+          delError.key | transloco: delError.params
+        }}</span>
+      }
+      @if (doc()) {
+        <button
+          type="button"
+          class="as-btn as-btn--quiet as-btn--s"
+          id="note-mode"
+          (click)="setMode(mode() === 'edit' ? 'view' : 'edit')"
+        >
+          {{
+            (mode() === 'edit' ? 'notes.page.view' : 'notes.page.edit')
+              | transloco
+          }}
+        </button>
+        <button
+          type="button"
+          class="as-btn as-btn--quiet as-btn--s"
+          id="note-save"
+          [disabled]="!dirty() || saving()"
+          (click)="save()"
+        >
+          {{ 'notes.page.save' | transloco }}
+        </button>
+        @if (!renaming()) {
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            id="note-rename"
+            (click)="startRename()"
+          >
+            {{ 'notes.page.rename' | transloco }}
+          </button>
+        }
+        @if (confirmingDelete()) {
+          <span class="as-files__err">{{
+            'notes.page.deleteConfirm' | transloco
+          }}</span>
+          <button
+            type="button"
+            class="as-btn as-btn--danger as-btn--s"
+            id="note-delete-yes"
+            (click)="remove()"
+          >
+            {{ 'notes.page.deleteYes' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            (click)="confirmingDelete.set(false)"
+          >
+            {{ 'notes.page.cancel' | transloco }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="as-btn as-btn--ghost as-btn--s as-btn--icon"
+            id="note-delete"
+            [attr.aria-label]="'notes.page.delete' | transloco"
+            (click)="confirmingDelete.set(true)"
+          >
+            <app-icon name="trash" />
+          </button>
+        }
+      }
+    </div>
+    @if (conflict()) {
+      <div class="as-files__banner" role="alert">
+        <span>{{ 'notes.page.conflict' | transloco }}</span>
+        <button
+          type="button"
+          class="as-btn as-btn--quiet as-btn--s"
+          (click)="save(undefined, true)"
+        >
+          {{ 'notes.page.overwrite' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="as-btn as-btn--quiet as-btn--s"
+          (click)="load()"
+        >
+          {{ 'notes.page.reload' | transloco }}
+        </button>
+      </div>
+    }
+    @if (unsaved.prompt() !== undefined) {
+      <div class="as-files__banner" role="alert">
+        <span>{{ 'notes.page.unsaved' | transloco }}</span>
+        <button
+          type="button"
+          class="as-btn as-btn--quiet as-btn--s"
+          (click)="unsaved.answer(true)"
+        >
+          {{ 'notes.page.discard' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="as-btn as-btn--quiet as-btn--s"
+          (click)="unsaved.answer(false)"
+        >
+          {{ 'notes.page.keepEditing' | transloco }}
+        </button>
+      </div>
+    }
+    @if (saveError(); as err) {
+      @let failed = errorText(err);
+      <div class="as-files__banner" role="alert">
+        {{ failed.key | transloco: failed.params }}
+      </div>
+    }
+    @if (doc(); as d) {
+      <div class="as-files__body" [hidden]="mode() !== 'edit'">
+        <app-code-editor
+          id="note-code"
+          class="as-files__editor"
+          [doc]="d"
+          (dirtyChange)="onDirty($event)"
+          (save)="save($event)"
+        />
+      </div>
+      @if (mode() === 'view') {
+        <div class="as-files__body">
+          <div class="as-note__scroll">
+            @if (viewText().trim() === '') {
+              <p class="as-files__empty">
+                {{ 'notes.page.empty' | transloco }}
+              </p>
+            }
+            <app-note-view
+              id="note-view"
+              class="as-md"
+              [html]="html()"
+              [fragment]="fragment()"
+            />
+            @if (backlinks().length > 0) {
+              <section class="as-note__backlinks" id="note-backlinks">
+                <h2>{{ 'notes.page.backlinks' | transloco }}</h2>
+                <ul>
+                  @for (b of backlinks(); track b.name) {
+                    <li>
+                      <a [routerLink]="['/notas', b.name]">{{ b.name }}</a>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          </div>
+        </div>
+      }
+    } @else if (loadError(); as err) {
+      @let readError = errorText(err);
+      <p class="as-files__empty" role="alert">
+        {{ readError.key | transloco: readError.params }}
+      </p>
+    } @else {
+      <p class="as-files__empty">{{ 'notes.page.loading' | transloco }}</p>
+    }
+  </section>
+</div>

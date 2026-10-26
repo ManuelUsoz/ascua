@@ -21,6 +21,7 @@ export const ICONS = {
   edit: ['M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4'],
   trash: ['M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13'],
   file: ['M7 3h7l5 5v13H7zM14 3v5h5'],
+  note: ['M5 3h14v18H5zM9 8h6M9 12h6M9 16h3'],
   search: ['M11 18a7 7 0 1 0 0-14a7 7 0 0 0 0 14zM20 20l-4-4'],
   external: ['M14 4h6v6M20 4l-9 9M18 14v5H5V6h5'],
   settings: [
