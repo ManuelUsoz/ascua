@@ -2,7 +2,8 @@ import { wisp } from "./wisp";
 
 export type Act =
   | "idle" | "wave" | "dance" | "mate" | "look" | "stretch" | "yawn" | "meditate"
-  | "sleep" | "code" | "read" | "think" | "juggle" | "alert" | "warn" | "ask" | "cheer";
+  | "sleep" | "code" | "read" | "think" | "juggle" | "alert" | "warn" | "ask" | "cheer"
+  | "listen" | "talk";
 
 type Mouth = "none" | "open" | "o" | "yawn";
 type Eyes = "happy" | "open" | "wide" | "closed" | "squint";
@@ -25,6 +26,8 @@ export const MOUTH: Record<Act, Mouth> = {
   warn: "none",
   ask: "o",
   cheer: "open",
+  listen: "none",
+  talk: "open",
 };
 
 const EYES: Record<Act, Eyes> = {
@@ -45,9 +48,11 @@ const EYES: Record<Act, Eyes> = {
   warn: "squint",
   ask: "open",
   cheer: "happy",
+  listen: "wide",
+  talk: "open",
 };
 
-const TONE: Partial<Record<Act, string>> = { sleep: "sleep", alert: "alert", warn: "warn", ask: "ask", cheer: "happy" };
+const TONE: Partial<Record<Act, string>> = { sleep: "sleep", alert: "alert", warn: "warn", ask: "ask", cheer: "happy", listen: "ask" };
 
 function setAct(el: HTMLElement, act: Act): void {
   el.dataset['act'] = act;

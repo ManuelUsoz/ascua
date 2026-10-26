@@ -1,0 +1,36 @@
+{
+  "checking": {
+    "title": "Waking Ascua up",
+    "subtitle": "Checking Claude Code."
+  },
+  "unavailable": {
+    "notInstalled": {
+      "title": "Claude Code is missing",
+      "body": "The assistant uses your own Claude Code. Install it, open a terminal and run claude to sign in. Then retry."
+    },
+    "notLoggedIn": {
+      "title": "Sign in needed",
+      "body": "Open a terminal, run claude and sign in. Ascua never asks for your account. Then retry."
+    }
+  },
+  "retry": "Retry",
+  "empty": "Tell me what you need: projects, files, terminals or repositories.",
+  "thinking": "Thinking…",
+  "cancelled": "Cancelled",
+  "send": "Send",
+  "cancel": "Stop",
+  "reset": "New conversation",
+  "composer": {
+    "label": "Message for Ascua",
+    "placeholder": "Type a message. Enter sends, Shift+Enter adds a new line."
+  },
+  "tool": {
+    "window": "Room",
+    "ui": "Interface guide",
+    "projects": "Projects",
+    "files": "Files",
+    "terminals": "Terminals",
+    "source_control": "Repositories",
+    "other": "Tool"
+  }
+}

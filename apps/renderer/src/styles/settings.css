@@ -32,6 +32,15 @@
   line-height: 18px;
   color: var(--ink-muted);
 }
+.as-settings__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink);
+  cursor: pointer;
+}
 .as-settings .as-select {
   width: min(260px, 100%);
 }

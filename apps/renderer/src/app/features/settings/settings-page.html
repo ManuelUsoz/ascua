@@ -36,4 +36,86 @@
       </p>
     }
   </section>
+  <section
+    class="as-panel as-settings__panel"
+    aria-labelledby="settings-voice-title"
+  >
+    <header class="as-settings__head">
+      <h2 id="settings-voice-title" class="as-settings__title">
+        {{ 'settings.voice.title' | transloco }}
+      </h2>
+      <p class="as-settings__hint">{{ 'settings.voice.hint' | transloco }}</p>
+    </header>
+    <label class="as-settings__check">
+      <input
+        id="settings-voice-enabled"
+        type="checkbox"
+        [checked]="settings.voice().enabled"
+        (change)="toggle('enabled', $event)"
+      />
+      {{ 'settings.voice.enabled' | transloco }}
+    </label>
+    <label class="as-settings__check">
+      <input
+        id="settings-voice-autospeak"
+        type="checkbox"
+        [checked]="settings.voice().autoSpeak"
+        (change)="toggle('autoSpeak', $event)"
+      />
+      {{ 'settings.voice.autoSpeak' | transloco }}
+    </label>
+    <div class="as-form__field">
+      <label class="as-label" for="settings-voice-style">{{
+        'settings.voice.style' | transloco
+      }}</label>
+      <select
+        id="settings-voice-style"
+        class="as-input as-select"
+        (change)="chooseStyle($event)"
+      >
+        @for (s of styles; track s) {
+          <option [value]="s" [selected]="s === settings.voice().style">
+            {{ 'settings.voice.styles.' + s | transloco }}
+          </option>
+        }
+      </select>
+      <p class="as-settings__hint">
+        {{ 'settings.voice.styleHint' | transloco }}
+      </p>
+    </div>
+    <div class="as-row">
+      <button type="button" class="as-btn as-btn--s" (click)="test()">
+        {{ 'settings.voice.test' | transloco }}
+      </button>
+      <button
+        type="button"
+        class="as-btn as-btn--s"
+        [disabled]="preparing()"
+        (click)="prepare()"
+      >
+        {{ 'settings.voice.prepare' | transloco }}
+      </button>
+      <button
+        type="button"
+        class="as-btn as-btn--quiet as-btn--s"
+        [disabled]="preparing()"
+        (click)="clear()"
+      >
+        {{ 'settings.voice.clear' | transloco }}
+      </button>
+    </div>
+    <p class="as-settings__hint">
+      @if (preparing() && voice.download(); as d) {
+        {{ 'settings.voice.downloading' | transloco: { percent: percent(d) } }}
+      } @else {
+        {{ 'settings.voice.prepareHint' | transloco }}
+      }
+    </p>
+    @if (voiceFailure(); as e) {
+      <p class="as-form__error" role="alert">
+        {{ e.key | transloco: e.params }}
+      </p>
+    }
+    <p class="as-settings__hint">{{ 'settings.voice.credit' | transloco }}</p>
+  </section>
 </div>

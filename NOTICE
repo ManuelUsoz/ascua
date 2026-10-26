@@ -9,4 +9,6 @@ All rights reserved:
 - The character art: libs/character/src/lib/wisp.ts and libs/character/src/lib/wisp.css.
 - The application icons and any other artwork depicting the character.
 
+Third-party code and models used by Ascua are listed in THIRD_PARTY_NOTICES.md.
+
 Apache-2.0 section 6 grants no rights to use the "Ascua" name or character as a trademark.

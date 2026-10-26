@@ -40,7 +40,14 @@ export const ICONS = {
   'chevron-left': ['M15 5l-7 7 7 7'],
   check: ['M5 12l4.5 4.5L19 7'],
   refresh: ['M20 11a8 8 0 0 0-14-4M4 4v4h4M4 13a8 8 0 0 0 14 4M20 20v-4h-4'],
+<<<<<<< HEAD
+  chat: ['M4 5h16v11H10l-5 4v-4H4z'],
+  mic: ['M9 4h6v8a3 3 0 0 1-6 0zM6 11a6 6 0 0 0 12 0M12 17v3'],
+  volume: ['M4 10h4l5-4v12l-5-4H4zM16 9a4 4 0 0 1 0 6'],
+  'volume-off': ['M4 10h4l5-4v12l-5-4H4zM16 10l5 5M21 10l-5 5'],
+=======
   chat: ['M4 5h16v11H9l-5 4z'],
+>>>>>>> origin/master
   minimize: ['M5 18h14'],
   close: ['M6 6l12 12M18 6L6 18'],
   lock: ['M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3'],

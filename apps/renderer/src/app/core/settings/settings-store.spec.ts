@@ -1,5 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import type { AscuaApi, Settings } from '@ascua/ipc';
+import {
+  DEFAULT_VOICE_SETTINGS,
+  type AscuaApi,
+  type Settings,
+  type SettingsPatch,
+} from '@ascua/ipc';
 import { TranslocoService } from '@jsverse/transloco';
 import { ASCUA_API } from '../bridge/ascua-api';
 import { i18nTesting } from '../../testing/i18n';
@@ -7,11 +12,15 @@ import { SettingsStore } from './settings-store';
 
 describe('SettingsStore', () => {
   let changed: (settings: Settings) => void;
+  const voice = DEFAULT_VOICE_SETTINGS;
   const api = {
-    getSettings: vi.fn(async (): Promise<Settings> => ({ language: 'en' })),
+    getSettings: vi.fn(
+      async (): Promise<Settings> => ({ language: 'en', voice }),
+    ),
     updateSettings: vi.fn(
-      async (patch: Partial<Settings>): Promise<Settings> => ({
+      async (patch: SettingsPatch): Promise<Settings> => ({
         language: patch.language ?? 'es',
+        voice: { ...voice, ...patch.voice },
       }),
     ),
     onSettingsChanged: vi.fn((callback: (settings: Settings) => void) => {
@@ -38,7 +47,7 @@ describe('SettingsStore', () => {
   it('follows onSettingsChanged', async () => {
     const store = TestBed.inject(SettingsStore);
     await store.init();
-    changed({ language: 'es' });
+    changed({ language: 'es', voice });
     await Promise.resolve();
     expect(TestBed.inject(TranslocoService).getActiveLang()).toBe('es');
     expect(store.language()).toBe('es');
@@ -49,5 +58,23 @@ describe('SettingsStore', () => {
     await store.setLanguage('en');
     expect(api.updateSettings).toHaveBeenCalledWith({ language: 'en' });
     expect(TestBed.inject(TranslocoService).getActiveLang()).toBe('en');
+  });
+
+  it('sends a voice patch to main', async () => {
+    const store = TestBed.inject(SettingsStore);
+    await store.setVoice({ style: 'M2' });
+    expect(api.updateSettings).toHaveBeenCalledWith({ voice: { style: 'M2' } });
+    expect(store.voice().style).toBe('M2');
+  });
+
+  it('merges a voice patch locally without the API', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [i18nTesting('es')],
+      providers: [{ provide: ASCUA_API, useValue: null }],
+    });
+    const store = TestBed.inject(SettingsStore);
+    await store.setVoice({ autoSpeak: true });
+    expect(store.voice()).toEqual({ ...voice, autoSpeak: true });
   });
 });

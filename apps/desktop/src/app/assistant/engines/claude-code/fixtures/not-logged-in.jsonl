@@ -1,0 +1,2 @@
+{"type":"system","subtype":"init","session_id":"00000000-0000-4000-8000-000000000002","tools":[],"mcp_servers":[]}
+{"type":"result","subtype":"success","is_error":true,"session_id":"00000000-0000-4000-8000-000000000002","result":"Not logged in - Please run /login"}

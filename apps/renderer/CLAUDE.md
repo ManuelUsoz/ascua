@@ -60,6 +60,51 @@ isolation, loaded from `file://` in the packaged app. Read the root
   and the other per-feature sheets.
 - `src/i18n/` - root catalogs `{es,en}.json` and per-scope folders.
 
+## Assistant and voice
+
+Main side (engine, tools, confirmations, SAB switch): `apps/desktop/CLAUDE.md`.
+Code lives in `features/assistant`, `core/assistant`, `core/navigation`
+(main-initiated routing), `core/voice` (ports, `whisper/` and `supertonic/`
+workers, `runtime/` model cache) and `core/i18n/labels.ts`. Not related to the
+`chats` module.
+
+- **UI knowledge.** `core/i18n/labels.ts` resolves `UI_LABEL_KEYS`; they and
+  the route go to main.
+- **Status text** next to the avatar (`layout/voice-status`) is non-interactive.
+- **Push-to-talk.** Avatar long press (450 ms, no movement), Ctrl+Space held in
+  the room (capture phase, so xterm/CodeMirror never see it), or the composer
+  mic.
+- **STT** is Whisper (transformers.js) in a Web Worker. `whisperProfile(device)`
+  in `voice-models.ts`: with WebGPU and `shader-f16`, `whisper-large-v3-turbo`
+  q4f16 (~566 MB); otherwise `whisper-small` q8 (~252 MB). `detectDevice()`
+  falls back to wasm (Xvfb, Linux without WebGPU). The vocabulary prompt
+  (project, pista and UI names) goes through `decoder_input_ids`
+  (`whisper-prompt.ts`) because transformers.js 3.8.1 ignores `prompt_ids`.
+- **TTS** is Supertonic 3 (ONNX in a worker, es+en, fp32 ~398 MB, ~0.8 GB RSS
+  loaded, unloaded after 5 min idle) and the only TTS: no OS voices on
+  purpose. Kokoro was dropped (English-only; full espeak-ng is GPL-3.0). The
+  Supertonic revision is pinned in `voice-models.ts`; attribution in
+  `THIRD_PARTY_NOTICES.md`.
+- **Model cache.** Cache Storage fails on `file://`, so models live in
+  IndexedDB (`ascua-voice-models`, `runtime/model-cache.ts`). One
+  `onnxruntime-web`, pinned to the exact version transformers depends on (bump
+  together), wasm served from the `voice-runtime/` asset. `wasmThreads()` sets
+  ORT `numThreads` to cores - 1 (1 without SAB, as in the browser preview).
+- **CSP.** `src/index.html` has a `<meta http-equiv>` policy and the
+  SharedArrayBuffer switch relies on it (no injected script may run).
+  `script-src 'self' 'wasm-unsafe-eval'` (no inline/eval), `worker-src 'self'
+blob:` (module workers, ORT pthreads, ui-drive blob worker), `connect-src`
+  `'self'` + Hugging Face (`huggingface.co`, `*.huggingface.co`, `*.hf.co`) +
+  `localhost:4200` http/ws, `img-src 'self' data: blob:`, `media-src blob:`
+  (TTS audio), `style-src 'self' 'unsafe-inline'` (xterm, CodeMirror, Angular
+  inject styles; styles only), everything else `'none'`. GitHub is fetched from
+  main, so no GitHub origin. `optimization.styles.inlineCritical` is off in
+  `apps/renderer/project.json` (its `onload` handler is blocked). To add an
+  origin, extend the matching directive and run `node tools/ui-drive.cjs
+dist/ui-drive` watching the console for "Refused to".
+- **Worker builds** print the harmless warning "webWorkerTsConfig not yet
+  supported"; the chunks are emitted.
+
 ## Dimensions shared with main
 
 `COMPACT` (420x320) and `AVATAR` (120) must match

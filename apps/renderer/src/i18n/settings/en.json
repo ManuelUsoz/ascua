@@ -9,5 +9,32 @@
   "languages": {
     "es": "Español",
     "en": "English"
+  },
+  "voice": {
+    "title": "Voice",
+    "hint": "Talk to Ascua and hear it answer. Everything is processed on this computer: only the text reaches the assistant.",
+    "enabled": "Enable voice",
+    "autoSpeak": "Read replies aloud",
+    "style": "Voice style",
+    "styleHint": "Used for Spanish and English.",
+    "styles": {
+      "F1": "Female 1",
+      "F2": "Female 2",
+      "F3": "Female 3",
+      "F4": "Female 4",
+      "F5": "Female 5",
+      "M1": "Male 1",
+      "M2": "Male 2",
+      "M3": "Male 3",
+      "M4": "Male 4",
+      "M5": "Male 5"
+    },
+    "sample": "Hi, I'm Ascua. This is how I sound.",
+    "test": "Test voice",
+    "prepare": "Prepare voice",
+    "prepareHint": "Downloads the voice models (about 960 MB with a GPU, about 650 MB without one) so they are ready when you need them.",
+    "downloading": "Downloading… {{percent}}%",
+    "clear": "Delete downloaded models",
+    "credit": "Voice: Supertonic 3 by Supertone (Open RAIL-M), downloaded from Hugging Face. Recognition: Whisper."
   }
 }

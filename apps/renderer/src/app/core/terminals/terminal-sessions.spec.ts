@@ -44,6 +44,7 @@ describe('TerminalSessions', () => {
     AscuaApi,
     | 'listTerminals'
     | 'startTerminal'
+    | 'startProjectTerminals'
     | 'stopTerminal'
     | 'replayTerminal'
     | 'writeTerminal'
@@ -75,6 +76,10 @@ describe('TerminalSessions', () => {
       startTerminal: vi.fn(async (projectId, terminalId) =>
         session(projectId, terminalId, 'running'),
       ),
+      startProjectTerminals: vi.fn(async (projectId) => [
+        session(projectId, 'api', 'running'),
+        session(projectId, 'web', 'running'),
+      ]),
       stopTerminal: vi.fn(async () => undefined),
       replayTerminal: vi.fn(() => replay),
       writeTerminal: vi.fn(),
@@ -179,11 +184,11 @@ describe('TerminalSessions', () => {
     expect(chunks).toEqual(['AB', 'C', 'D']);
   });
 
-  it('startAll starts only specs that are not running', async () => {
+  it('startAll delegates to main and upserts the sessions', async () => {
     await create();
     await sessions.startAll(project);
-    expect(api.startTerminal).toHaveBeenCalledTimes(1);
-    expect(api.startTerminal).toHaveBeenCalledWith('p', 'web', undefined);
+    expect(api.startProjectTerminals).toHaveBeenCalledWith('p');
+    expect(api.startTerminal).not.toHaveBeenCalled();
     expect(sessions.session('p', 'web')?.status).toBe('running');
   });
 

@@ -3,17 +3,11 @@ import { createServer, type Server, type Socket } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { PermissionDecision, PermissionRequest } from '@ascua/ipc';
+import type { PermissionSink, PermissionSource } from './permission-source';
 
 interface Pending {
   socket: Socket;
   request: PermissionRequest;
-}
-
-interface HookServerOptions {
-  /** A hook is waiting for the user's decision. */
-  onRequest(request: PermissionRequest): void;
-  /** The request was answered, or its hook disconnected. */
-  onResolved(id: number): void;
 }
 
 /**
@@ -22,26 +16,20 @@ interface HookServerOptions {
  * `tools/ascua-hook.mjs`, which writes the hook event here and waits for a
  * reply line. Any failure is the hook's problem; it fails open.
  */
-export class HookServer {
+export class HookServer implements PermissionSource {
   private server: Server | null = null;
-  private options: HookServerOptions | null = null;
+  private sink: PermissionSink | null = null;
   private readonly pending = new Map<number, Pending>();
-  private nextId = 1;
   private listening = false;
-
-  /** Hook connections still waiting for a decision. */
-  get pendingCount(): number {
-    return this.pending.size;
-  }
 
   /** Requests to re-send when the renderer (re)loads. */
   get pendingRequests(): PermissionRequest[] {
     return [...this.pending.values()].map(({ request }) => request);
   }
 
-  start(options: HookServerOptions): void {
+  start(sink: PermissionSink): void {
     if (this.server) return;
-    this.options = options;
+    this.sink = sink;
 
     const endpoint = endpointPath();
     if (process.platform !== 'win32' && existsSync(endpoint)) {
@@ -76,7 +64,7 @@ export class HookServer {
     this.pending.clear();
     this.server?.close();
     this.server = null;
-    this.options = null;
+    this.sink = null;
 
     if (process.platform !== 'win32' && this.listening) {
       try {
@@ -100,7 +88,7 @@ export class HookServer {
     } catch {
       // The hook disappeared between the click and this write.
     }
-    this.options?.onResolved(id);
+    this.sink?.onResolved(id);
   }
 
   private accept(socket: Socket): void {
@@ -130,8 +118,9 @@ export class HookServer {
         return;
       }
 
-      const request = toRequest(this.nextId++, event);
-      if (!request) {
+      const sink = this.sink;
+      const request = sink ? toRequest(sink.nextId(), event) : null;
+      if (!sink || !request) {
         socket.destroy();
         return;
       }
@@ -140,13 +129,13 @@ export class HookServer {
       const settled = () => {
         if (this.pending.delete(request.id)) {
           socket.destroy();
-          this.options?.onResolved(request.id);
+          sink.onResolved(request.id);
         }
       };
       socket.once('close', settled);
       socket.once('end', settled);
       socket.on('error', settled);
-      this.options?.onRequest(request);
+      sink.onRequest(request);
     });
   }
 }
@@ -169,7 +158,7 @@ function toRequest(id: number, event: unknown): PermissionRequest | null {
     record['tool_input'] && typeof record['tool_input'] === 'object'
       ? record['tool_input']
       : {};
-  return { id, tool, summary: summarize(tool, input), input };
+  return { id, source: 'hook', tool, summary: summarize(tool, input), input };
 }
 
 function summarize(tool: string, input: object): string {

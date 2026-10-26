@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "resolveJsonModule": true,
+    "lib": ["es2022", "webworker"],
+    "types": []
+  },
+  "include": ["src/**/*.worker.ts", "src/app/core/voice/supertonic/onnxruntime-web.d.ts"],
+  "exclude": ["src/**/*.spec.ts"]
+}

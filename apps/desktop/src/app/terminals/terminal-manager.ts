@@ -256,6 +256,15 @@ export class TerminalManager implements ProjectListener {
     return this.view(session);
   }
 
+  /** Start every saved pista of a project; running ones are returned as is. */
+  async startProject(projectId: string): Promise<TerminalSession[]> {
+    const project = await this.repository.get(projectId);
+    if (!project) return [];
+    return Promise.all(
+      project.terminals.map((t) => this.start(projectId, t.id)),
+    );
+  }
+
   stop(projectId: string, terminalId: string): void {
     this.stopSession(this.sessions.get(terminalKey(projectId, terminalId)));
   }
