@@ -41,6 +41,10 @@ async function setup(overrides: Partial<ChatSession> = {}) {
     clear: vi.fn().mockResolvedValue(undefined),
     update: vi.fn().mockResolvedValue(undefined),
     abort: vi.fn().mockResolvedValue(undefined),
+    selectedProvider: () => 'claude',
+    auth: () => undefined,
+    loggingIn: () => false,
+    ensureAuth: vi.fn().mockResolvedValue(undefined),
   };
   TestBed.configureTestingModule({
     imports: [i18nTesting('es')],

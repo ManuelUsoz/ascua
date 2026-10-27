@@ -68,7 +68,8 @@
     "untitledChat": "Chat sin título",
     "deleteChatTitle": "Eliminar chat",
     "deleteChatBody": "Se eliminará \"{{name}}\" y su historial. No se puede deshacer.",
-    "deleteChatConfirm": "Eliminar chat"
+    "deleteChatConfirm": "Eliminar chat",
+    "reindex": "Reindexar"
   },
   "status": {
     "working": "Trabajando",
@@ -167,7 +168,10 @@
     },
     "indexer": {
       "failed": "No se pudo indexar el proyecto.",
-      "notFound": "No se encontró el indexador."
+      "notFound": "No se encontró el indexador.",
+      "resetFailed": "No se pudo borrar el índice del proyecto.",
+      "benchFailed": "El benchmark falló.",
+      "notIndexed": "El proyecto aún no está indexado."
     },
     "file": {
       "gone": "El archivo ya no existe.",

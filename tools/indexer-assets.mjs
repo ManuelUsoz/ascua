@@ -9,6 +9,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const out = path.join(root, 'dist', 'apps', 'indexer');
 const files = [
   'apps/indexer/src/queries/definitions.scm',
+  'apps/indexer/src/queries/references.scm',
+  'apps/indexer/src/queries/imports.scm',
   'node_modules/web-tree-sitter/web-tree-sitter.wasm',
   'node_modules/tree-sitter-typescript/tree-sitter-typescript.wasm',
   'node_modules/tree-sitter-typescript/tree-sitter-tsx.wasm',

@@ -2,6 +2,7 @@ import type { ReasoningEffort } from './catalog';
 import type { ChatErrorKind } from './errors';
 import type { ChatModeId } from './harness';
 import type { PermissionRequest } from './permission';
+import type { QuestionAnswers, QuestionRequest } from './question';
 import type { AgentProviderId } from './provider';
 import type { Usage } from './usage';
 
@@ -94,12 +95,20 @@ export type PermissionPart = {
   state: 'pending' | 'allowed' | 'denied';
 };
 
+export type QuestionPart = {
+  kind: 'question';
+  request: QuestionRequest;
+  state: 'pending' | 'answered' | 'skipped';
+  answers?: QuestionAnswers;
+};
+
 export type MessagePart =
   | { kind: 'text'; text: string }
   | { kind: 'thinking'; text: string }
   | ToolUsePart
   | ToolResultPart
   | PermissionPart
+  | QuestionPart
   | { kind: 'error'; code: ChatErrorKind };
 
 export interface Message {
@@ -122,6 +131,16 @@ export function pendingPermissions(messages: Message[]): PermissionRequest[] {
   for (const m of messages) {
     for (const p of m.parts) {
       if (p.kind === 'permission' && p.state === 'pending') out.push(p.request);
+    }
+  }
+  return out;
+}
+
+export function pendingQuestions(messages: Message[]): QuestionRequest[] {
+  const out: QuestionRequest[] = [];
+  for (const m of messages) {
+    for (const p of m.parts) {
+      if (p.kind === 'question' && p.state === 'pending') out.push(p.request);
     }
   }
   return out;

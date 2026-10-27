@@ -1,0 +1,88 @@
+<p class="as-settings__hint">{{ 'settings.harness.hint' | transloco }}</p>
+@if (options().length === 0) {
+  <p class="as-settings__hint">
+    {{ 'settings.harness.noProjects' | transloco }}
+  </p>
+} @else {
+  <div class="as-form__field">
+    <span class="as-label">{{ 'settings.harness.project' | transloco }}</span>
+    <app-select
+      [options]="options()"
+      [selected]="projectId()"
+      [isDisabled]="bench.running()"
+      [ariaLabel]="'settings.harness.project' | transloco"
+      (picked)="pick($event)"
+    />
+  </div>
+  <div class="as-row">
+    <button
+      type="button"
+      appButton
+      class="as-btn--s"
+      [disabled]="bench.running()"
+      (click)="run()"
+    >
+      {{ 'settings.harness.run' | transloco }}
+    </button>
+  </div>
+}
+@if (bench.running()) {
+  <app-progress-bar
+    [value]="bench.progress().done"
+    [max]="bench.progress().total"
+    [label]="'settings.harness.bar' | transloco"
+  />
+} @else if (failure(); as f) {
+  <app-notice type="error" [title]="f" />
+} @else if (bench.report(); as r) {
+  <table class="as-harness__table">
+    <thead>
+      <tr>
+        <th>{{ 'settings.harness.tool' | transloco }}</th>
+        <th>{{ 'settings.harness.hitRate' | transloco }}</th>
+        <th>{{ 'settings.harness.tokens' | transloco }}</th>
+        <th>{{ 'settings.harness.ms' | transloco }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (t of r.perTool; track t.tool) {
+        <tr>
+          <td>{{ t.tool }}</td>
+          <td>{{ percent(t.hitRate) }}%</td>
+          <td>{{ t.avgTokens }}</td>
+          <td>{{ t.avgMs }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  <app-collapsible-card>
+    <span summary>{{ 'settings.harness.cases' | transloco }}</span>
+    <table class="as-harness__table">
+      <thead>
+        <tr>
+          <th>{{ 'settings.harness.case' | transloco }}</th>
+          <th>{{ 'settings.harness.result' | transloco }}</th>
+          <th>{{ 'settings.harness.recall' | transloco }}</th>
+          <th>{{ 'settings.harness.tokens' | transloco }}</th>
+          <th>{{ 'settings.harness.ms' | transloco }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of r.cases; track c.id) {
+          <tr>
+            <td>{{ c.id }}</td>
+            <td>
+              {{
+                (c.hit ? 'settings.harness.hit' : 'settings.harness.miss')
+                  | transloco
+              }}
+            </td>
+            <td>{{ percent(c.recall) }}%</td>
+            <td>{{ c.tokens }}</td>
+            <td>{{ c.ms }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </app-collapsible-card>
+}

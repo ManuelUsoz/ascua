@@ -3,12 +3,19 @@ import {
   PERMISSION_MODES,
   ChatError,
   isAgentProviderId,
+  type AgentProvider,
   type AgentProviderId,
   type ChatModeId,
+  type ProviderAuth,
   type PermissionMode,
   type ReasoningEffort,
 } from '@ascua/chat';
-import { IPC, encodeError, type AscuaError } from '@ascua/ipc';
+import {
+  IPC,
+  encodeError,
+  type AscuaError,
+  type ProviderAuthChange,
+} from '@ascua/ipc';
 import type { TerminalManager } from '../terminals/terminal-manager';
 import type { ChatService } from './chat-service';
 import type { ProviderRegistry } from './provider-registry';
@@ -62,18 +69,102 @@ function optionalEffort(value: unknown): ReasoningEffort | undefined {
   return value as ReasoningEffort;
 }
 
+const MAX_ANSWERS = 16;
+const MAX_QUESTION_KEY = 2000;
+const MAX_ANSWER = 4000;
+
+/** Answers keyed by question text, or null to skip; strings only, bounded. */
+export function questionAnswers(value: unknown): Record<string, string> | null {
+  if (value === null) return null;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new ChatError('invalidInput');
+  }
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length === 0 || entries.length > MAX_ANSWERS) {
+    throw new ChatError('invalidInput');
+  }
+  const out: Record<string, string> = {};
+  for (const [key, answer] of entries) {
+    if (
+      key === '' ||
+      key.length > MAX_QUESTION_KEY ||
+      typeof answer !== 'string' ||
+      answer.length > MAX_ANSWER
+    ) {
+      throw new ChatError('invalidInput');
+    }
+    out[key] = answer;
+  }
+  return out;
+}
+
 function providerId(value: unknown): AgentProviderId {
   if (!isAgentProviderId(value)) throw new ChatError('providerDisabled');
   return value;
 }
 
+const LOGIN_POLL_MS = 3000;
+const LOGIN_WATCH_MS = 5 * 60 * 1000;
+
+export interface LoginTimers {
+  setInterval(fn: () => void, ms: number): unknown;
+  clearInterval(handle: unknown): void;
+  setTimeout(fn: () => void, ms: number): unknown;
+  clearTimeout(handle: unknown): void;
+}
+
 export function registerChatIpc(
   service: ChatService,
   registry: ProviderRegistry,
-  terminals: Pick<TerminalManager, 'openCommand'>,
+  terminals: Pick<TerminalManager, 'openCommand' | 'onExit'>,
   send: (channel: string, payload: unknown) => void,
   getSettings: () => Promise<unknown>,
+  timers: LoginTimers = {
+    setInterval: (fn, ms) => setInterval(fn, ms),
+    clearInterval: (h) => clearInterval(h as NodeJS.Timeout),
+    setTimeout: (fn, ms) => setTimeout(fn, ms),
+    clearTimeout: (h) => clearTimeout(h as NodeJS.Timeout),
+  },
 ): void {
+  const watchers = new Map<AgentProviderId, () => void>();
+  const watchLogin = (provider: AgentProvider, terminalId: string): void => {
+    const id = provider.descriptor.id;
+    watchers.get(id)?.();
+    let last: ProviderAuth['state'] | undefined;
+    let done = false;
+    const check = async (final: boolean): Promise<void> => {
+      if (done) return;
+      let auth: ProviderAuth;
+      try {
+        auth = await provider.authStatus();
+      } catch {
+        return;
+      }
+      if (done) return;
+      const ends = final || auth.state === 'loggedIn';
+      if (ends) {
+        const change: ProviderAuthChange = { ...auth, final: true };
+        send(IPC.chatProviderAuthChanged, change);
+      } else if (auth.state !== last) {
+        send(IPC.chatProviderAuthChanged, auth);
+      }
+      last = auth.state;
+      if (ends) stop();
+    };
+    const poll = timers.setInterval(() => void check(false), LOGIN_POLL_MS);
+    const limit = timers.setTimeout(() => void check(true), LOGIN_WATCH_MS);
+    const stop = (): void => {
+      if (done) return;
+      done = true;
+      timers.clearInterval(poll);
+      timers.clearTimeout(limit);
+      if (watchers.get(id) === stop) watchers.delete(id);
+    };
+    watchers.set(id, stop);
+    terminals.onExit(terminalId, () => {
+      if (!done) void check(true);
+    });
+  };
   const thrown = (error: unknown): never => {
     throw new Error(encodeError(toError(error)));
   };
@@ -95,10 +186,14 @@ export function registerChatIpc(
         const provider = registry.get(providerId(id));
         const command = provider?.loginCommand();
         if (!command) throw new ChatError('providerDisabled');
-        return await terminals.openCommand(str(projectId), {
+        const session = await terminals.openCommand(str(projectId), {
           name: 'login', // i18n-ignore: stable id, the renderer shows terminals.loginName
           ...command,
         });
+        if (session.status === 'running') {
+          watchLogin(provider as AgentProvider, session.id);
+        }
+        return session;
       } catch (error) {
         return toError(error);
       }
@@ -253,6 +348,28 @@ export function registerChatIpc(
           str(sessionId),
           str(requestId),
           allow,
+        );
+        return undefined;
+      } catch (error) {
+        return toError(error);
+      }
+    },
+  );
+  ipcMain.handle(
+    IPC.resolveChatQuestion,
+    (
+      _e,
+      projectId: unknown,
+      sessionId: unknown,
+      requestId: unknown,
+      answers: unknown,
+    ) => {
+      try {
+        service.resolveQuestion(
+          str(projectId),
+          str(sessionId),
+          str(requestId),
+          questionAnswers(answers),
         );
         return undefined;
       } catch (error) {

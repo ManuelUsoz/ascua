@@ -88,6 +88,74 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX tool_calls_tool_started ON tool_calls(tool, started_at);
     `,
   },
+  {
+    version: 4,
+    name: 'occurrences-imports-relations',
+    // No cross-file FKs: references are resolved by name + import target at
+    // query time, so editing one file never invalidates rows of another.
+    // files.module: TS = repo-relative posix path without extension.
+    sql: `
+      ALTER TABLE files ADD COLUMN module TEXT NULL;
+      CREATE INDEX files_module ON files(module);
+      CREATE TABLE imports (
+        id INTEGER PRIMARY KEY,
+        file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL,
+        local_name TEXT NULL,
+        imported_name TEXT NULL,
+        specifier TEXT NOT NULL,
+        target_path TEXT NULL,
+        target_module TEXT NULL,
+        line INTEGER NOT NULL
+      );
+      CREATE INDEX imports_file_id ON imports(file_id);
+      CREATE INDEX imports_target_path ON imports(target_path);
+      CREATE INDEX imports_target_module ON imports(target_module);
+      CREATE INDEX imports_local_name ON imports(local_name);
+      CREATE TABLE occurrences (
+        id INTEGER PRIMARY KEY,
+        file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        qualifier TEXT NULL,
+        role TEXT NOT NULL,
+        line INTEGER NOT NULL,
+        col INTEGER NOT NULL,
+        enclosing_symbol_id INTEGER NULL REFERENCES symbols(id) ON DELETE SET NULL
+      );
+      CREATE INDEX occurrences_file_id ON occurrences(file_id);
+      CREATE INDEX occurrences_name ON occurrences(name);
+      CREATE INDEX occurrences_enclosing ON occurrences(enclosing_symbol_id);
+      CREATE TABLE relations (
+        id INTEGER PRIMARY KEY,
+        file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+        symbol_id INTEGER NOT NULL REFERENCES symbols(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL,
+        target_name TEXT NOT NULL,
+        target_qualifier TEXT NULL
+      );
+      CREATE INDEX relations_file_id ON relations(file_id);
+      CREATE INDEX relations_target_name ON relations(target_name);
+    `,
+  },
+  {
+    version: 5,
+    name: 'reindex-occurrences-and-imports',
+    // Indexes built before references.scm/imports.scm existed hold files whose
+    // hashes are unchanged, so they would never be re-parsed. Dropping the
+    // files (cascading to every derived row) forces a full rebuild.
+    sql: `DELETE FROM files;`,
+  },
+  {
+    version: 6,
+    name: 'occurrence-binding-and-receiver-type',
+    // binding: local | param | property, NULL when the name is not a binding.
+    // receiver_type: declared/inferred type of a member call's receiver.
+    // Old rows keep NULLs and behave as before.
+    sql: `
+      ALTER TABLE occurrences ADD COLUMN binding TEXT NULL;
+      ALTER TABLE occurrences ADD COLUMN receiver_type TEXT NULL;
+    `,
+  },
 ];
 
 export const migrate = (

@@ -13,6 +13,11 @@
     "checkAgain": "Comprobar de nuevo",
     "use": "Usar {{provider}}"
   },
+  "auth": {
+    "loggedOut": "Tu sesión venció o no está iniciada.",
+    "login": "Iniciar sesión en {{provider}}",
+    "waiting": "Esperando que termines de iniciar sesión…"
+  },
   "provider": {
     "claude": "Claude",
     "codex": "Codex",
@@ -114,6 +119,16 @@
     "deny": "Denegar",
     "allowed": "Permitido",
     "denied": "Denegado"
+  },
+  "question": {
+    "pickOne": "Elegí una",
+    "pickAny": "Podés elegir varias",
+    "other": "Otro",
+    "otherPlaceholder": "Escribí otra respuesta…",
+    "answer": "Responder",
+    "skip": "Omitir",
+    "waiting": "El agente espera tu respuesta",
+    "skipped": "Omitida"
   },
   "usage": {
     "tokens": "{{count}} tokens",

@@ -33,6 +33,9 @@ async function setup(
     capabilitiesLoading: () => false,
     models: () => STATIC_MODEL_CATALOGS.claude,
     selectedProvider: () => provider ?? undefined,
+    auth: () => undefined,
+    loggingIn: () => false,
+    ensureAuth: vi.fn().mockResolvedValue(undefined),
   };
   const settings = {
     settings: signal<Settings>({ language: 'es', chatDefaults }),

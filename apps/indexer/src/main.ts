@@ -9,12 +9,14 @@ import {
 import { Effect, Layer, Logger, Runtime } from 'effect';
 import { IndexerService } from './index/indexer-service';
 import { SqliteClient } from './db/sqlite-client';
+import { BENCHMARK_CASES } from './bench/cases';
+import { runBenchmark } from './bench/bench';
 import { mcpLayer } from './mcp/server';
 import { MetricsService } from './metrics/metrics-service';
 import { QueryService } from './query/query-service';
 
 const USAGE =
-  'usage: main.mjs index <root> [--db <file>] | mcp <root> [--db <file>] [--max-tokens <n>] | stats <root> [--db <file>]';
+  'usage: main.mjs index <root> [--db <file>] | mcp <root> [--db <file>] [--max-tokens <n>] | stats <root> [--db <file>] | bench <root> [--db <file>]';
 
 const flag = (args: string[], name: string): string | undefined => {
   const i = args.indexOf(name);
@@ -37,7 +39,10 @@ process.on('unhandledRejection', (e) => {
 
 const [command, rootArg, ...rest] = process.argv.slice(2);
 if (
-  (command !== 'index' && command !== 'mcp' && command !== 'stats') ||
+  (command !== 'index' &&
+    command !== 'mcp' &&
+    command !== 'stats' &&
+    command !== 'bench') ||
   !rootArg
 ) {
   process.stderr.write(`${USAGE}\n`);
@@ -79,7 +84,23 @@ const statsRun = Effect.gen(function* () {
   process.stdout.write(`${JSON.stringify(totals)}\n`);
 }).pipe(Effect.provide(MetricsService.layer), Effect.provide(base));
 
-if (command === 'index') {
+// stdout: one `{"done","total"}` line per case, then the BenchmarkReport line.
+const benchRun = Effect.gen(function* () {
+  const report = yield* runBenchmark(BENCHMARK_CASES, (p) =>
+    process.stdout.write(`${JSON.stringify(p)}\n`),
+  );
+  process.stdout.write(`${JSON.stringify(report)}\n`);
+}).pipe(Effect.provide(QueryService.layer(root)), Effect.provide(base));
+
+if (command === 'bench') {
+  NodeRuntime.runMain(Effect.scoped(benchRun), {
+    teardown: (exit, onExit) =>
+      Runtime.defaultTeardown(exit, (code) => {
+        onExit(code);
+        process.exit(code);
+      }),
+  });
+} else if (command === 'index') {
   // The run is a one-shot: building the layer does the work, then exit.
   // runMain only exits on failure; on success it waits for an empty event
   // loop, which never happens in an Electron utility process (parentPort

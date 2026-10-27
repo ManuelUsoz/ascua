@@ -25,6 +25,9 @@ function settle(records: ChatSessionRecord[]): ChatSessionRecord[] {
         if (part.kind === 'permission' && part.state === 'pending') {
           part.state = 'denied';
         }
+        if (part.kind === 'question' && part.state === 'pending') {
+          part.state = 'skipped';
+        }
       }
     }
   }

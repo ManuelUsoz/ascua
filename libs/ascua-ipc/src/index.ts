@@ -37,6 +37,9 @@ import type {
   ReviewInput,
 } from '@ascua/source-control';
 
+/** Push payload of `chatProviderAuthChanged`; `final` marks the last push of a login watch. */
+export type ProviderAuthChange = ProviderAuth & { final?: true };
+
 export const IPC = {
   toggleFullscreen: 'ascua:window:toggle-fullscreen',
   exitFullscreen: 'ascua:window:exit-fullscreen',
@@ -121,9 +124,14 @@ export const IPC = {
   sendChatPrompt: 'ascua:chats:send',
   abortChat: 'ascua:chats:abort',
   resolveChatPermission: 'ascua:chats:resolve-permission',
+  resolveChatQuestion: 'ascua:chats:resolve-question',
   chatEvent: 'ascua:chats:event',
+  chatProviderAuthChanged: 'ascua:chats:provider-auth-changed',
   indexProject: 'ascua:indexer:index',
+  reindexProject: 'ascua:indexer:reindex',
   indexProgress: 'ascua:indexer:progress',
+  runBenchmark: 'ascua:indexer:benchmark',
+  benchmarkProgress: 'ascua:indexer:benchmark-progress',
 } as const;
 
 export const NAVIGATE_SCREENS = [
@@ -350,7 +358,45 @@ export const CHAT_ERROR_CODES = [
 export const INDEXER_ERROR_CODES = [
   'indexer.failed',
   'indexer.notFound',
+  'indexer.resetFailed',
+  'indexer.benchFailed',
+  'indexer.notIndexed',
 ] as const;
+
+export interface BenchmarkCase {
+  id: string;
+  question: string;
+  tool: string;
+  args: Record<string, unknown>;
+  expectFiles: string[];
+  expectSymbols: string[];
+}
+
+export interface BenchmarkCaseResult {
+  id: string;
+  tool: string;
+  hit: boolean;
+  recall: number;
+  tokens: number;
+  ms: number;
+}
+
+export interface BenchmarkReport {
+  cases: BenchmarkCaseResult[];
+  perTool: {
+    tool: string;
+    hitRate: number;
+    avgTokens: number;
+    avgMs: number;
+  }[];
+}
+
+/** Progress of a benchmark run, pushed on `IPC.benchmarkProgress`. */
+export interface BenchmarkProgress {
+  projectId: string;
+  done: number;
+  total: number;
+}
 
 /** Progress of a project index run, pushed on `IPC.indexProgress`. */
 export interface IndexProgress {
@@ -841,8 +887,26 @@ export interface AscuaApi {
     requestId: string,
     allow: boolean,
   ): Promise<AscuaError | undefined>;
+  /**
+   * Answers keyed by question text; null skips the questions.
+   * `chat.notFound` when the request is no longer pending.
+   */
+  resolveChatQuestion(
+    projectId: string,
+    sessionId: string,
+    requestId: string,
+    answers: Record<string, string> | null,
+  ): Promise<AscuaError | undefined>;
   onChatEvent(callback: (event: ChatEvent) => void): () => void;
+  onChatProviderAuthChanged(
+    callback: (auth: ProviderAuthChange) => void,
+  ): () => void;
   /** Starts (or joins) an index run; progress streams through `onIndexProgress`. */
   indexProject(projectId: string): Promise<AscuaError | undefined>;
+  reindexProject(projectId: string): Promise<AscuaError | undefined>;
   onIndexProgress(callback: (event: IndexProgress) => void): () => void;
+  runBenchmark(projectId: string): Promise<BenchmarkReport | AscuaError>;
+  onBenchmarkProgress(
+    callback: (event: BenchmarkProgress) => void,
+  ): () => void;
 }

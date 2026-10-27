@@ -10,6 +10,7 @@ import {
   type ModelCatalog,
   type ProviderModel,
   type AgentEvent,
+  type AgentProviderId,
   type ChatCommand,
   type ChatEvent,
   type ChatEventPublisher,
@@ -22,6 +23,9 @@ import {
   type PermissionDecision,
   type PermissionRequest,
   type ProviderSession,
+  type QuestionAnswers,
+  type QuestionDecision,
+  type QuestionRequest,
   type UsageLedger,
 } from '@ascua/chat';
 import type { ChatSessionPatch, ChatStartOptions } from '@ascua/ipc';
@@ -40,6 +44,8 @@ export interface ChatServiceOptions {
   bus: ChatEventPublisher;
   ids: () => string;
   now: () => number;
+  /** Called when a turn failed because the provider session is not logged in. */
+  onAuthRequired?: (provider: AgentProviderId) => void;
   mcpServers?: (
     projectId: string,
     cwd: string,
@@ -64,6 +70,15 @@ interface PendingPermission {
   tool: PermissionRequest['tool'];
   resolve(decision: PermissionDecision): void;
 }
+
+interface PendingQuestion {
+  projectId: string;
+  sessionId: string;
+  messageId: string;
+  resolve(decision: QuestionDecision): void;
+}
+
+type PendingOwner = Pick<PendingPermission, 'projectId' | 'sessionId'>;
 
 interface Capabilities {
   commands: ChatCommand[];
@@ -107,6 +122,7 @@ export class ChatService {
     { projectId: string; session: ProviderSession }
   >();
   private readonly pending = new Map<string, PendingPermission>();
+  private readonly questions = new Map<string, PendingQuestion>();
   private readonly capsCache = new Map<string, Promise<Capabilities>>();
 
   constructor(private readonly o: ChatServiceOptions) {}
@@ -359,6 +375,26 @@ export class ChatService {
     );
   }
 
+  /** `answers` null means the user skipped the questions. */
+  resolveQuestion(
+    projectId: string,
+    sessionId: string,
+    requestId: string,
+    answers: QuestionAnswers | null,
+  ): void {
+    const q = this.questions.get(requestId);
+    if (!q || q.projectId !== projectId || q.sessionId !== sessionId) {
+      throw new ChatError('notFound');
+    }
+    this.settleQuestion(
+      requestId,
+      answers
+        ? { answered: true, answers }
+        : { answered: false, reason: 'skipped' },
+      true,
+    );
+  }
+
   abort(projectId: string, sessionId: string): void {
     const run = this.runs.get(sessionId);
     if (!run || run.projectId !== projectId) return;
@@ -500,6 +536,7 @@ export class ChatService {
           },
           onEvent: (e) => this.onAgentEvent(sessionId, e),
           onPermission: (req) => this.onPermission(sessionId, req),
+          onQuestion: (req) => this.onQuestion(sessionId, req),
         });
         entry = { projectId: record.projectId, session: opened };
         if (run.dead) {
@@ -567,6 +604,7 @@ export class ChatService {
         : phase === 'open'
           ? 'startFailed'
           : 'promptFailed';
+    if (kind === 'authRequired') this.o.onAuthRequired?.(record.provider);
     if (run.completed) {
       // The turn already finished: never append a second message or usage.
       this.emit(run, { type: 'error', error: kind });
@@ -684,10 +722,70 @@ export class ChatService {
     }
   }
 
-  private denyAll(match: (p: PendingPermission) => boolean): void {
+  private onQuestion(
+    sessionId: string,
+    request: QuestionRequest,
+  ): Promise<QuestionDecision> {
+    const run = this.runs.get(sessionId);
+    if (!run || run.dead) {
+      return Promise.resolve({ answered: false, reason: 'aborted' });
+    }
+    return new Promise<QuestionDecision>((resolve) => {
+      this.questions.set(request.requestId, {
+        projectId: run.projectId,
+        sessionId,
+        messageId: run.assistantId,
+        resolve,
+      });
+      run.record.status = 'awaitingPermission';
+      this.emit(run, {
+        type: 'questionRequested',
+        messageId: run.assistantId,
+        request,
+      });
+      this.emit(run, { type: 'statusChanged', status: 'awaitingPermission' });
+    });
+  }
+
+  private settleQuestion(
+    requestId: string,
+    decision: QuestionDecision,
+    resume: boolean,
+  ): void {
+    const q = this.questions.get(requestId);
+    if (!q) return;
+    this.questions.delete(requestId);
+    q.resolve(decision);
+    const run = this.runs.get(q.sessionId);
+    if (!run || run.dead) return;
+    this.emit(run, {
+      type: 'questionSettled',
+      messageId: q.messageId,
+      requestId,
+      ...(decision.answered
+        ? { answers: decision.answers }
+        : { skipped: true }),
+    });
+    if (resume) {
+      run.record.status = 'running';
+      this.emit(run, { type: 'statusChanged', status: 'running' });
+    }
+  }
+
+  /** Settles every matching permission and question as aborted. */
+  private denyAll(match: (p: PendingOwner) => boolean): void {
     for (const [requestId, p] of [...this.pending]) {
       if (match(p)) {
         this.settle(requestId, { allow: false, reason: 'aborted' }, false);
+      }
+    }
+    for (const [requestId, q] of [...this.questions]) {
+      if (match(q)) {
+        this.settleQuestion(
+          requestId,
+          { answered: false, reason: 'aborted' },
+          false,
+        );
       }
     }
   }

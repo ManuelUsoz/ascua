@@ -12,7 +12,7 @@ import { Effect, Layer } from 'effect';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SqliteClient } from '../db/sqlite-client';
 import { IndexerService } from '../index/indexer-service';
-import { QueryUtil } from '../query-util';
+import { ParserUtil } from '../parser-util';
 import { changedFiles } from './changed-files';
 
 let root: string;
@@ -84,9 +84,7 @@ describe('scanner', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {
       return undefined;
     });
-    vi.spyOn(QueryUtil, 'definitionsInFile').mockRejectedValueOnce(
-      new Error('boom'),
-    );
+    vi.spyOn(ParserUtil, 'parseFile').mockRejectedValueOnce(new Error('boom'));
     try {
       await run(
         Effect.gen(function* () {

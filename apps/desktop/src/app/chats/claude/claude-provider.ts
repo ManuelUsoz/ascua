@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { execFile } from 'node:child_process';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
 import type {
   Options,
   Query,
@@ -18,14 +17,19 @@ import {
   type ProviderModel,
   type PermissionRequest,
   type PermissionDecision,
+  type QuestionDecision,
+  type QuestionRequest,
   type ProviderAuth,
   type ProviderSession,
   type ToolKind,
   type TurnResult,
 } from '@ascua/chat';
 import {
+  ASK_USER_QUESTION,
   TurnMapper,
   toChatError,
+  toQuestionRequest,
+  toSdkAnswer,
   toPermissionRequest,
   toSdkPermission,
   toChatCommands,
@@ -62,7 +66,57 @@ export interface ClaudeProviderDeps {
   env: () => NodeJS.ProcessEnv;
   ids: () => string;
   home: () => string;
-  exists: (path: string) => boolean;
+  runAuthStatus: (
+    exe: ClaudeExecutable,
+    env: NodeJS.ProcessEnv,
+  ) => Promise<{ code: number | null; stdout: string }>;
+}
+
+interface AuthStatusJson {
+  loggedIn?: boolean;
+  email?: string;
+  subscriptionType?: string;
+}
+
+function parseAuthStatus(stdout: string): AuthStatusJson | undefined {
+  try {
+    const v: unknown = JSON.parse(stdout);
+    return v && typeof v === 'object' ? (v as AuthStatusJson) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function execAuthStatus(
+  exe: ClaudeExecutable,
+  env: NodeJS.ProcessEnv,
+): Promise<{ code: number | null; stdout: string }> {
+  const file = exe.executable ?? exe.path;
+  const args = exe.executable
+    ? [exe.path, 'auth', 'status', '--json']
+    : ['auth', 'status', '--json'];
+  return new Promise((resolve, reject) => {
+    execFile(
+      file,
+      args,
+      {
+        env: claudeEnv(env, exe) as NodeJS.ProcessEnv,
+        timeout: AUTH_TIMEOUT_MS,
+        windowsHide: true,
+        // .cmd shims on Windows need a shell; args are fixed literals.
+        shell: process.platform === 'win32' && /\.(cmd|bat)$/i.test(file),
+      },
+      (err, stdout) => {
+        if (!err) return resolve({ code: 0, stdout });
+        const e = err as NodeJS.ErrnoException & { killed?: boolean };
+        if (e.code === 'ENOENT' || e.killed) return reject(e);
+        resolve({
+          code: typeof e.code === 'number' ? e.code : null,
+          stdout: String(stdout ?? ''),
+        });
+      },
+    );
+  });
 }
 
 const defaults: ClaudeProviderDeps = {
@@ -71,7 +125,7 @@ const defaults: ClaudeProviderDeps = {
   env: () => process.env,
   ids: randomUUID,
   home: homedir,
-  exists: existsSync,
+  runAuthStatus: execAuthStatus,
 };
 
 /** Async queue feeding a streaming-input query. */
@@ -120,17 +174,35 @@ export class ClaudeProvider implements AgentProvider {
 
   async authStatus(): Promise<ProviderAuth> {
     const id = this.descriptor.id;
-    const { env, home, exists } = this.deps;
-    if (
-      env()['ANTHROPIC_API_KEY'] ||
-      exists(join(home(), '.claude', '.credentials.json'))
-    ) {
+    const { env, home } = this.deps;
+    if (env()['ANTHROPIC_API_KEY']) {
       return { provider: id, state: 'loggedIn' };
     }
     let q: Query | undefined;
     try {
-      const sdk = await this.deps.loadSdk();
       const exe = this.deps.executable();
+      try {
+        const res = await this.deps.runAuthStatus(exe, env());
+        const parsed = parseAuthStatus(res.stdout);
+        if (parsed?.loggedIn === true) {
+          const email = parsed.email;
+          const plan = parsed.subscriptionType;
+          return {
+            provider: id,
+            state: 'loggedIn',
+            ...(email || plan ? { account: { email, plan } } : {}),
+          };
+        }
+        if (parsed?.loggedIn === false) {
+          return { provider: id, state: 'loggedOut' };
+        }
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') {
+          return { provider: id, state: 'unavailable', error: 'agentMissing' };
+        }
+        /* timeout or other failure: fall back to the SDK probe */
+      }
+      const sdk = await this.deps.loadSdk();
       const input = new InputQueue();
       q = sdk.query({
         prompt: input,
@@ -227,6 +299,21 @@ export class ClaudeProvider implements AgentProvider {
         ? { resume: options.resumeToken }
         : { sessionId: token }),
       canUseTool: (name, toolInput, o) => {
+        // Questions always reach the user, whatever the permission mode.
+        if (name === ASK_USER_QUESTION) {
+          if (o.signal.aborted) {
+            return Promise.resolve(
+              toSdkAnswer({ answered: false, reason: 'aborted' }, toolInput),
+            );
+          }
+          const q = toQuestionRequest(this.deps.ids(), toolInput, o.toolUseID);
+          if (!q) {
+            return Promise.resolve(
+              toSdkAnswer({ answered: false, reason: 'skipped' }, toolInput),
+            );
+          }
+          return session.question(q).then((d) => toSdkAnswer(d, toolInput));
+        }
         if (o.signal.aborted) {
           return Promise.resolve(
             toSdkPermission({ allow: false, reason: 'aborted' }, toolInput),
@@ -288,6 +375,7 @@ class ClaudeSession implements ProviderSession {
   private lastCost = 0;
   private closed = false;
   private readonly asks = new Set<(d: PermissionDecision) => void>();
+  private readonly questions = new Set<(d: QuestionDecision) => void>();
 
   constructor(
     readonly resumeToken: string,
@@ -311,6 +399,31 @@ class ClaudeSession implements ProviderSession {
     });
   }
 
+  question(req: QuestionRequest): Promise<QuestionDecision> {
+    return new Promise((resolve) => {
+      this.questions.add(resolve);
+      this.options.onQuestion(req).then(
+        (d) => {
+          this.questions.delete(resolve);
+          resolve(d);
+        },
+        () => {
+          this.questions.delete(resolve);
+          resolve({ answered: false, reason: 'aborted' });
+        },
+      );
+    });
+  }
+
+  private abortAsks(): void {
+    for (const resolve of this.asks)
+      resolve({ allow: false, reason: 'aborted' });
+    this.asks.clear();
+    for (const resolve of this.questions)
+      resolve({ answered: false, reason: 'aborted' });
+    this.questions.clear();
+  }
+
   start(q: Query, mapper: TurnMapper): void {
     this.q = q;
     void (async () => {
@@ -318,7 +431,7 @@ class ClaudeSession implements ProviderSession {
         for await (const msg of q) {
           const events: AgentEvent[] = mapper.map(msg);
           for (const e of events) this.options.onEvent(e);
-          if (msg.type === 'result') this.settle(msg);
+          if (msg.type === 'result') this.settle(msg, mapper.takeError());
         }
         this.fail(new ChatError('exited'));
       } catch (err) {
@@ -327,9 +440,19 @@ class ClaudeSession implements ProviderSession {
     })();
   }
 
-  private settle(result: SDKResultMessage): void {
+  private settle(result: SDKResultMessage, recorded?: ChatError): void {
     const turn = this.turn;
     if (!turn) return;
+    const r = result as unknown as {
+      is_error?: boolean;
+      terminal_reason?: string;
+      result?: string;
+    };
+    if (recorded || (r.is_error && r.terminal_reason === 'api_error')) {
+      this.aborted = false;
+      this.fail(recorded ?? toChatError(new Error(r.result ?? ''), 'prompt'));
+      return;
+    }
     this.turn = undefined;
     const usage = toUsage(result);
     if (usage.costUsd !== undefined) {
@@ -371,18 +494,14 @@ class ClaudeSession implements ProviderSession {
   abort(): void {
     if (!this.turn) return;
     this.aborted = true;
-    for (const resolve of this.asks)
-      resolve({ allow: false, reason: 'aborted' });
-    this.asks.clear();
+    this.abortAsks();
     void this.q?.interrupt().catch(() => undefined);
   }
 
   close(): void {
     if (this.closed) return;
     this.closed = true;
-    for (const resolve of this.asks)
-      resolve({ allow: false, reason: 'aborted' });
-    this.asks.clear();
+    this.abortAsks();
     this.input.end();
     try {
       this.q?.close();

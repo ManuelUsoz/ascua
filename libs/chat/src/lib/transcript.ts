@@ -75,6 +75,21 @@ export function applyChatEvent(
             : p,
         ),
       );
+    case 'questionRequested':
+      return patch(messages, event.messageId, (parts) => [
+        ...parts,
+        { kind: 'question', request: event.request, state: 'pending' },
+      ]);
+    case 'questionSettled':
+      return patch(messages, event.messageId, (parts) =>
+        parts.map((p) => {
+          if (p.kind !== 'question' || p.request.requestId !== event.requestId)
+            return p;
+          return event.answers && !event.skipped
+            ? { ...p, state: 'answered', answers: event.answers }
+            : { ...p, state: 'skipped' };
+        }),
+      );
     case 'messageCompleted':
       return messages.some((m) => m.id === event.message.id)
         ? messages.map((m) => (m.id === event.message.id ? event.message : m))

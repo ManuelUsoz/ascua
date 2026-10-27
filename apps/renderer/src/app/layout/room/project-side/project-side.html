@@ -14,6 +14,8 @@
     <a
       class="as-tree__row as-tree__row--project"
       [routerLink]="['/proyectos', p.id, 'terminales']"
+      (contextmenu)="openProjectMenu($event, p.id)"
+      (keydown)="onProjectKey($event, p.id)"
     >
       <app-icon
         [name]="p.id === crumbs().projectId ? 'chevron-down' : 'chevron-right'"
@@ -90,6 +92,7 @@
     </p>
   }
   <app-context-menu [items]="menuItems" />
+  <app-context-menu [items]="projectMenuItems" #projectMenu />
   <app-confirm-modal
     [open]="pending() !== null"
     [title]="'side.deleteChatTitle'"

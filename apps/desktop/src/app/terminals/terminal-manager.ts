@@ -24,6 +24,7 @@ const STOP_TIMEOUT_MS = 3000;
 export class TerminalManager implements ProjectListener {
   private readonly sessions = new Map<string, Session>();
   private readonly exitWaiters = new Set<() => void>();
+  private readonly exitListeners = new Map<string, Array<() => void>>();
   private readonly commands = new Map<
     string,
     { file: string; args: string[] }
@@ -397,6 +398,18 @@ export class TerminalManager implements ProjectListener {
     session.stopping = false;
     this.notify(IPC.terminalChanged, this.view(session));
     for (const waiter of [...this.exitWaiters]) waiter();
+    const listeners = this.exitListeners.get(event.id);
+    if (listeners) {
+      this.exitListeners.delete(event.id);
+      for (const listener of listeners) listener();
+    }
+  }
+
+  /** Calls `callback` once, the next time session `id` exits. */
+  onExit(id: string, callback: () => void): void {
+    const list = this.exitListeners.get(id) ?? [];
+    list.push(callback);
+    this.exitListeners.set(id, list);
   }
 
   private view(session: Session): TerminalSession {

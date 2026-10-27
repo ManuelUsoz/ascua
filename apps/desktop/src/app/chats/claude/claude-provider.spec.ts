@@ -77,7 +77,7 @@ function provider(sdk: unknown, over: Record<string, unknown> = {}) {
     env: () => ({}),
     ids: () => `id${++n}`,
     home: () => '/home',
-    exists: () => false,
+    runAuthStatus: async () => ({ code: 1, stdout: '' }),
     ...over,
   });
 }
@@ -93,6 +93,7 @@ const open = (
     runtime: { permissionMode: 'supervised' },
     onEvent: (e) => events.push(e),
     onPermission: async () => ({ allow: true }),
+    onQuestion: async () => ({ answered: false, reason: 'skipped' }),
     ...o,
   });
 
@@ -124,6 +125,38 @@ describe('ClaudeProvider', () => {
     // second turn reports the cost delta
     const r2 = await s.prompt('again');
     expect(r2.usage.costUsd).toBeCloseTo(0);
+    s.close();
+  });
+
+  it('rejects the turn with authRequired on a synthetic auth error', async () => {
+    let n = 0;
+    const { sdk } = fakeSdk((_o, emit) => {
+      if (n++ === 0) {
+        emit({
+          type: 'assistant',
+          error: 'authentication_failed',
+          is_api_error_message: true,
+          message: {
+            model: '<synthetic>',
+            content: [{ type: 'text', text: 'Failed to authenticate' }],
+          },
+        });
+        emit(
+          result({
+            is_error: true,
+            terminal_reason: 'api_error',
+            result: 'Failed to authenticate',
+          }),
+        );
+      } else emit(result());
+    });
+    const s = await open(provider(sdk));
+    await expect(s.prompt('hi')).rejects.toMatchObject({
+      kind: 'authRequired',
+    });
+    await expect(s.prompt('again')).resolves.toMatchObject({
+      stop: 'endTurn',
+    });
     s.close();
   });
 
@@ -321,6 +354,85 @@ describe('ClaudeProvider', () => {
     s.close();
   });
 
+  it('routes AskUserQuestion to onQuestion even in fullAccess', async () => {
+    let opts: Record<string, any> = {};
+    const { sdk } = fakeSdk((o) => void (opts = o));
+    const onPermission = vi.fn(async () => ({ allow: true as const }));
+    const onQuestion = vi.fn(async () => ({
+      answered: true as const,
+      answers: { 'Which?': 'A, B' },
+    }));
+    const s = await open(provider(sdk), {
+      runtime: { permissionMode: 'fullAccess' },
+      onPermission,
+      onQuestion,
+    });
+    void s.prompt('x').catch(() => undefined);
+    await vi.waitFor(() => expect(opts['canUseTool']).toBeTypeOf('function'));
+    const input = {
+      questions: [
+        {
+          question: 'Which?',
+          header: 'Pick',
+          multiSelect: true,
+          options: [
+            { label: 'A', description: 'a' },
+            { label: 'B', description: 'b' },
+          ],
+        },
+      ],
+    };
+    const res = await opts['canUseTool']('AskUserQuestion', input, {
+      signal: new AbortController().signal,
+      toolUseID: 'tu',
+    });
+    expect(res).toEqual({
+      behavior: 'allow',
+      updatedInput: { ...input, answers: { 'Which?': 'A, B' } },
+    });
+    expect(onQuestion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolUseId: 'tu',
+        questions: [expect.objectContaining({ question: 'Which?' })],
+      }),
+    );
+    expect(onPermission).not.toHaveBeenCalled();
+    expect(opts['disallowedTools'] ?? []).not.toContain('AskUserQuestion');
+
+    onQuestion.mockResolvedValueOnce({
+      answered: false,
+      reason: 'skipped',
+    } as never);
+    const skipped = await opts['canUseTool']('AskUserQuestion', input, {
+      signal: new AbortController().signal,
+    });
+    expect(skipped).toEqual({
+      behavior: 'deny',
+      message: 'The user skipped the questions.',
+    });
+    s.close();
+  });
+
+  it('close resolves pending questions as aborted', async () => {
+    let opts: Record<string, any> = {};
+    const { sdk } = fakeSdk((o) => void (opts = o));
+    const s = await open(provider(sdk), {
+      onQuestion: () => new Promise(() => undefined),
+    });
+    void s.prompt('x').catch(() => undefined);
+    await vi.waitFor(() => expect(opts['canUseTool']).toBeDefined());
+    const ask = opts['canUseTool'](
+      'AskUserQuestion',
+      { questions: [{ question: 'Q?', options: [] }] },
+      { signal: new AbortController().signal },
+    );
+    s.close();
+    expect(await ask).toMatchObject({
+      behavior: 'deny',
+      message: 'The request was aborted.',
+    });
+  });
+
   it('abort interrupts and denies pending asks', async () => {
     let opts: Record<string, any> = {};
     let interruptEmit = () => undefined as void;
@@ -393,6 +505,47 @@ describe('ClaudeProvider', () => {
     expect(await provider(empty).authStatus()).toEqual({
       provider: 'claude',
       state: 'loggedOut',
+    });
+  });
+
+  it('auth status command decides login state', async () => {
+    const { sdk } = fakeSdk(() => undefined, {
+      account: { email: 'x@y.z' },
+    });
+    expect(
+      await provider(sdk, {
+        runAuthStatus: async () => ({
+          code: 1,
+          stdout: '{"loggedIn": false, "authMethod": "none"}',
+        }),
+      }).authStatus(),
+    ).toEqual({ provider: 'claude', state: 'loggedOut' });
+    expect(
+      await provider(sdk, {
+        runAuthStatus: async () => ({
+          code: 0,
+          stdout: '{"loggedIn": true, "email": "a@b.c"}',
+        }),
+      }).authStatus(),
+    ).toMatchObject({
+      state: 'loggedIn',
+      account: { email: 'a@b.c' },
+    });
+    expect(
+      await provider(sdk, {
+        runAuthStatus: async () => ({ code: 0, stdout: 'garbage' }),
+      }).authStatus(),
+    ).toMatchObject({ state: 'loggedIn', account: { email: 'x@y.z' } });
+    expect(
+      await provider(sdk, {
+        runAuthStatus: async () => {
+          throw Object.assign(new Error('nope'), { code: 'ENOENT' });
+        },
+      }).authStatus(),
+    ).toEqual({
+      provider: 'claude',
+      state: 'unavailable',
+      error: 'agentMissing',
     });
   });
 

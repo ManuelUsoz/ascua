@@ -16,6 +16,7 @@ import {
 } from '../../../shared/context-menu/context-menu';
 import { ConfirmModal } from '../../../shared/modal/modal';
 import { ChatStore } from '../../../core/chats/chat-store';
+import { IndexStore } from '../../../core/projects/index-store';
 import { ProjectStore } from '../../../core/projects/project-store';
 import { TerminalSessions } from '../../../core/terminals/terminal-sessions';
 import { Button } from '../../../shared/button/button';
@@ -42,6 +43,7 @@ export class ProjectSide {
   protected readonly sessions = inject(TerminalSessions);
   protected readonly chats = inject(ChatStore);
   protected readonly crumbs = injectCrumbs();
+  private readonly indexStore = inject(IndexStore);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
 
@@ -78,6 +80,45 @@ export class ProjectSide {
       },
     },
   ];
+
+  protected readonly projectMenu =
+    viewChild.required<ContextMenu>('projectMenu');
+  private projectTarget: string | null = null;
+  protected readonly projectMenuItems: ContextMenuItem[] = [
+    {
+      icon: 'refresh',
+      label: 'side.reindex',
+      run: () => {
+        if (this.projectTarget)
+          void this.indexStore.reindex(this.projectTarget);
+      },
+    },
+  ];
+
+  protected onProjectKey(event: KeyboardEvent, projectId: string): void {
+    if (
+      event.key === 'ContextMenu' ||
+      (event.shiftKey && event.key === 'F10')
+    ) {
+      this.openProjectMenu(event, projectId);
+    }
+  }
+
+  protected openProjectMenu(event: Event, projectId: string): void {
+    event.preventDefault();
+    let x: number;
+    let y: number;
+    if (event instanceof MouseEvent) {
+      x = event.clientX;
+      y = event.clientY;
+    } else {
+      const r = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      x = r.left;
+      y = r.bottom;
+    }
+    this.projectTarget = projectId;
+    this.projectMenu().openAt(x, y);
+  }
 
   protected onChatKey(
     event: KeyboardEvent,

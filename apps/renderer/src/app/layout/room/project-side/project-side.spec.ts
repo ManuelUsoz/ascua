@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { ChatStore } from '../../../core/chats/chat-store';
+import { IndexStore } from '../../../core/projects/index-store';
 import { ProjectStore } from '../../../core/projects/project-store';
 import { TerminalSessions } from '../../../core/terminals/terminal-sessions';
 import { i18nTesting } from '../../../testing/i18n';
@@ -68,6 +69,90 @@ describe('ProjectSide chats', () => {
     expect(rows[1].querySelector('.as-dot')?.getAttribute('data-tone')).toBe(
       'ask',
     );
+  });
+
+  describe('reindex', () => {
+    const reindex = vi.fn(async () => undefined);
+
+    async function mount() {
+      reindex.mockClear();
+      TestBed.configureTestingModule({
+        imports: [ProjectSide, i18nTesting()],
+        providers: [
+          provideRouter([
+            { path: 'proyectos/:projectId/terminales', children: [] },
+          ]),
+          { provide: IndexStore, useValue: { reindex } },
+          {
+            provide: ProjectStore,
+            useValue: {
+              projects: signal([{ id: 'p1', name: 'Uno', terminals: [] }]),
+            },
+          },
+          {
+            provide: TerminalSessions,
+            useValue: {
+              counts: () => ({ running: 0, total: 0 }),
+              shells: () => [],
+              session: () => undefined,
+            },
+          },
+          {
+            provide: ChatStore,
+            useValue: {
+              sessions: () => [],
+              status: () => undefined,
+              ensureLoaded: vi.fn(),
+            },
+          },
+        ],
+      });
+      await TestBed.inject(Router).navigateByUrl('/proyectos/p1/terminales');
+      const fixture = TestBed.createComponent(ProjectSide);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const row = el.querySelector<HTMLAnchorElement>(
+        'a[href*="/proyectos/p1/terminales"]',
+      )!;
+      const flush = async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+      };
+      return { el, row, flush };
+    }
+
+    it('right-click opens the menu and Re-index calls the store', async () => {
+      const { el, row, flush } = await mount();
+      const ev = new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+      });
+      row.dispatchEvent(ev);
+      await flush();
+      expect(ev.defaultPrevented).toBe(true);
+      const item = el.querySelector<HTMLElement>('[role="menuitem"]')!;
+      expect(item.textContent).toContain('Reindexar');
+      item.click();
+      await flush();
+      expect(reindex).toHaveBeenCalledWith('p1');
+    });
+
+    it('Shift+F10 opens the menu', async () => {
+      const { el, row, flush } = await mount();
+      row.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'F10',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await flush();
+      expect(el.querySelector('[role="menuitem"]')).not.toBeNull();
+    });
   });
 
   describe('delete', () => {

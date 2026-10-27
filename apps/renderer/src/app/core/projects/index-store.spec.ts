@@ -4,10 +4,14 @@ import { vi } from 'vitest';
 import { ASCUA_API } from '../bridge/ascua-api';
 import { IndexStore } from './index-store';
 
-function setup(indexProject: () => Promise<unknown>) {
+function setup(
+  indexProject: () => Promise<unknown>,
+  reindexProject: () => Promise<unknown> = async () => undefined,
+) {
   let push: (p: IndexProgress) => void = () => undefined;
   const api = {
     indexProject: vi.fn(indexProject),
+    reindexProject: vi.fn(reindexProject),
     onIndexProgress: (cb: (p: IndexProgress) => void) => {
       push = cb;
       return () => undefined;
@@ -53,6 +57,42 @@ describe('IndexStore', () => {
     await store.start('a');
     expect(store.progress('a')?.state).toBe('error');
     expect(store.progress('a')?.error?.code).toBe('indexer.failed');
+  });
+
+  it('reindex calls reindexProject and marks running', async () => {
+    let release: () => void = () => undefined;
+    const { store, api } = setup(
+      async () => undefined,
+      () => new Promise((r) => (release = () => r(undefined))),
+    );
+    const run = store.reindex('a');
+    expect(api.reindexProject).toHaveBeenCalledWith('a');
+    expect(store.progress('a')?.state).toBe('running');
+    release();
+    await run;
+    expect(store.progress('a')?.state).toBe('running');
+  });
+
+  it('reindex maps a returned error to the error state', async () => {
+    const { store } = setup(
+      async () => undefined,
+      async () => ({ code: 'indexer.resetFailed' }),
+    );
+    await store.reindex('a');
+    expect(store.progress('a')?.state).toBe('error');
+    expect(store.progress('a')?.error?.code).toBe('indexer.resetFailed');
+  });
+
+  it('reindex maps a thrown error to the error state', async () => {
+    const { store } = setup(
+      async () => undefined,
+      async () => {
+        throw new Error('boom');
+      },
+    );
+    await store.reindex('a');
+    expect(store.progress('a')?.state).toBe('error');
+    expect(store.progress('a')?.error).toBeDefined();
   });
 
   it('tolerates an absent bridge', async () => {

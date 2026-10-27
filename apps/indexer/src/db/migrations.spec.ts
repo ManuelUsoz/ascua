@@ -41,7 +41,55 @@ describe('migrations', () => {
     expect(tableExists(db, 'files')).toBe(true);
     expect(tableExists(db, 'symbols')).toBe(true);
     expect(tableExists(db, 'tool_calls')).toBe(true);
-    expect(userVersion(db)).toBe(3);
+    expect(userVersion(db)).toBe(6);
+  });
+
+  it('v6 adds occurrence binding and receiver_type columns', () => {
+    const db = openDatabase(':memory:');
+    const columns = (
+      db.prepare('PRAGMA table_info(occurrences)').all() as { name: string }[]
+    ).map((c) => c.name);
+    expect(columns).toEqual(
+      expect.arrayContaining(['binding', 'receiver_type']),
+    );
+  });
+
+  it('v5 clears files indexed before occurrences existed', () => {
+    const db = openDatabase(':memory:');
+    db.exec('PRAGMA user_version = 4');
+    const id = addFile(db);
+    addSymbol(db, id);
+    expect(migrate(db, MIGRATIONS.slice(0, 5))).toBe(1);
+    for (const t of ['files', 'symbols']) {
+      expect(db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get()).toEqual({
+        n: 0,
+      });
+    }
+  });
+
+  it('v4 adds occurrences, imports, relations and files.module', () => {
+    const db = openDatabase(':memory:');
+    for (const t of ['imports', 'occurrences', 'relations']) {
+      expect(tableExists(db, t)).toBe(true);
+    }
+    const id = addFile(db);
+    db.prepare('UPDATE files SET module = ? WHERE id = ?').run('a', id);
+    addSymbol(db, id);
+    db.prepare(
+      "INSERT INTO imports (file_id, kind, specifier, line) VALUES (?, 'import', './b', 1)",
+    ).run(id);
+    db.prepare(
+      "INSERT INTO occurrences (file_id, name, role, line, col, enclosing_symbol_id) VALUES (?, 'f', 'call', 1, 0, 1)",
+    ).run(id);
+    db.prepare(
+      "INSERT INTO relations (file_id, symbol_id, kind, target_name) VALUES (?, 1, 'extends', 'A')",
+    ).run(id);
+    db.prepare('DELETE FROM files WHERE id = ?').run(id);
+    for (const t of ['imports', 'occurrences', 'relations']) {
+      expect(db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get()).toEqual({
+        n: 0,
+      });
+    }
   });
 
   it('is idempotent', () => {

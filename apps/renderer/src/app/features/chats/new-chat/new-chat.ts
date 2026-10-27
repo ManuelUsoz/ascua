@@ -47,6 +47,7 @@ import { ProviderOnboarding } from '../provider-onboarding/provider-onboarding';
           <app-notice type="error" [title]="e" />
         }
         <app-chat-composer
+          [projectId]="projectId()"
           [disabled]="busy()"
           [commands]="commands()"
           [catalog]="catalog()"

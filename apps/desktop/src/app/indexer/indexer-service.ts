@@ -1,8 +1,14 @@
 import { utilityProcess } from 'electron';
 import type { UtilityProcess } from 'electron';
 import { existsSync, mkdirSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { AscuaError, IndexProgress } from '@ascua/ipc';
+import type {
+  AscuaError,
+  BenchmarkProgress,
+  BenchmarkReport,
+  IndexProgress,
+} from '@ascua/ipc';
 import type { ProjectRepository } from '../projects/project-repository';
 
 export type ForkIndexer = (script: string, args: string[]) => UtilityProcess;
@@ -10,6 +16,9 @@ export type ForkIndexer = (script: string, args: string[]) => UtilityProcess;
 export interface IndexerServiceOptions {
   projects: Pick<ProjectRepository, 'get'>;
   push: (event: IndexProgress) => void;
+  pushBenchmark?: (event: BenchmarkProgress) => void;
+  /** Test seam: defaults to `fs.existsSync`. */
+  dbExists?: (path: string) => boolean;
   isPackaged: boolean;
   resourcesPath: string;
   /** `app.getPath('userData')`: index DBs live under `indexes/`, never in the project. */
@@ -17,6 +26,8 @@ export interface IndexerServiceOptions {
   /** Directory holding `dist/apps/indexer` parent in dev. */
   devRoot?: string;
   fork?: ForkIndexer;
+  /** Test seam: defaults to `fs.promises.rm` with retries. */
+  remove?: (path: string) => Promise<void>;
 }
 
 export function indexerEntry(
@@ -38,6 +49,7 @@ const log = (message: string, ...rest: unknown[]) =>
 
 export class IndexerService {
   private readonly running = new Map<string, UtilityProcess>();
+  private readonly benchmarking = new Set<string>();
   private readonly fork: ForkIndexer;
 
   constructor(private readonly options: IndexerServiceOptions) {
@@ -69,6 +81,135 @@ export class IndexerService {
     if (this.running.has(projectId)) return undefined;
     this.run(projectId, root);
     return undefined;
+  }
+
+  /** Never throws: kills a running child, deletes the db and indexes again. */
+  async reindex(projectId: string): Promise<AscuaError | undefined> {
+    let root: string | undefined;
+    try {
+      root = (await this.options.projects.get(projectId))?.path;
+    } catch {
+      root = undefined;
+    }
+    if (!root) return this.index(projectId);
+    const child = this.running.get(projectId);
+    if (child) {
+      this.running.delete(projectId);
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 5000);
+        child.once('exit', () => {
+          clearTimeout(timer);
+          resolve();
+        });
+        try {
+          child.kill();
+        } catch {
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    }
+    const db = indexDbPath(this.options.userDataPath, projectId);
+    const remove =
+      this.options.remove ??
+      ((path: string) =>
+        rm(path, { force: true, maxRetries: 5, retryDelay: 100 }));
+    try {
+      for (const path of [db, `${db}-wal`, `${db}-shm`]) await remove(path);
+    } catch (e) {
+      console.error('[indexer] reset failed', e);
+      const error: AscuaError = { code: 'indexer.resetFailed' };
+      this.emit({ projectId, done: 0, total: 0, state: 'error', error });
+      return error;
+    }
+    return this.index(projectId);
+  }
+
+  /** Never throws: runs the retrieval benchmark in a child, returns report or error. */
+  async benchmark(projectId: string): Promise<BenchmarkReport | AscuaError> {
+    let root: string | undefined;
+    try {
+      root = (await this.options.projects.get(projectId))?.path;
+    } catch {
+      root = undefined;
+    }
+    if (!root) return { code: 'indexer.notFound' };
+    const db = indexDbPath(this.options.userDataPath, projectId);
+    const exists = this.options.dbExists ?? existsSync;
+    if (this.running.has(projectId) || !exists(db))
+      return { code: 'indexer.notIndexed' };
+    if (this.benchmarking.has(projectId)) return { code: 'indexer.benchFailed' };
+    this.benchmarking.add(projectId);
+    const { isPackaged, resourcesPath, devRoot } = this.options;
+    const failed: AscuaError = { code: 'indexer.benchFailed' };
+    try {
+      return await new Promise<BenchmarkReport | AscuaError>((resolve) => {
+        let child: UtilityProcess;
+        try {
+          const entry = indexerEntry(isPackaged, resourcesPath, devRoot);
+          child = this.fork(entry, ['bench', root, '--db', db]);
+        } catch (e) {
+          console.error('[indexer] bench fork failed', e);
+          resolve(failed);
+          return;
+        }
+        let report: BenchmarkReport | undefined;
+        let settled = false;
+        const finish = (result: BenchmarkReport | AscuaError) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          resolve(result);
+        };
+        const timer = setTimeout(() => {
+          try {
+            child.kill();
+          } catch {
+            // already gone
+          }
+          finish(failed);
+        }, 60_000);
+        child.stderr?.on('data', (chunk: Buffer | string) =>
+          console.error(`[indexer:stderr] ${chunk.toString().trimEnd()}`),
+        );
+        const line = (text: string) => {
+          try {
+            const parsed = JSON.parse(text) as Record<string, unknown>;
+            if (Array.isArray(parsed['perTool'])) {
+              report = parsed as unknown as BenchmarkReport;
+            } else if (
+              typeof parsed['done'] === 'number' &&
+              typeof parsed['total'] === 'number'
+            ) {
+              try {
+                this.options.pushBenchmark?.({
+                  projectId,
+                  done: parsed['done'],
+                  total: parsed['total'],
+                });
+              } catch {
+                // window gone
+              }
+            }
+          } catch {
+            log('non-json bench stdout', text);
+          }
+        };
+        let buffer = '';
+        child.stdout?.on('data', (chunk: Buffer | string) => {
+          buffer += chunk.toString();
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          for (const text of lines) if (text.trim()) line(text.trim());
+        });
+        child.on('exit', (code) => {
+          if (buffer.trim()) line(buffer.trim());
+          finish(code === 0 && report ? report : failed);
+        });
+      });
+    } finally {
+      this.benchmarking.delete(projectId);
+    }
   }
 
   dispose(): void {
@@ -134,6 +275,7 @@ export class IndexerService {
     child.on('exit', (code) => {
       log('exited', { projectId, code, done, total, finished });
       if (finished) return;
+      if (this.running.get(projectId) !== child) return; // replaced by reindex
       if (buffer.trim()) line(buffer);
       if (code !== 0) return fail();
       finished = true;

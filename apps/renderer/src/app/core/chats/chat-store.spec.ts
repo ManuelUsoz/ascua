@@ -59,11 +59,35 @@ describe('ChatStore', () => {
         push = cb;
         return () => undefined;
       }),
+      onChatProviderAuthChanged: vi.fn(() => () => undefined),
       onSettingsChanged: vi.fn((cb) => {
         settingsChanged = cb;
         return () => undefined;
       }),
     };
+  });
+
+  it('clears loggingIn on a final loggedOut push and keeps auth', async () => {
+    let authCb!: (a: unknown) => void;
+    api['onChatProviderAuthChanged'].mockImplementation((cb) => {
+      authCb = cb;
+      return () => undefined;
+    });
+    api['loginChatProvider'] = vi.fn(async () => ({ id: 't1' }));
+    const store = setup();
+    await store.checkAuth('claude');
+    await store.login('p1', 'claude');
+    expect(store.loggingIn()).toBe(true);
+    authCb({ provider: 'claude', state: 'loggedOut', final: true });
+    expect(store.loggingIn()).toBe(false);
+    expect(store.auth()?.state).toBe('loggedOut');
+  });
+
+  it('clears loggingIn when login returns an error', async () => {
+    api['loginChatProvider'] = vi.fn(async () => ({ code: 'unknown' }));
+    const store = setup();
+    await store.login('p1', 'claude');
+    expect(store.loggingIn()).toBe(false);
   });
 
   it('loads sessions and follows status events', async () => {
@@ -248,6 +272,34 @@ describe('ChatStore', () => {
     expect(api['updateChatSession']).toHaveBeenCalledWith('p1', 's1', {
       permissionMode: 'auto',
     });
+  });
+
+  it('resolveQuestion forwards answers or a skip and returns errors', async () => {
+    const store = setup();
+    api['resolveChatQuestion'] = vi.fn(async () => undefined);
+    expect(
+      await store.resolveQuestion('p1', 's1', 'q1', { 'Which?': 'A' }),
+    ).toBeUndefined();
+    expect(api['resolveChatQuestion']).toHaveBeenLastCalledWith(
+      'p1',
+      's1',
+      'q1',
+      { 'Which?': 'A' },
+    );
+    api['resolveChatQuestion'].mockResolvedValueOnce({
+      code: 'chat.notFound',
+    });
+    expect(await store.resolveQuestion('p1', 's1', 'q1', null)).toEqual({
+      code: 'chat.notFound',
+    });
+    expect(api['resolveChatQuestion']).toHaveBeenLastCalledWith(
+      'p1',
+      's1',
+      'q1',
+      null,
+    );
+    api['resolveChatQuestion'].mockRejectedValueOnce(new Error('x'));
+    expect(await store.resolveQuestion('p1', 's1', 'q1', null)).toBeDefined();
   });
 
   it('remove and sessionRemoved drop the session', async () => {

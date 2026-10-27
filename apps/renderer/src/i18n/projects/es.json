@@ -42,8 +42,6 @@
     "sections": "Secciones del proyecto"
   },
   "indexing": {
-    "bar": "Progreso de indexado",
-    "progress": "Indexando",
-    "starting": "Indexando"
+    "bar": "Progreso de indexado"
   }
 }

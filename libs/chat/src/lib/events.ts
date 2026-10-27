@@ -10,6 +10,7 @@ import type {
   ToolUsePart,
 } from './model';
 import type { PermissionRequest } from './permission';
+import type { QuestionAnswers, QuestionRequest } from './question';
 import type { Usage } from './usage';
 
 interface Ids {
@@ -41,6 +42,18 @@ export type ChatEvent = Ids &
         messageId: string;
         requestId: string;
         allowed: boolean;
+      }
+    | {
+        type: 'questionRequested';
+        messageId: string;
+        request: QuestionRequest;
+      }
+    | {
+        type: 'questionSettled';
+        messageId: string;
+        requestId: string;
+        answers?: QuestionAnswers;
+        skipped?: boolean;
       }
     | { type: 'messageCompleted'; message: Message }
     | { type: 'statusChanged'; status: SessionStatus; error?: ChatErrorKind }

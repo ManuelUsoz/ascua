@@ -16,11 +16,12 @@ import { errorText } from '../../core/i18n/app-error';
 import { SettingsStore } from '../../core/settings/settings-store';
 import type { LoadProgress } from '../../core/voice/ports';
 import { VoiceStore } from '../../core/voice/voice-store';
+import { HarnessPanel } from './harness/harness-panel';
 
 /** Settings screen: one panel per setting. */
 @Component({
   selector: 'app-settings-page',
-  imports: [TranslocoPipe],
+  imports: [TranslocoPipe, HarnessPanel],
   templateUrl: './settings-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

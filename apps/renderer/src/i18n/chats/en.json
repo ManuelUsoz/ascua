@@ -13,6 +13,11 @@
     "checkAgain": "Check again",
     "use": "Use {{provider}}"
   },
+  "auth": {
+    "loggedOut": "Your session expired or you are not signed in.",
+    "login": "Sign in to {{provider}}",
+    "waiting": "Waiting for you to finish signing in…"
+  },
   "provider": {
     "claude": "Claude",
     "codex": "Codex",
@@ -114,6 +119,16 @@
     "deny": "Deny",
     "allowed": "Allowed",
     "denied": "Denied"
+  },
+  "question": {
+    "pickOne": "Pick one",
+    "pickAny": "Pick any",
+    "other": "Other",
+    "otherPlaceholder": "Type another answer…",
+    "answer": "Answer",
+    "skip": "Skip",
+    "waiting": "The agent is waiting for your answer",
+    "skipped": "Skipped"
   },
   "usage": {
     "tokens": "{{count}} tokens",

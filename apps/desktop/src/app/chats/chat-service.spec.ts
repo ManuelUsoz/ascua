@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   ChatError,
   type AgentProvider,
@@ -8,8 +8,10 @@ import {
   type ChatSessionStore,
   type McpServerSpec,
   type OpenOptions,
+  type Message,
   type PermissionDecision,
   type ProviderSession,
+  type QuestionDecision,
   type TurnResult,
   type UsageEntry,
   type UsageLedger,
@@ -130,6 +132,7 @@ function setup(
     projectId: string,
     cwd: string,
   ) => McpServerSpec[] | Promise<McpServerSpec[]>,
+  onAuthRequired?: (provider: string) => void,
 ) {
   const { provider, state } = fakeProvider(script, openError);
   const store = new MemStore();
@@ -160,6 +163,7 @@ function setup(
     ids: () => `id${++n}`,
     now: () => 1000 + n,
     mcpServers,
+    onAuthRequired,
   });
   return { service, store, ledger, events, state };
 }
@@ -325,6 +329,78 @@ describe('ChatService', () => {
     ).toThrow();
   });
 
+  const question = {
+    requestId: 'q1',
+    questions: [
+      {
+        question: 'Which?',
+        multiSelect: false,
+        options: [{ label: 'A' }, { label: 'B' }],
+      },
+    ],
+  };
+
+  it('asks a question even in fullAccess and delivers the answers', async () => {
+    const decisions: QuestionDecision[] = [];
+    const { service, events } = setup(async (o) => {
+      decisions.push(await o.onQuestion(question));
+      return { stop: 'endTurn', usage };
+    });
+    const session = await service.start('p1', 'a', {
+      permissionMode: 'fullAccess',
+    });
+    await until(() => types(events).includes('questionRequested'));
+    expect((lastStatus(events) as { status: string }).status).toBe(
+      'awaitingPermission',
+    );
+    service.resolveQuestion('p1', session.id, 'q1', { 'Which?': 'A' });
+    await until(() => types(events).includes('messageCompleted'));
+    expect(decisions).toEqual([{ answered: true, answers: { 'Which?': 'A' } }]);
+    const settled = events.find((e) => e.type === 'questionSettled');
+    expect(settled).toMatchObject({ answers: { 'Which?': 'A' } });
+    const done = events.find((e) => e.type === 'messageCompleted') as {
+      message: Message;
+    };
+    expect(done.message.parts).toContainEqual(
+      expect.objectContaining({ kind: 'question', state: 'answered' }),
+    );
+  });
+
+  it('delivers a skipped question', async () => {
+    const decisions: QuestionDecision[] = [];
+    const { service, events } = setup(async (o) => {
+      decisions.push(await o.onQuestion(question));
+      return { stop: 'endTurn', usage };
+    });
+    const session = await service.start('p1', 'a', SUP);
+    await until(() => types(events).includes('questionRequested'));
+    service.resolveQuestion('p1', session.id, 'q1', null);
+    await until(() => decisions.length === 1);
+    expect(decisions[0]).toEqual({ answered: false, reason: 'skipped' });
+    expect(events.find((e) => e.type === 'questionSettled')).toMatchObject({
+      skipped: true,
+    });
+  });
+
+  it('abort settles a pending question as aborted', async () => {
+    const decisions: QuestionDecision[] = [];
+    const { service, events } = setup(async (o) => {
+      decisions.push(await o.onQuestion(question));
+      return { stop: 'aborted', usage };
+    });
+    const session = await service.start('p1', 'a', SUP);
+    await until(() => types(events).includes('questionRequested'));
+    service.abort('p1', session.id);
+    await until(() => decisions.length === 1);
+    expect(decisions[0]).toEqual({ answered: false, reason: 'aborted' });
+    expect(() => service.resolveQuestion('p1', session.id, 'q1', null)).toThrow(
+      ChatError,
+    );
+    expect(() => service.resolveQuestion('p1', 's', 'nope', null)).toThrow(
+      ChatError,
+    );
+  });
+
   it('reports authRequired as a failed status with an error part', async () => {
     const { service, events, store } = setup(
       streaming,
@@ -342,6 +418,19 @@ describe('ChatService', () => {
       kind: 'error',
       code: 'authRequired',
     });
+  });
+
+  it('notifies onAuthRequired when a turn fails on authentication', async () => {
+    const onAuthRequired = vi.fn();
+    const { service, events } = setup(
+      streaming,
+      new ChatError('authRequired'),
+      undefined,
+      onAuthRequired,
+    );
+    await service.start('p1', 'a');
+    await until(() => types(events).includes('error'));
+    expect(onAuthRequired).toHaveBeenCalledWith('claude');
   });
 
   const idle = (events: ChatEvent[]) => () =>

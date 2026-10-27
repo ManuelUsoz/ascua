@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { ChatError } from '@ascua/chat';
 
@@ -52,10 +53,11 @@ export function platformPackage(
 type Resolve = (id: string) => string;
 
 function defaultResolve(): Resolve {
+  const create = createRequire;
   const req =
     typeof __non_webpack_require__ === 'function'
       ? __non_webpack_require__
-      : require;
+      : create(__filename);
   return (id) => req.resolve(id);
 }
 

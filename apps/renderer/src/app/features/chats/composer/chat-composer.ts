@@ -2,14 +2,18 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   ElementRef,
+  inject,
   input,
   output,
   signal,
   viewChild,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   DEFAULT_PERMISSION_MODE,
+  type AgentProviderId,
   type ChatCommand,
   type ChatModeId,
   type ModelCatalog,
@@ -18,8 +22,12 @@ import {
 } from '@ascua/chat';
 import type { ChatSessionPatch } from '@ascua/ipc';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { ChatStore } from '../../../core/chats/chat-store';
+import { TerminalSessions } from '../../../core/terminals/terminal-sessions';
+import { text } from '../../../core/i18n/text';
 import { Button } from '../../../shared/button/button';
 import { Icon } from '../../../shared/icon/icon';
+import { Notice } from '../../../shared/notice/notice';
 import { ComposerControls } from './composer-controls';
 import { detectTrigger, rankCommands, replaceRange } from './composer-trigger';
 
@@ -31,7 +39,7 @@ const GROUPS: ChatCommand['source'][] = ['builtin', 'nxy', 'custom'];
  */
 @Component({
   selector: 'app-chat-composer',
-  imports: [TranslocoPipe, Button, Icon, ComposerControls],
+  imports: [TranslocoPipe, Button, Icon, ComposerControls, Notice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'chat-composer' },
   template: `
@@ -90,6 +98,29 @@ const GROUPS: ChatCommand['source'][] = ['builtin', 'nxy', 'custom'];
           <span>{{ 'chats.commands.keys.close' | transloco }}</span>
         </div>
       </div>
+    }
+    @if (loggedOutProvider(); as provider) {
+      <app-notice type="warning" [title]="loggedOutTitle">
+        @if (store.loggingIn()) {
+          {{ 'chats.auth.waiting' | transloco }}
+        } @else {
+          <div noticeActions>
+            <button
+              appButton
+              type="button"
+              variant="primary"
+              size="s"
+              (clicked)="signIn(provider)"
+            >
+              {{
+                'chats.auth.login'
+                  | transloco
+                    : { provider: 'chats.provider.' + provider | transloco }
+              }}
+            </button>
+          </div>
+        }
+      </app-notice>
     }
     <div class="chat-composer__box">
       <div class="chat-composer__field">
@@ -198,10 +229,25 @@ export class ChatComposer {
   readonly effort = input<ReasoningEffort | undefined>(undefined);
   readonly catalog = input<ModelCatalog | undefined>(undefined);
   readonly mode = input<ChatModeId>('chat');
+  /** Needed to open the login terminal; without it the notice has no action. */
+  readonly projectId = input<string | undefined>(undefined);
   readonly submitted = output<string>();
   readonly aborted = output<void>();
   readonly runtimeChanged = output<ChatSessionPatch>();
   readonly modeCleared = output<void>();
+
+  protected readonly store = inject(ChatStore);
+  private readonly router = inject(Router);
+  private readonly terminals = inject(TerminalSessions);
+  protected readonly loggedOutTitle = text('chats.auth.loggedOut');
+  /** The selected provider when its login is known to be gone. */
+  protected readonly loggedOutProvider = computed(() => {
+    const provider = this.store.selectedProvider();
+    const auth = this.store.auth();
+    return provider && auth?.provider === provider && auth.state === 'loggedOut'
+      ? provider
+      : undefined;
+  });
 
   private readonly textarea =
     viewChild<ElementRef<HTMLTextAreaElement>>('prompt');
@@ -244,6 +290,22 @@ export class ChatComposer {
       return group;
     }).filter((g) => g.items.length > 0);
   });
+
+  constructor() {
+    effect(() => {
+      const provider = this.store.selectedProvider();
+      if (provider) void this.store.ensureAuth(provider);
+    });
+  }
+
+  protected async signIn(provider: AgentProviderId): Promise<void> {
+    const projectId = this.projectId();
+    if (!projectId) return;
+    const result = await this.store.login(projectId, provider);
+    if ('code' in result) return;
+    this.terminals.adopt(result);
+    await this.router.navigate(['/proyectos', projectId, 'terminales']);
+  }
 
   protected onInput(event: Event): void {
     const el = event.target as HTMLTextAreaElement;

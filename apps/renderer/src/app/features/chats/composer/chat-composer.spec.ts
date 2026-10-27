@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import {
   CLEAR_COMMAND,
   NXY_COMMANDS,
@@ -8,6 +9,8 @@ import {
 } from '@ascua/chat';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { describe, expect, it, vi } from 'vitest';
+import { ASCUA_API } from '../../../core/bridge/ascua-api';
+import { ChatStore } from '../../../core/chats/chat-store';
 import { i18nTesting } from '../../../testing/i18n';
 import { ChatComposer } from './chat-composer';
 
@@ -326,5 +329,60 @@ describe('ChatComposer', () => {
     expect(chip.textContent).toContain('Ubicar');
     chip.querySelector('button')?.click();
     expect(modeCleared).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ChatComposer login notice', () => {
+  it('shows on loggedOut, logs in, and hides on a loggedIn push', async () => {
+    let pushAuth: (a: unknown) => void = () => undefined;
+    const api = {
+      listChatProviders: vi.fn(async () => []),
+      getSettings: vi.fn(async () => ({ chatProvider: 'claude' })),
+      getChatProviderAuth: vi.fn(async () => ({
+        provider: 'claude',
+        state: 'loggedOut',
+      })),
+      loginChatProvider: vi.fn(async () => ({ id: 't1' })),
+      onTerminalChanged: vi.fn(() => () => undefined),
+      onTerminalOutput: vi.fn(() => () => undefined),
+      onTerminalRemoved: vi.fn(() => () => undefined),
+      listTerminals: vi.fn(async () => []),
+      onChatEvent: vi.fn(() => () => undefined),
+      onSettingsChanged: vi.fn(() => () => undefined),
+      onChatProviderAuthChanged: vi.fn((cb) => {
+        pushAuth = cb;
+        return () => undefined;
+      }),
+    };
+    TestBed.configureTestingModule({
+      imports: [i18nTesting('es')],
+      providers: [
+        provideTranslocoScope('chats'),
+        { provide: ASCUA_API, useValue: api },
+        { provide: Router, useValue: { navigate: vi.fn(async () => true) } },
+      ],
+    });
+    const store = TestBed.inject(ChatStore);
+    await store.loadProviders();
+    const fixture = TestBed.createComponent(ChatComposer);
+    fixture.componentRef.setInput('projectId', 'p1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const notice = el.querySelector('app-notice') as HTMLElement;
+    expect(notice).not.toBeNull();
+    const button = notice.querySelector('button') as HTMLButtonElement;
+    expect(label(button)).toBe('Iniciar sesión en Claude');
+    button.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(api.loginChatProvider).toHaveBeenCalledWith('p1', 'claude');
+    expect(el.querySelector('app-notice')?.textContent).toContain(
+      'Esperando que termines',
+    );
+    pushAuth({ provider: 'claude', state: 'loggedIn' });
+    fixture.detectChanges();
+    expect(el.querySelector('app-notice')).toBeNull();
   });
 });

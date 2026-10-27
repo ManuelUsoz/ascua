@@ -4,6 +4,7 @@ import type { AgentEvent, ChatEvent } from './events';
 import type { TurnSetup } from './harness';
 import type { ChatSession, Message, PermissionMode, StopReason } from './model';
 import type { PermissionDecision, PermissionRequest } from './permission';
+import type { QuestionDecision, QuestionRequest } from './question';
 import type { ProviderAuth, ProviderDescriptor } from './provider';
 import type { Usage, UsageEntry, UsageQuery, UsageTotals } from './usage';
 
@@ -40,6 +41,8 @@ export interface OpenOptions {
   };
   onEvent(e: AgentEvent): void;
   onPermission(req: PermissionRequest): Promise<PermissionDecision>;
+  /** Questions the agent asks the user, whatever the permission mode. */
+  onQuestion(req: QuestionRequest): Promise<QuestionDecision>;
 }
 
 export interface AgentProvider {

@@ -16,6 +16,7 @@
   <app-notice type="error" [title]="e" />
 }
 <app-chat-composer
+  [projectId]="projectId()"
   [disabled]="!loaded()"
   [running]="running()"
   [commands]="commands()"

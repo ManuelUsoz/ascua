@@ -13,7 +13,13 @@
 (class_declaration name: (type_identifier) @name) @class
 (abstract_class_declaration name: (type_identifier) @name) @class
 
+(interface_declaration name: (type_identifier) @name) @interface
+
 (method_definition name: (_) @name) @method
+
+; interface members: owner is the interface
+(method_signature name: (_) @name) @method
+(property_signature name: (_) @name) @method
 
 ; class field holding a function: handler = () => {}
 (public_field_definition

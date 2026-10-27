@@ -41,6 +41,23 @@
   color: var(--ink);
   cursor: pointer;
 }
+.as-harness__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink);
+}
+.as-harness__table th,
+.as-harness__table td {
+  padding: var(--space-1) var(--space-2);
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.as-harness__table th {
+  font-weight: 650;
+  color: var(--ink-muted);
+}
 .as-settings .as-select {
   width: min(260px, 100%);
 }

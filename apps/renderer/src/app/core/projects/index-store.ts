@@ -48,6 +48,23 @@ export class IndexStore {
     }
   }
 
+  /** Drops the project index and rebuilds it from scratch. */
+  async reindex(projectId: string): Promise<void> {
+    if (!this.api) return;
+    this.set({ projectId, done: 0, total: 0, state: 'running' });
+    let error: AscuaError | undefined;
+    try {
+      error = await this.api.reindexProject(projectId);
+    } catch (e) {
+      console.error('[index] reindexProject threw', e);
+      error = toAscuaError(e);
+    }
+    if (error) {
+      console.error('[index] reindexProject returned error', error);
+      this.set({ projectId, done: 0, total: 0, state: 'error', error });
+    }
+  }
+
   private set(p: IndexProgress): void {
     console.log('[index] set', p);
     this.byProject.update((m) => new Map(m).set(p.projectId, p));

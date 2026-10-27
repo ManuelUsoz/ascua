@@ -2,6 +2,7 @@ export * from './lib/errors';
 export * from './lib/provider';
 export * from './lib/usage';
 export * from './lib/permission';
+export * from './lib/question';
 export * from './lib/model';
 export * from './lib/events';
 export * from './lib/transcript';

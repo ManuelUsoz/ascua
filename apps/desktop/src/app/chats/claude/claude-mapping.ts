@@ -20,6 +20,10 @@ import {
   type ReasoningEffort,
   type PermissionDecision,
   type PermissionRequest,
+  type Question,
+  type QuestionDecision,
+  type QuestionOption,
+  type QuestionRequest,
   type StopReason,
   type ToolKind,
   type Usage,
@@ -133,6 +137,68 @@ export function toSdkPermission(
       decision.reason === 'aborted'
         ? 'The request was aborted.' // i18n-ignore
         : 'The user denied this tool call.', // i18n-ignore
+  };
+}
+
+/** The SDK built-in tool that asks the user multiple-choice questions. */
+export const ASK_USER_QUESTION = 'AskUserQuestion';
+
+const MAX_QUESTIONS = 8;
+const MAX_OPTIONS = 12;
+
+/** Parses AskUserQuestion input; undefined when it has no usable question. */
+export function toQuestionRequest(
+  requestId: string,
+  input: SdkInput,
+  toolUseId?: string,
+): QuestionRequest | undefined {
+  const raw = input['questions'];
+  if (!Array.isArray(raw)) return undefined;
+  const questions: Question[] = [];
+  for (const q of raw.slice(0, MAX_QUESTIONS) as unknown[]) {
+    if (!q || typeof q !== 'object') continue;
+    const r = q as Record<string, unknown>;
+    const question = str(r['question']);
+    if (!question) continue;
+    const options: QuestionOption[] = [];
+    if (Array.isArray(r['options'])) {
+      for (const o of r['options'].slice(0, MAX_OPTIONS) as unknown[]) {
+        if (!o || typeof o !== 'object') continue;
+        const label = str((o as Record<string, unknown>)['label']);
+        if (!label) continue;
+        const description = str((o as Record<string, unknown>)['description']);
+        options.push(description ? { label, description } : { label });
+      }
+    }
+    const header = str(r['header']);
+    questions.push({
+      question,
+      ...(header ? { header } : {}),
+      multiSelect: r['multiSelect'] === true,
+      options,
+    });
+  }
+  if (!questions.length) return undefined;
+  return { requestId, ...(toolUseId ? { toolUseId } : {}), questions };
+}
+
+/** AskUserQuestion takes the answers keyed by question text in its input. */
+export function toSdkAnswer(
+  decision: QuestionDecision,
+  input: SdkInput,
+): PermissionResult {
+  if (decision.answered === true) {
+    return {
+      behavior: 'allow',
+      updatedInput: { ...input, answers: decision.answers },
+    };
+  }
+  return {
+    behavior: 'deny',
+    message:
+      decision.reason === 'aborted'
+        ? 'The request was aborted.' // i18n-ignore
+        : 'The user skipped the questions.', // i18n-ignore
   };
 }
 
@@ -264,6 +330,7 @@ interface Block {
   type?: string;
   id?: string;
   name?: string;
+  text?: string;
   input?: SdkInput;
   tool_use_id?: string;
   is_error?: boolean;
@@ -282,8 +349,19 @@ interface ToolInfo {
 export class TurnMapper {
   private readonly tools = new Map<string, ToolInfo>();
 
+  private error: ChatError | undefined;
+
+  /** Returns and clears the API error recorded during the turn, if any. */
+  takeError(): ChatError | undefined {
+    const e = this.error;
+    this.error = undefined;
+    return e;
+  }
+
   map(msg: SDKMessage): AgentEvent[] {
     const m = msg as unknown as {
+      error?: string;
+      is_api_error_message?: boolean;
       type: string;
       parent_tool_use_id?: string | null;
       event?: {
@@ -320,6 +398,22 @@ export class TurnMapper {
       return [];
     }
     const content = m.message?.content;
+    if (
+      m.type === 'assistant' &&
+      !parent &&
+      (m.error || m.is_api_error_message)
+    ) {
+      const text = Array.isArray(content)
+        ? (content as Block[])
+            .map((b) => (b.type === 'text' ? (b.text ?? '') : ''))
+            .join('')
+        : '';
+      this.error =
+        m.error === 'authentication_failed' || authFailure(text)
+          ? new ChatError('authRequired', undefined, text)
+          : toChatError(new Error(text || m.error), 'prompt');
+      return [];
+    }
     if (!Array.isArray(content)) return [];
     const out: AgentEvent[] = [];
     for (const b of content as Block[]) {

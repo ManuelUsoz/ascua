@@ -36,5 +36,23 @@
     "downloading": "Downloading… {{percent}}%",
     "clear": "Delete downloaded models",
     "credit": "Voice: Supertonic 3 by Supertone (Open RAIL-M), downloaded from Hugging Face. Recognition: Whisper."
+  },
+  "harness": {
+    "title": "Ascua harness",
+    "hint": "Runs retrieval benchmarks against the project index.",
+    "noProjects": "There are no projects to benchmark.",
+    "project": "Project",
+    "run": "Run benchmark",
+    "bar": "Benchmark progress",
+    "tool": "Tool",
+    "hitRate": "Hit rate",
+    "tokens": "Tokens",
+    "ms": "ms",
+    "cases": "Cases",
+    "case": "Case",
+    "result": "Result",
+    "recall": "Recall",
+    "hit": "Hit",
+    "miss": "Miss"
   }
 }

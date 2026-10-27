@@ -71,12 +71,6 @@
             [max]="idx.total"
             [label]="'projects.indexing.bar' | transloco"
           />
-          <span class="as-project-index__text">{{
-            (idx.total
-              ? 'projects.indexing.progress'
-              : 'projects.indexing.starting'
-            ) | transloco: { done: idx.done, total: idx.total }
-          }}</span>
         </div>
       } @else if (indexError(); as err) {
         <p class="as-form__error as-page-head__error" role="alert">

@@ -7,6 +7,8 @@ import {
   toProviderModels,
   toChatError,
   toPermissionRequest,
+  toQuestionRequest,
+  toSdkAnswer,
   toSdkPermission,
   toStopReason,
   toUsage,
@@ -137,6 +139,25 @@ describe('TurnMapper', () => {
         ],
       },
     ]);
+  });
+
+  it('records api error assistant messages as the turn error', () => {
+    const mk = (error: string, text: string) =>
+      ({
+        type: 'assistant',
+        error,
+        is_api_error_message: true,
+        message: { model: '<synthetic>', content: [{ type: 'text', text }] },
+      }) as unknown as SDKMessage;
+    const a = new TurnMapper();
+    expect(
+      a.map(mk('authentication_failed', 'Failed to authenticate')),
+    ).toEqual([]);
+    expect(a.takeError()?.kind).toBe('authRequired');
+    expect(a.takeError()).toBeUndefined();
+    const b = new TurnMapper();
+    b.map(mk('server_error', 'boom'));
+    expect(b.takeError()?.kind).toBe('promptFailed');
   });
 
   it('drops subagent output', () => {
@@ -276,6 +297,61 @@ describe('mapping helpers', () => {
     expect(toSdkPermission({ allow: false }, {})).toMatchObject({
       behavior: 'deny',
     });
+  });
+
+  it('parses AskUserQuestion input into a question request', () => {
+    const input = {
+      questions: [
+        {
+          question: 'Which library?',
+          header: 'Library',
+          multiSelect: false,
+          options: [
+            { label: 'date-fns', description: 'Small' },
+            { label: 'luxon', description: '' },
+            { nope: true },
+          ],
+        },
+        { question: 'Features?', multiSelect: true, options: [] },
+        { header: 'no question' },
+        'junk',
+      ],
+    };
+    expect(toQuestionRequest('q', input, 'u')).toEqual({
+      requestId: 'q',
+      toolUseId: 'u',
+      questions: [
+        {
+          question: 'Which library?',
+          header: 'Library',
+          multiSelect: false,
+          options: [
+            { label: 'date-fns', description: 'Small' },
+            { label: 'luxon' },
+          ],
+        },
+        { question: 'Features?', multiSelect: true, options: [] },
+      ],
+    });
+    expect(toQuestionRequest('q', {})).toBeUndefined();
+    expect(toQuestionRequest('q', { questions: [{}] })).toBeUndefined();
+  });
+
+  it('maps question decisions to SDK results', () => {
+    const input = { questions: [] };
+    expect(
+      toSdkAnswer({ answered: true, answers: { 'Q?': 'A, B' } }, input),
+    ).toEqual({
+      behavior: 'allow',
+      updatedInput: { questions: [], answers: { 'Q?': 'A, B' } },
+    });
+    expect(toSdkAnswer({ answered: false, reason: 'skipped' }, input)).toEqual({
+      behavior: 'deny',
+      message: 'The user skipped the questions.',
+    });
+    expect(
+      toSdkAnswer({ answered: false, reason: 'aborted' }, input),
+    ).toMatchObject({ behavior: 'deny', message: 'The request was aborted.' });
   });
 
   it('maps errors', () => {

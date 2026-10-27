@@ -22,6 +22,40 @@ export interface SymbolRow {
   owner: string | null;
 }
 
+export interface ImportRow {
+  id: number;
+  file_id: number;
+  kind: string;
+  local_name: string | null;
+  imported_name: string | null;
+  specifier: string;
+  target_path: string | null;
+  target_module: string | null;
+  line: number;
+}
+
+export interface OccurrenceRow {
+  id: number;
+  file_id: number;
+  name: string;
+  qualifier: string | null;
+  role: string;
+  line: number;
+  col: number;
+  enclosing_symbol_id: number | null;
+  binding: string | null;
+  receiver_type: string | null;
+}
+
+export interface RelationRow {
+  id: number;
+  file_id: number;
+  symbol_id: number;
+  kind: string;
+  target_name: string;
+  target_qualifier: string | null;
+}
+
 export interface ToolCallRow {
   id: number;
   tool: string;

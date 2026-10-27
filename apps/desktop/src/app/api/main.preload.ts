@@ -11,10 +11,13 @@ import {
   type FileEntry,
   type FileIndex,
   type FullscreenState,
+  type BenchmarkProgress,
+  type BenchmarkReport,
   type IndexProgress,
   type Layout,
   type PermissionDecision,
   type PickTerminalFolderResult,
+  type ProviderAuthChange,
   type Project,
   type RepositoryLink,
   type SaveProjectResult,
@@ -317,13 +320,33 @@ const api: AscuaApi = {
       requestId,
       allow,
     ) as Promise<AscuaError | undefined>,
+  resolveChatQuestion: (projectId, sessionId, requestId, answers) =>
+    ipcRenderer.invoke(
+      IPC.resolveChatQuestion,
+      projectId,
+      sessionId,
+      requestId,
+      answers,
+    ) as Promise<AscuaError | undefined>,
   onChatEvent: (callback) => listen<ChatEvent>(IPC.chatEvent, callback),
+  onChatProviderAuthChanged: (callback) =>
+    listen<ProviderAuthChange>(IPC.chatProviderAuthChanged, callback),
   indexProject: (projectId) =>
     ipcRenderer.invoke(IPC.indexProject, projectId) as Promise<
       AscuaError | undefined
     >,
+  reindexProject: (projectId) =>
+    ipcRenderer.invoke(IPC.reindexProject, projectId) as Promise<
+      AscuaError | undefined
+    >,
   onIndexProgress: (callback) =>
     listen<IndexProgress>(IPC.indexProgress, callback),
+  runBenchmark: (projectId) =>
+    ipcRenderer.invoke(IPC.runBenchmark, projectId) as Promise<
+      BenchmarkReport | AscuaError
+    >,
+  onBenchmarkProgress: (callback) =>
+    listen<BenchmarkProgress>(IPC.benchmarkProgress, callback),
 };
 
 contextBridge.exposeInMainWorld('ascua', api);

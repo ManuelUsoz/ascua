@@ -9,6 +9,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { ErrorPart } from '../parts/error-part';
 import { MarkdownPart } from '../parts/markdown-part';
 import { PermissionCard } from '../parts/permission-part';
+import { QuestionCard } from '../parts/question-part';
 import { TextPart } from '../parts/text-part';
 import { ThinkingPart } from '../parts/thinking-part';
 import { ToolGroupView } from '../parts/tool-group';
@@ -23,6 +24,7 @@ import { ToolGroupView } from '../parts/tool-group';
     ThinkingPart,
     ToolGroupView,
     PermissionCard,
+    QuestionCard,
     ErrorPart,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +54,13 @@ import { ToolGroupView } from '../parts/tool-group';
         }
         @case ('permission') {
           <app-permission-part
+            [projectId]="projectId()"
+            [sessionId]="message().sessionId"
+            [part]="part"
+          />
+        }
+        @case ('question') {
+          <app-question-part
             [projectId]="projectId()"
             [sessionId]="message().sessionId"
             [part]="part"

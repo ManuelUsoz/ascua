@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatEvent } from './events';
-import { pendingPermissions, type Message } from './model';
+import { pendingPermissions, pendingQuestions, type Message } from './model';
 import { applyChatEvent } from './transcript';
 
 const ids = { sessionId: 's', projectId: 'p' };
@@ -97,6 +97,74 @@ describe('applyChatEvent', () => {
     });
     expect(settled[0].parts[0]).toMatchObject({ state: 'denied' });
     expect(pendingPermissions(settled)).toEqual([]);
+  });
+
+  it('requests then answers a question', () => {
+    const question = {
+      requestId: 'q1',
+      questions: [
+        {
+          question: 'Which?',
+          multiSelect: false,
+          options: [{ label: 'A' }, { label: 'B' }],
+        },
+      ],
+    };
+    const requested = fold([
+      { ...ids, type: 'messageStarted', message: msg() },
+      {
+        ...ids,
+        type: 'questionRequested',
+        messageId: 'm1',
+        request: question,
+      },
+    ]);
+    expect(pendingQuestions(requested)).toEqual([question]);
+    expect(requested[0].parts[0]).toMatchObject({
+      kind: 'question',
+      state: 'pending',
+    });
+    const answered = applyChatEvent(requested, {
+      ...ids,
+      type: 'questionSettled',
+      messageId: 'm1',
+      requestId: 'q1',
+      answers: { 'Which?': 'A' },
+    });
+    expect(answered[0].parts[0]).toMatchObject({
+      state: 'answered',
+      answers: { 'Which?': 'A' },
+    });
+    expect(pendingQuestions(answered)).toEqual([]);
+  });
+
+  it('marks only the matching question as skipped', () => {
+    const requested = fold([
+      { ...ids, type: 'messageStarted', message: msg() },
+      {
+        ...ids,
+        type: 'questionRequested',
+        messageId: 'm1',
+        request: { requestId: 'q1', questions: [] },
+      },
+      {
+        ...ids,
+        type: 'questionSettled',
+        messageId: 'm1',
+        requestId: 'other',
+        skipped: true,
+      },
+    ]);
+    expect(requested[0].parts[0]).toMatchObject({ state: 'pending' });
+    const skipped = applyChatEvent(requested, {
+      ...ids,
+      type: 'questionSettled',
+      messageId: 'm1',
+      requestId: 'q1',
+      skipped: true,
+    });
+    expect(skipped[0].parts[0]).toMatchObject({ state: 'skipped' });
+    expect(skipped[0].parts[0]).not.toHaveProperty('answers');
   });
 
   it('replaces the message on completion', () => {

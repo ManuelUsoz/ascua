@@ -10,6 +10,7 @@ import type {
   AscuaError,
   ChatSessionPatch,
   ChatStartOptions,
+  ProviderAuthChange,
   TerminalSession,
 } from '@ascua/ipc';
 import {
@@ -33,6 +34,7 @@ import { toAscuaError } from '../i18n/app-error';
 
 const NO_DESKTOP: AscuaError = { code: 'noDesktop' };
 const NONE: readonly never[] = [];
+const AUTH_TTL_MS = 30_000;
 
 const MAX_BUFFERED_EVENTS = 500;
 const MAX_BUFFERED_SESSIONS = 20;
@@ -60,6 +62,18 @@ function replay(snapshot: Message[], events: ChatEvent[]): Message[] {
         m.parts.some(
           (p) =>
             p.kind === 'permission' &&
+            p.request.requestId === e.request.requestId,
+        ),
+      )
+    ) {
+      continue;
+    }
+    if (
+      e.type === 'questionRequested' &&
+      messages.some((m) =>
+        m.parts.some(
+          (p) =>
+            p.kind === 'question' &&
             p.request.requestId === e.request.requestId,
         ),
       )
@@ -98,8 +112,11 @@ export class ChatStore {
   private readonly fetching = new Set<string>();
   private readonly loading = new Set<string>();
   private readonly buffers = new Map<string, ChatEvent[]>();
+  private readonly loggingInState = signal(false);
+  private readonly authCheckedAt = new Map<AgentProviderId, number>();
   private subscribed = false;
 
+  readonly loggingIn = this.loggingInState.asReadonly();
   readonly providers = this.providerList.asReadonly();
   readonly selectedProvider = this.selected.asReadonly();
   readonly auth = this.authState.asReadonly();
@@ -170,9 +187,42 @@ export class ChatStore {
       this.failure.set(NO_DESKTOP);
       return undefined;
     }
+    this.subscribe(api);
     this.authState.set(undefined);
+    return this.fetchAuth(api, id);
+  }
+
+  /**
+   * Refreshes the auth of a provider without clearing the current value; a
+   * check younger than 30 s is reused unless `force` is set.
+   */
+  async ensureAuth(
+    id: AgentProviderId,
+    force = false,
+  ): Promise<ProviderAuth | undefined> {
+    const api = this.api;
+    if (!api) return undefined;
+    this.subscribe(api);
+    const current = this.authState();
+    const checked = this.authCheckedAt.get(id);
+    if (
+      !force &&
+      current?.provider === id &&
+      checked !== undefined &&
+      Date.now() - checked < AUTH_TTL_MS
+    ) {
+      return current;
+    }
+    return this.fetchAuth(api, id);
+  }
+
+  private async fetchAuth(
+    api: AscuaApi,
+    id: AgentProviderId,
+  ): Promise<ProviderAuth | undefined> {
     try {
       const auth = await api.getChatProviderAuth(id);
+      this.authCheckedAt.set(id, Date.now());
       this.authState.set(auth);
       return auth;
     } catch (e) {
@@ -188,10 +238,15 @@ export class ChatStore {
   ): Promise<TerminalSession | AscuaError> {
     const api = this.api;
     if (!api) return NO_DESKTOP;
+    this.subscribe(api);
+    this.authCheckedAt.delete(id);
+    this.loggingInState.set(true);
     try {
       const result = await api.loginChatProvider(projectId, id);
+      if ('code' in result) this.loggingInState.set(false);
       return result;
     } catch (e) {
+      this.loggingInState.set(false);
       return toAscuaError(e);
     }
   }
@@ -446,6 +501,27 @@ export class ChatStore {
     }
   }
 
+  /** `answers` keyed by question text; null skips the questions. */
+  async resolveQuestion(
+    projectId: string,
+    sessionId: string,
+    requestId: string,
+    answers: Record<string, string> | null,
+  ): Promise<AscuaError | undefined> {
+    const api = this.api;
+    if (!api) return NO_DESKTOP;
+    try {
+      return await api.resolveChatQuestion(
+        projectId,
+        sessionId,
+        requestId,
+        answers,
+      );
+    } catch (e) {
+      return toAscuaError(e);
+    }
+  }
+
   private subscribe(api: AscuaApi): void {
     if (this.subscribed) return;
     this.subscribed = true;
@@ -453,6 +529,17 @@ export class ChatStore {
     this.destroyRef.onDestroy(
       api.onSettingsChanged((s) => this.selected.set(s.chatProvider)),
     );
+    this.destroyRef.onDestroy(
+      api.onChatProviderAuthChanged((auth) => this.applyAuth(auth)),
+    );
+  }
+
+  private applyAuth(auth: ProviderAuthChange): void {
+    if (auth.state === 'loggedOut') this.authCheckedAt.delete(auth.provider);
+    else this.authCheckedAt.set(auth.provider, Date.now());
+    const shown = this.authState()?.provider ?? this.selected();
+    if (auth.provider === shown) this.authState.set(auth);
+    if (auth.state === 'loggedIn' || auth.final) this.loggingInState.set(false);
   }
 
   private apply(event: ChatEvent): void {

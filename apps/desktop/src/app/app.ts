@@ -257,6 +257,11 @@ export default class App {
         bus: chatBus,
         ids: randomUUID,
         now: Date.now,
+        onAuthRequired: (provider) =>
+          App.controller.send(IPC.chatProviderAuthChanged, {
+            provider,
+            state: 'loggedOut',
+          }),
         mcpServers: async (id) => {
           const root = (await repository.get(id))?.path;
           if (!root) return [];
@@ -303,6 +308,8 @@ export default class App {
       const indexer = new IndexerService({
         projects: repository,
         push: (event) => App.controller.send(IPC.indexProgress, event),
+        pushBenchmark: (event) =>
+          App.controller.send(IPC.benchmarkProgress, event),
         isPackaged: App.application.isPackaged,
         resourcesPath: process.resourcesPath,
         userDataPath: App.application.getPath('userData'),

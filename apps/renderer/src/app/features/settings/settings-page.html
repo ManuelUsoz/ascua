@@ -118,4 +118,15 @@
     }
     <p class="as-settings__hint">{{ 'settings.voice.credit' | transloco }}</p>
   </section>
+  <section
+    class="as-panel as-settings__panel"
+    aria-labelledby="settings-harness-title"
+  >
+    <header class="as-settings__head">
+      <h2 id="settings-harness-title" class="as-settings__title">
+        {{ 'settings.harness.title' | transloco }}
+      </h2>
+    </header>
+    <app-harness-panel />
+  </section>
 </div>
