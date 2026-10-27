@@ -84,7 +84,6 @@
   "errors": {
     "unknown": "Unexpected error: {{detail}}",
     "noDesktop": "Only available in the desktop app.",
-<<<<<<< HEAD
     "assistant": {
       "notInstalled": "Claude Code was not found on this computer.",
       "notLoggedIn": "Claude Code is not signed in.",
@@ -99,7 +98,7 @@
       "noSpeech": "Nothing was heard.",
       "answerYesNo": "A confirmation is pending: say yes or no.",
       "ttsUnavailable": "The voice could not be played."
-=======
+    },
     "invalidLink": "This link cannot be opened.",
     "chat": {
       "providerNotConfigured": "No chat provider is configured.",
@@ -114,7 +113,6 @@
       "exited": "The agent exited unexpectedly.",
       "saveFailed": "Could not save the chat.",
       "unknown": "Unexpected chat error."
->>>>>>> origin/master
     },
     "sourceControl": {
       "notConnected": "You are not connected to the provider.",
@@ -166,6 +164,10 @@
       "spawnFailed": "{{detail}}",
       "openFailed": "Could not open the terminal",
       "openFailedWith": "Could not open the terminal: {{detail}}"
+    },
+    "indexer": {
+      "failed": "Could not index the project.",
+      "notFound": "The indexer was not found."
     },
     "file": {
       "gone": "The file no longer exists.",

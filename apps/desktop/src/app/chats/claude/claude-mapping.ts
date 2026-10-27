@@ -14,6 +14,7 @@ import {
   type ChatCommand,
   type ChatErrorKind,
   type OpenOptions,
+  type McpServerSpec,
   type PermissionMode,
   type ProviderModel,
   type ReasoningEffort,
@@ -27,6 +28,7 @@ import {
 export type SdkInput = Parameters<CanUseTool>[1];
 
 const MAX_DETAIL = 200;
+const MAX_RESULT = 2000;
 
 const KINDS: Record<string, ToolKind> = {
   Read: 'read',
@@ -44,6 +46,20 @@ const KINDS: Record<string, ToolKind> = {
   WebFetch: 'fetch',
 };
 
+export function toSdkMcpServers(specs: McpServerSpec[]): Options['mcpServers'] {
+  return Object.fromEntries(
+    specs.map((s) => [
+      s.name,
+      {
+        type: 'stdio' as const,
+        command: s.command,
+        args: s.args,
+        ...(s.env ? { env: s.env } : {}),
+      },
+    ]),
+  );
+}
+
 export function toolKind(name: string): ToolKind {
   return KINDS[name] ?? 'other';
 }
@@ -54,6 +70,23 @@ function str(v: unknown): string | undefined {
 
 function truncate(s: string): string {
   return s.length > MAX_DETAIL ? `${s.slice(0, MAX_DETAIL - 1)}…` : s;
+}
+
+/** Text of a tool_result: a string, or the text blocks of an MCP result. */
+function resultText(content: unknown): string | undefined {
+  let s: string | undefined;
+  if (typeof content === 'string') s = content;
+  else if (Array.isArray(content)) {
+    s = (content as { type?: string; text?: unknown }[])
+      .map((c) =>
+        c?.type === 'text' && typeof c.text === 'string' ? c.text : '',
+      )
+      .filter(Boolean)
+      .join('\n');
+  }
+  s = s?.trim();
+  if (!s) return undefined;
+  return s.length > MAX_RESULT ? `${s.slice(0, MAX_RESULT - 1)}…` : s;
 }
 
 function detailOf(name: string, input: SdkInput): string | undefined {
@@ -341,8 +374,7 @@ export class TurnMapper {
             kind: 'toolResult',
             toolUseId: b.tool_use_id,
             isError,
-            summary:
-              typeof b.content === 'string' ? truncate(b.content) : undefined,
+            summary: resultText(b.content),
           },
         });
       }

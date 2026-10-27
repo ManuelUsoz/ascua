@@ -18,5 +18,6 @@
     "executableArgs": ["--ozone-platform=x11"],
     "icon": "icon.png"
   },
+  "extraResources": [{ "from": "dist/apps/indexer", "to": "indexer" }],
   "files": [{ "from": "desktop", "to": "desktop", "filter": ["pty-host.js"] }]
 }

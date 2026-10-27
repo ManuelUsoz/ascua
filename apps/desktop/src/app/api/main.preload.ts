@@ -11,6 +11,7 @@ import {
   type FileEntry,
   type FileIndex,
   type FullscreenState,
+  type IndexProgress,
   type Layout,
   type PermissionDecision,
   type PickTerminalFolderResult,
@@ -317,6 +318,12 @@ const api: AscuaApi = {
       allow,
     ) as Promise<AscuaError | undefined>,
   onChatEvent: (callback) => listen<ChatEvent>(IPC.chatEvent, callback),
+  indexProject: (projectId) =>
+    ipcRenderer.invoke(IPC.indexProject, projectId) as Promise<
+      AscuaError | undefined
+    >,
+  onIndexProgress: (callback) =>
+    listen<IndexProgress>(IPC.indexProgress, callback),
 };
 
 contextBridge.exposeInMainWorld('ascua', api);

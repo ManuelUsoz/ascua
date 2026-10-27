@@ -112,20 +112,11 @@
   </div>
   @if (tab() === 'files' && totals().count) {
     <div class="as-pr__review">
-      <span
-        class="as-progress"
-        role="progressbar"
-        aria-valuemin="0"
-        [attr.aria-valuemax]="totals().count"
-        [attr.aria-valuenow]="viewedCount()"
-        [attr.aria-label]="'repositories.pr.viewed.bar' | transloco"
-      >
-        <span
-          class="as-progress__fill"
-          [attr.data-complete]="viewedCount() === totals().count ? '' : null"
-          [style.transform]="'scaleX(' + viewedPercent() / 100 + ')'"
-        ></span>
-      </span>
+      <app-progress-bar
+        [value]="viewedCount()"
+        [max]="totals().count"
+        [label]="'repositories.pr.viewed.bar' | transloco"
+      />
       <span class="as-pr__progress-text">{{
         'repositories.pr.viewed.progress'
           | transloco: { done: viewedCount(), total: totals().count }

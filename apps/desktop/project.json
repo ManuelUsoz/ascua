@@ -39,11 +39,11 @@
       "executor": "nx-electron:execute",
       "options": {
         "buildTarget": "desktop:build",
-        "waitUntilTargets": ["renderer:serve"]
+        "waitUntilTargets": ["renderer:serve", "indexer:serve"]
       }
     },
     "package": {
-      "dependsOn": ["build"],
+      "dependsOn": ["build", {"projects": ["indexer"], "target": "build"}],
       "executor": "nx-electron:package",
       "outputs": ["{options.outputPath}"],
       "options": {
@@ -55,7 +55,7 @@
       }
     },
     "make": {
-      "dependsOn": ["build"],
+      "dependsOn": ["build", {"projects": ["indexer"], "target": "build"}],
       "executor": "nx-electron:make",
       "outputs": ["{options.outputPath}"],
       "options": {

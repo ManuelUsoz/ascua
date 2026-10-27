@@ -6,6 +6,7 @@ import {
   type ChatEvent,
   type ChatSessionRecord,
   type ChatSessionStore,
+  type McpServerSpec,
   type OpenOptions,
   type PermissionDecision,
   type ProviderSession,
@@ -122,7 +123,14 @@ function fakeProvider(script: Script, openError?: Error) {
   return { provider, state };
 }
 
-function setup(script: Script, openError?: Error) {
+function setup(
+  script: Script,
+  openError?: Error,
+  mcpServers?: (
+    projectId: string,
+    cwd: string,
+  ) => McpServerSpec[] | Promise<McpServerSpec[]>,
+) {
   const { provider, state } = fakeProvider(script, openError);
   const store = new MemStore();
   const ledger = new MemLedger();
@@ -151,6 +159,7 @@ function setup(script: Script, openError?: Error) {
     bus: { publish: (e) => void events.push(e) },
     ids: () => `id${++n}`,
     now: () => 1000 + n,
+    mcpServers,
   });
   return { service, store, ledger, events, state };
 }
@@ -356,6 +365,44 @@ describe('ChatService', () => {
     expect(state.opens[0].runtime.permissionMode).toBe('fullAccess');
     expect(decisions).toEqual([{ allow: true }]);
     expect(types(events)).not.toContain('permissionRequested');
+  });
+
+  it('open receives the mcp specs from the dependency', async () => {
+    const spec = { name: 'x', command: 'node', args: ['a'] };
+    const seen: string[][] = [];
+    const { service, events, state } = setup(
+      streaming,
+      undefined,
+      (id, cwd) => {
+        seen.push([id, cwd]);
+        return [spec];
+      },
+    );
+    await service.start('p1', 'a');
+    await until(idle(events));
+    expect(state.opens[0].mcpServers).toEqual([spec]);
+    expect(seen[0][0]).toBe('p1');
+  });
+
+  it('open awaits async mcp specs resolved from the project, not cwd', async () => {
+    const spec = { name: 'x', command: 'node', args: ['/indexed/root'] };
+    const { service, events, state } = setup(
+      streaming,
+      undefined,
+      async (id) => (id === 'p1' ? [spec] : []),
+    );
+    await service.start('p1', 'a');
+    await until(idle(events));
+    expect(state.opens[0].mcpServers).toEqual([spec]);
+  });
+
+  it('open gets no mcp specs when the dependency throws', async () => {
+    const { service, events, state } = setup(streaming, undefined, () => {
+      throw new Error('boom');
+    });
+    await service.start('p1', 'a');
+    await until(idle(events));
+    expect(state.opens[0].mcpServers).toEqual([]);
   });
 
   it('supervised and auto still ask the user', async () => {

@@ -3,12 +3,6 @@
 // three worlds.
 
 import type {
-<<<<<<< HEAD
-  AssistantEvent,
-  AssistantStatus,
-  TranscriptMessage,
-} from '@ascua/assistant';
-=======
   AgentProviderId,
   ChatCommand,
   ChatErrorKind,
@@ -22,7 +16,11 @@ import type {
   ProviderInfo,
   ReasoningEffort,
 } from '@ascua/chat';
->>>>>>> origin/master
+import type {
+  AssistantEvent,
+  AssistantStatus,
+  TranscriptMessage,
+} from '@ascua/assistant';
 import type {
   Account,
   Branch,
@@ -98,7 +96,6 @@ export const IPC = {
   sourceControlCommitDiff: 'ascua:source-control:commit-diff',
   sourceControlReview: 'ascua:source-control:review',
   sourceControlOpenUrl: 'ascua:source-control:open-url',
-<<<<<<< HEAD
   assistantSend: 'ascua:assistant:send',
   assistantCancel: 'ascua:assistant:cancel',
   assistantReset: 'ascua:assistant:reset',
@@ -109,7 +106,6 @@ export const IPC = {
   assistantContext: 'ascua:assistant:context',
   startProjectTerminals: 'ascua:terminal:start-project',
   voiceActive: 'ascua:voice:active',
-=======
   chatProviders: 'ascua:chats:providers',
   chatProviderAuth: 'ascua:chats:provider-auth',
   chatProviderLogin: 'ascua:chats:provider-login',
@@ -126,7 +122,8 @@ export const IPC = {
   abortChat: 'ascua:chats:abort',
   resolveChatPermission: 'ascua:chats:resolve-permission',
   chatEvent: 'ascua:chats:event',
->>>>>>> origin/master
+  indexProject: 'ascua:indexer:index',
+  indexProgress: 'ascua:indexer:progress',
 } as const;
 
 export const NAVIGATE_SCREENS = [
@@ -188,7 +185,6 @@ export interface UiContext {
 export const LANGUAGES = ['es', 'en'] as const;
 export type Language = (typeof LANGUAGES)[number];
 
-<<<<<<< HEAD
 /** Supertonic 3 preset voices; they speak every language. */
 export const VOICE_STYLES = [
   'F1',
@@ -208,9 +204,18 @@ export interface VoiceSettings {
   enabled: boolean;
   autoSpeak: boolean;
   style: VoiceStyle;
-=======
+}
+
+export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
+  enabled: true,
+  // Off by default: speaking triggers a ~400 MB model download. Opt in from Ajustes.
+  autoSpeak: false,
+  style: 'F1',
+};
+
 export interface Settings {
   language: Language;
+  voice: VoiceSettings;
   /** Last parent folder used to clone a repository. */
   cloneDir?: string;
   /** Agent provider chosen for project chats. */
@@ -226,24 +231,14 @@ export interface Settings {
       }
     >
   >;
->>>>>>> origin/master
-}
-
-export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
-  enabled: true,
-  // Off by default: speaking triggers a ~400 MB model download. Opt in from Ajustes.
-  autoSpeak: false,
-  style: 'F1',
-};
-
-export interface Settings {
-  language: Language;
-  voice: VoiceSettings;
 }
 
 export interface SettingsPatch {
   language?: Language;
   voice?: Partial<VoiceSettings>;
+  cloneDir?: string;
+  chatProvider?: AgentProviderId;
+  chatDefaults?: Settings['chatDefaults'];
 }
 
 export const COMMON_ERROR_CODES = [
@@ -319,7 +314,6 @@ export const SOURCE_CONTROL_ERROR_CODES = [
   'sourceControl.rejected',
 ] as const;
 
-<<<<<<< HEAD
 export const ASSISTANT_ERROR_CODES = [
   'assistant.notInstalled',
   'assistant.notLoggedIn',
@@ -337,7 +331,7 @@ export const VOICE_ERROR_CODES = [
   'voice.answerYesNo',
   'voice.ttsUnavailable',
 ] as const;
-=======
+
 export const CHAT_ERROR_CODES = [
   'chat.providerNotConfigured',
   'chat.providerDisabled',
@@ -352,10 +346,24 @@ export const CHAT_ERROR_CODES = [
   'chat.saveFailed',
   'chat.unknown',
 ] as const satisfies readonly `chat.${ChatErrorKind}`[];
->>>>>>> origin/master
+
+export const INDEXER_ERROR_CODES = [
+  'indexer.failed',
+  'indexer.notFound',
+] as const;
+
+/** Progress of a project index run, pushed on `IPC.indexProgress`. */
+export interface IndexProgress {
+  projectId: string;
+  done: number;
+  total: number;
+  state: 'running' | 'done' | 'error';
+  error?: AscuaError;
+}
 
 /** Every error code the renderer translates as `errors.<code>`. */
 export type ErrorCode =
+  | (typeof INDEXER_ERROR_CODES)[number]
   | (typeof VOICE_ERROR_CODES)[number]
   | (typeof ASSISTANT_ERROR_CODES)[number]
   | (typeof COMMON_ERROR_CODES)[number]
@@ -766,7 +774,6 @@ export interface AscuaApi {
     provider: ProviderId,
     url: string,
   ): Promise<AscuaError | undefined>;
-<<<<<<< HEAD
   assistantSend(text: string): Promise<void>;
   assistantCancel(): Promise<void>;
   assistantReset(): Promise<void>;
@@ -781,7 +788,6 @@ export interface AscuaApi {
   onAssistantEvent(callback: (event: AssistantEvent) => void): () => void;
   /** Main asks the renderer to route to a screen. */
   onAssistantNavigate(callback: (target: NavigateTarget) => void): () => void;
-=======
   listChatProviders(): Promise<ProviderInfo[]>;
   getChatProviderAuth(id: AgentProviderId): Promise<ProviderAuth>;
   /** Opens a terminal running the provider's login command. */
@@ -836,5 +842,7 @@ export interface AscuaApi {
     allow: boolean,
   ): Promise<AscuaError | undefined>;
   onChatEvent(callback: (event: ChatEvent) => void): () => void;
->>>>>>> origin/master
+  /** Starts (or joins) an index run; progress streams through `onIndexProgress`. */
+  indexProject(projectId: string): Promise<AscuaError | undefined>;
+  onIndexProgress(callback: (event: IndexProgress) => void): () => void;
 }

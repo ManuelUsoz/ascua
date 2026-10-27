@@ -20,8 +20,17 @@ export interface ProviderSession {
   setPermissionMode?(mode: PermissionMode): Promise<void>;
 }
 
+/** A stdio MCP server a provider should attach to the session. */
+export interface McpServerSpec {
+  name: string;
+  command: string;
+  args: string[];
+  env?: Record<string, string>;
+}
+
 export interface OpenOptions {
   cwd: string;
+  mcpServers?: McpServerSpec[];
   resumeToken?: string;
   turn: TurnSetup;
   runtime: {

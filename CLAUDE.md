@@ -21,6 +21,10 @@ Node hook. Per-area guides: `apps/renderer/CLAUDE.md`, `apps/desktop/CLAUDE.md`,
 - `node tools/ui-drive.cjs <outDir>` after `npx nx build desktop` (Playwright
   scenarios in `tools/ui-drive/`). Close any running Ascua first: the hook pipe
   is shared.
+- `npx nx build indexer` / `npx nx test indexer --run` / `npx nx lint indexer`; `nx serve desktop` also
+  runs `indexer:serve`. Output: `dist/apps/indexer/main.mjs` (ESM, bundled) plus the
+  tree-sitter `.wasm` files and `.scm` queries copied by
+  `tools/indexer-assets.mjs`.
 - `npx electron tools/pty-smoke.cjs <pty-host.js>` checks the pty host.
 - ui-drive subsets: `--grep assistant`, `--grep voice` (or a spec file name).
 - Test seams for assistant/voice: `ASCUA_VOICE_FAKE=<phrase|phrase>` (scripted
@@ -34,7 +38,7 @@ Node hook. Per-area guides: `apps/renderer/CLAUDE.md`, `apps/desktop/CLAUDE.md`,
 Full verify chain:
 
 ```sh
-npm run format:check && npm run i18n:check && npx nx lint renderer && npx nx lint desktop && npx nx test renderer --run && npx nx test desktop --run && npx nx build desktop
+npm run format:check && npm run i18n:check && npx nx lint renderer && npx nx lint desktop && npx nx lint indexer && npx nx test renderer --run && npx nx test desktop --run && npx nx test indexer --run && npx nx build desktop && npx nx build indexer
 ```
 
 Run `npx nx package desktop` when changing packaging, preload, or the hook.
@@ -47,6 +51,12 @@ the hook.
   See `apps/desktop/CLAUDE.md`.
 - `apps/renderer` - Angular renderer (zoneless, signals, sandboxed). See
   `apps/renderer/CLAUDE.md`.
+- `apps/indexer` - agent-facing code indexer (Effect 4, web-tree-sitter WASM, ts
+  only). Standalone Node app: not part of the Electron package, its deps are
+  devDependencies, and it must not import renderer or main code. `index` and
+  `mcp` both take `--db <file>` (default `<root>/.ascua/index.db`, standalone
+  use); the desktop app passes `userData/indexes/<projectId>.db` and never
+  writes into the user's project.
 - `libs/ascua-ipc` (`@ascua/ipc`) - IPC channel names and shared types.
   Dependency-free; imported by main, preload and renderer.
 - `libs/character` (`@ascua/character`) - framework-agnostic SVG character and

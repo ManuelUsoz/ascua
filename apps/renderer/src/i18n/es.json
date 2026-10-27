@@ -84,7 +84,6 @@
   "errors": {
     "unknown": "Error inesperado: {{detail}}",
     "noDesktop": "Solo disponible en la app de escritorio.",
-<<<<<<< HEAD
     "assistant": {
       "notInstalled": "No se encontró Claude Code en este equipo.",
       "notLoggedIn": "Claude Code no tiene la sesión iniciada.",
@@ -99,7 +98,7 @@
       "noSpeech": "No se escuchó nada.",
       "answerYesNo": "Hay una confirmación pendiente: decí sí o no.",
       "ttsUnavailable": "No se pudo reproducir la voz."
-=======
+    },
     "invalidLink": "No se puede abrir este enlace.",
     "chat": {
       "providerNotConfigured": "No hay un proveedor de chat configurado.",
@@ -114,7 +113,6 @@
       "exited": "El agente se cerró inesperadamente.",
       "saveFailed": "No se pudo guardar el chat.",
       "unknown": "Error inesperado en el chat."
->>>>>>> origin/master
     },
     "sourceControl": {
       "notConnected": "No estás conectado al proveedor.",
@@ -166,6 +164,10 @@
       "spawnFailed": "{{detail}}",
       "openFailed": "No se pudo abrir la terminal",
       "openFailedWith": "No se pudo abrir la terminal: {{detail}}"
+    },
+    "indexer": {
+      "failed": "No se pudo indexar el proyecto.",
+      "notFound": "No se encontró el indexador."
     },
     "file": {
       "gone": "El archivo ya no existe.",

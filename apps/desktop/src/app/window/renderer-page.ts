@@ -14,16 +14,11 @@ export function currentRendererTarget(): RendererTarget {
 }
 
 export function loadRenderer(win: BrowserWindow): void {
-<<<<<<< HEAD
   const target = currentRendererTarget();
   if (target.kind === 'url') {
     win.loadURL(targetUrl(target));
-=======
-  if (!app.isPackaged && process.env['ASCUA_RENDERER'] !== 'dist') {
-    win.loadURL(`http://localhost:${rendererAppPort}`);
     // Dev server only (`nx serve desktop`); detached, the window is frameless.
     win.webContents.openDevTools({ mode: 'detach' });
->>>>>>> origin/master
   } else {
     win.loadFile(target.path, { query: target.query });
   }

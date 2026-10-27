@@ -83,6 +83,31 @@ describe('TurnMapper', () => {
     });
   });
 
+  it('joins the text blocks of an MCP tool result', () => {
+    const t = new TurnMapper();
+    const res = t.map(
+      m({
+        type: 'user',
+        message: {
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 't9',
+              content: [
+                { type: 'text', text: 'one' },
+                { type: 'image', data: 'x' },
+                { type: 'text', text: 'two' },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(res.at(-1)).toMatchObject({
+      part: { kind: 'toolResult', isError: false, summary: 'one\ntwo' },
+    });
+  });
+
   it('maps init model and commands_changed custom commands', () => {
     const t = new TurnMapper();
     expect(

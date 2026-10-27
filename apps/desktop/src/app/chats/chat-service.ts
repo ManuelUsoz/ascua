@@ -17,6 +17,7 @@ import {
   type ChatSessionRecord,
   type ChatSessionStore,
   type ChatTranscript,
+  type McpServerSpec,
   type Message,
   type PermissionDecision,
   type PermissionRequest,
@@ -39,6 +40,10 @@ export interface ChatServiceOptions {
   bus: ChatEventPublisher;
   ids: () => string;
   now: () => number;
+  mcpServers?: (
+    projectId: string,
+    cwd: string,
+  ) => McpServerSpec[] | Promise<McpServerSpec[]>;
 }
 
 interface Run {
@@ -456,6 +461,18 @@ export class ChatService {
     return record;
   }
 
+  /** A broken spec builder never blocks a chat. */
+  private async mcpServers(
+    projectId: string,
+    cwd: string,
+  ): Promise<McpServerSpec[]> {
+    try {
+      return (await this.o.mcpServers?.(projectId, cwd)) ?? [];
+    } catch {
+      return [];
+    }
+  }
+
   private async turn(run: Run, cwd: string, text: string): Promise<void> {
     const { record } = run;
     const sessionId = record.id;
@@ -473,6 +490,7 @@ export class ChatService {
         });
         const opened = await provider.open({
           cwd,
+          mcpServers: await this.mcpServers(record.projectId, cwd),
           resumeToken: record.resumeToken,
           turn: setup,
           runtime: {
