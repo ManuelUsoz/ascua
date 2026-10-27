@@ -175,13 +175,10 @@ export class TerminalSessions {
   }
 
   async startAll(project: Project): Promise<void> {
-    await Promise.all(
-      project.terminals
-        .filter(
-          (spec) => this.session(project.id, spec.id)?.status !== 'running',
-        )
-        .map((spec) => this.start(project.id, spec.id)),
-    );
+    if (!this.api) return;
+    for (const session of await this.api.startProjectTerminals(project.id)) {
+      this.upsert(session);
+    }
   }
 
   async stopAll(project: Project): Promise<void> {

@@ -10,6 +10,9 @@ export function registerTerminalIpc(manager: TerminalManager): void {
     (_event, projectId: string, terminalId: string, size?: TerminalSize) =>
       manager.start(projectId, terminalId, size),
   );
+  ipcMain.handle(IPC.startProjectTerminals, (_event, projectId: string) =>
+    manager.startProject(projectId),
+  );
   ipcMain.handle(
     IPC.stopTerminal,
     (_event, projectId: string, terminalId: string) =>

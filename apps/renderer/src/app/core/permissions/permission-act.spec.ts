@@ -3,6 +3,7 @@ import { actFor } from './permission-act';
 
 const request = (tool: string, summary: string): PermissionRequest => ({
   id: 1,
+  source: 'hook',
   tool,
   summary,
   input: {},

@@ -41,6 +41,9 @@ hook server. Read the root `CLAUDE.md` first.
   `settings-ipc.ts`, `initial-language.ts`.
 - `storage/atomic-json.ts` - `writeJsonAtomic`, shared by projects and settings.
 - `i18n/main-messages.ts` - native dialog text (es/en, typed dictionary).
+- `assistant/` - the voice assistant's main side (see "Assistant" below).
+  Separate from `chats/`, which also drives Claude but is its own module
+  (sessions, providers, usage); the two coexist and are not unified.
 - `events/` - Electron Forge scaffold. Not the Ascua entry; leave it alone.
 - `constants.ts` - includes the renderer dev port 4200.
 
@@ -72,6 +75,67 @@ hook server. Read the root `CLAUDE.md` first.
 - **Token.** GitHub token stays in main, stored through safeStorage.
 - **Position file.** `%APPDATA%\ascua\position.json` packaged, and
   `%APPDATA%\Electron\position.json` in dev. Linux: `~/.config/ascua/`.
+
+## Assistant (main side)
+
+Renderer side (voice, STT/TTS, CSP): `apps/renderer/CLAUDE.md`. Not the same
+as `chats/`.
+
+- **Engine.** `ClaudeCodeEngine` drives the user's own `claude -p`
+  (stream-json, `--restricted`, cwd `userData/assistant`, never `--bare`). The
+  persona goes inline with `--append-system-prompt`
+  (`--append-system-prompt-file` does not exist in Claude Code 2.1.310).
+  `status()` creates the workDir. `ASCUA_CLAUDE_CLI` forces the CLI path (a
+  `.js/.mjs/.cjs` runs as Electron-as-node).
+- **Tools.** Capabilities in `assistant/capabilities/` over an
+  engine-agnostic `ToolRegistry`, exposed by a hand-rolled MCP server on
+  `node:http` (`127.0.0.1`, per-launch bearer token, no SDK). Tool choice is
+  the model's, via the persona and intent-written descriptions; no regex fast
+  path. The window capability reads `expanded` (`isExpanded()`), not
+  `isFullScreen()`, and only opens/collapses the room (no OS minimize).
+  Built-in Claude Code tools stay off (`--tools ""`, WebSearch included). All
+  registry tools are allowed at CLI level (`mcp__ascua__*`); the registry's
+  `Confirmer` is the only gate for writes. On Windows the `.cmd` shim is
+  spawned with a shell, so stop/cancel kill the process tree.
+- **Lifecycle.** `warm()` spawns `claude` ahead of the first turn; triggers
+  are the Asistente page and voice `pressStart`, never app launch. An idle warm
+  process is reaped after 10 min (session id kept, next spawn resumes). Cancel
+  and barge-in send a stream-json `control_request` `interrupt` instead of
+  killing: the CLI answers `control_response`, then a `result`
+  `error_during_execution`, and stays alive (a drain swallows that result);
+  kill is only the fallback (error response or 3 s timeout). Verified on
+  Claude Code 2.1.310: an idle warm process makes no API call, and the
+  mcp.json `timeout` (from `toolTimeoutMs`) lets a held tool call last 90 s+.
+  `ENABLE_CLAUDEAI_MCP_SERVERS=false` is set in the spawn env (turns and auth
+  status), or the CLI loads claude.ai connectors despite `--strict-mcp-config`.
+- **Confirmations.** `PermissionSource` (`permissions/permission-source.ts`)
+  is the seam shared by `HookServer` and `AssistantConfirmer`; the bridge gives
+  every source one id counter. Write tools (`terminals_start`, `_start_all`,
+  `_stop`, `_open_shell`, `_close_shell`, `_write`) call `summarize`, then the
+  confirmer shows the permission bubble (`source: 'assistant'`) and refuses on
+  deny, abort, `turnDone`/`error` (`dismissAll`) or after 120 s. Assistant
+  requests keep the room open (hook requests still collapse it) and can be
+  answered by voice (sí/dale/no on the next push-to-talk, `yes-no.ts`).
+  `rendererReady` resets only on a main-frame, non-same-document navigation
+  (`window/ascua-window.ts`), so hash navigations and aborted ones do not drop
+  bubbles; `did-finish-load` sets it.
+- **UI knowledge.** The renderer pushes real labels (`UI_LABEL_KEYS`) and the
+  route (`AssistantContext`) to main (`UiContextStore`); `ui_guide` quotes
+  them and `window_state` reports the current screen.
+- **Voice permissions.** `media-permission.ts` grants only audio from our own
+  renderer (plus the `clipboard-sanitized-write` exception for the device-code
+  copy). `autoplayPolicy: 'no-user-gesture-required'`. `setVoiceActive` keeps
+  the window interactive (like `permissions.active`) only while listening, not
+  while transcribing or speaking. `autoSpeak` defaults to false.
+- **Wasm threads.** `main.ts` appends `enable-features=SharedArrayBuffer`
+  (`chromium-switches.ts`) on every platform, giving the renderer and workers
+  SharedArrayBuffer on `file://`. `crossOriginIsolated` stays false on purpose:
+  COOP/COEP needs a custom protocol, which changes the origin (fresh
+  IndexedDB, a 650-960 MB re-download) and touches `loadFile`,
+  `ASCUA_RENDERER=dist`, `isOwnRendererUrl`, `will-navigate` and the reload
+  path. That is the fallback if a future Electron drops the feature; the
+  ui-drive `wasm threads` test fails first. No Chromium WebGPU switch on
+  purpose (`enable-unsafe-webgpu` would bypass the Linux blocklist).
 
 ## Commands
 

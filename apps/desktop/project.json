@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/desktop/src",
   "projectType": "application",
-  "implicitDependencies": ["ascua-ipc", "source-control", "chat"],
+  "implicitDependencies": ["ascua-ipc", "source-control", "assistant", "chat"],
   "targets": {
     "build": {
       "dependsOn": [{"projects": ["renderer"], "target": "build"}],

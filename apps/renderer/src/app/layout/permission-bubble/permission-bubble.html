@@ -1,4 +1,8 @@
-<section id="bubble" [hidden]="!queue.current()">
+<section
+  id="bubble"
+  [hidden]="!queue.current()"
+  [attr.data-source]="queue.current()?.source"
+>
   <header>
     <span
       id="bubble-face"
@@ -6,7 +10,13 @@
       [characterAct]="queue.currentAct()"
       [characterPaused]="!queue.current()"
     ></span>
-    <span id="tool">{{ queue.current()?.tool }}</span>
+    <span id="tool">
+      @if (queue.title(); as title) {
+        {{ title.key | transloco: title.params }}
+      } @else {
+        {{ queue.current()?.tool }}
+      }
+    </span>
     <span id="queued">
       @if (queue.queuedText(); as queued) {
         {{ queued.key | transloco: queued.params }}
@@ -21,8 +31,10 @@
     <button type="button" class="deny" (click)="queue.decide('deny')">
       {{ 'bubble.reject' | transloco }}
     </button>
-    <button type="button" class="quiet" (click)="queue.decide('terminal')">
-      {{ 'bubble.inTerminal' | transloco }}
-    </button>
+    @if (!queue.isAssistant()) {
+      <button type="button" class="quiet" (click)="queue.decide('terminal')">
+        {{ 'bubble.inTerminal' | transloco }}
+      </button>
+    }
   </footer>
 </section>

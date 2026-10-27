@@ -1,0 +1,154 @@
+<div class="as-assistant">
+  @if (checking()) {
+    <div class="as-assistant__center">
+      <app-spinner
+        mode="withTitleAndSubt"
+        [size]="40"
+        [title]="'assistant.checking.title' | transloco"
+        [subtitle]="'assistant.checking.subtitle' | transloco"
+      />
+    </div>
+  } @else if (unavailable(); as reason) {
+    <div class="as-assistant__center">
+      <section class="as-assistant__notice" role="status">
+        <h1 class="as-assistant__notice-title">
+          {{ 'assistant.unavailable.' + reason + '.title' | transloco }}
+        </h1>
+        <p class="as-assistant__notice-body">
+          {{ 'assistant.unavailable.' + reason + '.body' | transloco }}
+        </p>
+        <button
+          type="button"
+          class="as-btn as-btn--primary"
+          (click)="store.retry()"
+        >
+          {{ 'assistant.retry' | transloco }}
+        </button>
+      </section>
+    </div>
+  } @else {
+    <div #scroller class="as-assistant__scroll" aria-live="polite">
+      @if (store.messages().length === 0) {
+        <p class="as-assistant__empty">
+          {{ 'assistant.empty' | transloco }}
+        </p>
+      }
+      @for (m of store.messages(); track m.id) {
+        <article
+          class="as-msg"
+          [attr.data-role]="m.role"
+          [attr.data-state]="m.state"
+        >
+          @if (m.tools.length > 0) {
+            <div class="as-row as-msg__tools">
+              @for (t of m.tools; track t.callId) {
+                <span class="as-chip" [attr.data-state]="t.state">{{
+                  toolKey(t.tool) | transloco
+                }}</span>
+              }
+            </div>
+          }
+          @if (m.text) {
+            <p class="as-msg__text">{{ m.text }}</p>
+          } @else if (m.state === 'streaming') {
+            <p class="as-msg__text as-msg__text--wait">
+              {{ 'assistant.thinking' | transloco }}
+            </p>
+          }
+          @if (m.state === 'cancelled') {
+            <p class="as-msg__note">{{ 'assistant.cancelled' | transloco }}</p>
+          }
+          @if (m.error) {
+            <p class="as-form__error" role="alert">
+              {{ messageErrorKey(m.error) | transloco }}
+            </p>
+          }
+        </article>
+      }
+    </div>
+    @if (failure(); as e) {
+      <p class="as-form__error as-assistant__error" role="alert">
+        {{ e.key | transloco: e.params }}
+      </p>
+    }
+    <form class="as-composer" (submit)="$event.preventDefault()">
+      <textarea
+        #box
+        class="as-input as-composer__input"
+        rows="2"
+        [attr.maxlength]="maxLength"
+        [attr.aria-label]="'assistant.composer.label' | transloco"
+        [attr.placeholder]="'assistant.composer.placeholder' | transloco"
+        [value]="draft()"
+        (input)="input($event)"
+        (keydown)="keydown($event)"
+      ></textarea>
+      @if (voice.enabled()) {
+        <div class="as-composer__voice">
+          <button
+            type="button"
+            class="as-btn as-btn--s as-composer__mic"
+            [attr.aria-pressed]="voice.state() === 'listening'"
+            [attr.aria-label]="'voice.mic' | transloco"
+            [attr.title]="'voice.hold' | transloco"
+            (pointerdown)="micDown($event)"
+            (pointerup)="voice.pressEnd()"
+            (pointerleave)="micLeave()"
+            (pointercancel)="voice.cancelListening()"
+          >
+            <app-icon name="mic" />
+          </button>
+          <button
+            type="button"
+            class="as-btn as-btn--quiet as-btn--s"
+            [attr.aria-pressed]="!voice.autoSpeak()"
+            [attr.aria-label]="'voice.mute' | transloco"
+            (click)="voice.toggleMute()"
+          >
+            <app-icon [name]="voice.autoSpeak() ? 'volume' : 'volume-off'" />
+          </button>
+          <span class="as-composer__voice-status" role="status">
+            @if (voiceFailure(); as e) {
+              {{ e.key | transloco: e.params }}
+            } @else if (voice.download(); as d) {
+              {{ 'voice.downloading.' + d.engine | transloco }}
+              {{ percent(d) }}%
+            } @else if (voice.state() !== 'idle') {
+              {{ 'voice.state.' + voice.state() | transloco }}
+            } @else {
+              {{ 'voice.hold' | transloco }}
+            }
+          </span>
+        </div>
+      }
+      <div class="as-composer__actions">
+        <button
+          type="button"
+          class="as-btn as-btn--quiet as-btn--s"
+          [disabled]="store.messages().length === 0"
+          (click)="store.reset()"
+        >
+          {{ 'assistant.reset' | transloco }}
+        </button>
+        @if (store.busy()) {
+          <button
+            type="button"
+            class="as-btn as-btn--s"
+            (click)="store.cancel()"
+          >
+            <app-icon name="stop" />{{ 'assistant.cancel' | transloco }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="as-btn as-btn--primary as-btn--s"
+            [disabled]="!canSend()"
+            (click)="send(box)"
+          >
+            {{ 'assistant.send' | transloco }}
+          </button>
+        }
+      </div>
+    </form>
+  }
+</div>

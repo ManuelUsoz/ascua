@@ -18,7 +18,8 @@
     "edit": "Edit",
     "settings": "Settings",
     "repositories": "Repositories",
-    "spaces": "Spaces"
+    "spaces": "Spaces",
+    "assistant": "Assistant"
   },
   "room": {
     "minimize": "Minimize",
@@ -28,7 +29,31 @@
     "approve": "Approve",
     "reject": "Reject",
     "inTerminal": "In terminal",
-    "queued": "+{{count}} waiting"
+    "queued": "+{{count}} waiting",
+    "tool": {
+      "terminals_start": "Start the pista {{pista}} of {{project}}",
+      "terminals_start_all": "Start the pistas of {{project}}",
+      "terminals_stop": "Stop {{name}} of {{project}}",
+      "terminals_open_shell": "Open a terminal in {{project}}",
+      "terminals_close_shell": "Close {{name}} of {{project}}",
+      "terminals_write": "Type into {{name}} of {{project}}",
+      "other": "Ascua wants to use {{tool}}"
+    }
+  },
+  "voice": {
+    "mic": "Hold to talk",
+    "mute": "Mute the voice",
+    "hold": "Hold the microphone, or Ctrl+Space, to talk.",
+    "state": {
+      "listening": "Listening…",
+      "loadingModel": "Loading the voice model…",
+      "transcribing": "Transcribing…",
+      "speaking": "Speaking…"
+    },
+    "downloading": {
+      "stt": "Downloading speech recognition",
+      "tts": "Downloading speech synthesis"
+    }
   },
   "notice": {
     "error": "Error",
@@ -59,6 +84,22 @@
   "errors": {
     "unknown": "Unexpected error: {{detail}}",
     "noDesktop": "Only available in the desktop app.",
+<<<<<<< HEAD
+    "assistant": {
+      "notInstalled": "Claude Code was not found on this computer.",
+      "notLoggedIn": "Claude Code is not signed in.",
+      "crashed": "The assistant stopped unexpectedly.",
+      "busy": "The assistant is still answering.",
+      "failed": "The assistant could not answer."
+    },
+    "voice": {
+      "micDenied": "Microphone access is not allowed.",
+      "micUnavailable": "No microphone was found.",
+      "modelFailed": "The voice model could not be loaded.",
+      "noSpeech": "Nothing was heard.",
+      "answerYesNo": "A confirmation is pending: say yes or no.",
+      "ttsUnavailable": "The voice could not be played."
+=======
     "invalidLink": "This link cannot be opened.",
     "chat": {
       "providerNotConfigured": "No chat provider is configured.",
@@ -73,6 +114,7 @@
       "exited": "The agent exited unexpectedly.",
       "saveFailed": "Could not save the chat.",
       "unknown": "Unexpected chat error."
+>>>>>>> origin/master
     },
     "sourceControl": {
       "notConnected": "You are not connected to the provider.",

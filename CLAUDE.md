@@ -26,6 +26,14 @@ Node hook. Per-area guides: `apps/renderer/CLAUDE.md`, `apps/desktop/CLAUDE.md`,
   tree-sitter `.wasm` files and `.scm` queries copied by
   `tools/indexer-assets.mjs`.
 - `npx electron tools/pty-smoke.cjs <pty-host.js>` checks the pty host.
+- ui-drive subsets: `--grep assistant`, `--grep voice` (or a spec file name).
+- Test seams for assistant/voice: `ASCUA_VOICE_FAKE=<phrase|phrase>` (scripted
+  recognizer and fake synthesizer recording `window.__ascuaSpoken`),
+  `--use-fake-device-for-media-stream` (via `Seed.args`), `Seed.env`,
+  `Seed.voice` (seeded `autoSpeak: false` so no scenario downloads models).
+- Dev-only logs: `[ascua:timing]` (renderer, per voice turn), `[ascua:voice]`
+  (engine, device, threads), `[assistant:timing]` (main: warm, spawn, first
+  delta, done).
 
 Full verify chain:
 
@@ -55,6 +63,11 @@ the hook.
   life loop. Art is all-rights-reserved; see the root `NOTICE`.
 - `libs/source-control` (`@ascua/source-control`) - provider-agnostic model,
   ports and `SourceControlError`. Dependency-free.
+- `libs/assistant` (`@ascua/assistant`) - tool and registry ports,
+  `AssistantEngine`, `AssistantError`, `reduceTranscript`. Dependency-free.
+  Main side: `apps/desktop/src/app/assistant/`; renderer: `features/assistant`,
+  `core/assistant`, `core/navigation`, `core/voice`. Details in the desktop and
+  renderer guides. `THIRD_PARTY_NOTICES.md` credits ported code.
 - Shared libs have no build target; they resolve through `tsconfig.base.json`.
 - `tools/` - ui-drive, linux check, hook (`ascua-hook.mjs`), i18n check.
 

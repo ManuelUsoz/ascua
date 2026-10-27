@@ -4,6 +4,11 @@
     <meta charset="utf-8" />
     <title>Ascua</title>
     <!-- No <base>: with hash routing it makes "#/route" resolve to the directory URL, so a reload of file:// fails. -->
+    <!-- CSP: see AGENTS.md. The SharedArrayBuffer switch in main.ts relies on it. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co ws://localhost:4200 http://localhost:4200; img-src 'self' data: blob:; media-src blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
   </head>

@@ -3,6 +3,7 @@ import ElectronEvents from './app/events/electron.events';
 // import UpdateEvents from './app/events/update.events';
 import { app } from 'electron';
 import App from './app/app';
+import { SAB_FEATURE, withFeature } from './app/chromium-switches';
 
 export default class Main {
   static initialize() {
@@ -33,6 +34,13 @@ if (
 ) {
   app.commandLine.appendSwitch('ozone-platform', 'x11');
 }
+
+// SharedArrayBuffer for the renderer and its workers on file:// without
+// cross-origin isolation, so onnxruntime can run wasm threads (voice).
+app.commandLine.appendSwitch(
+  'enable-features',
+  withFeature(app.commandLine.getSwitchValue('enable-features'), SAB_FEATURE),
+);
 
 // handle setup events as quickly as possible
 Main.initialize();

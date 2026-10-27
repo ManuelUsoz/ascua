@@ -15,8 +15,25 @@
 }
 
 #bubble[hidden],
-body.is-open #bubble,
+body.is-open #bubble:not([data-source='assistant']),
 body.is-closing #bubble {
+  display: none;
+}
+
+/* The assistant's confirmation stays over the open room, at its bottom right. */
+body.is-open #bubble[data-source='assistant'] {
+  z-index: 20;
+  top: auto;
+  left: auto;
+  right: 24px;
+  bottom: 24px;
+}
+
+body.is-open #bubble[data-source='assistant'] #summary {
+  max-height: 14em;
+}
+
+body.is-open #bubble[data-source='assistant']::after {
   display: none;
 }
 
@@ -85,10 +102,12 @@ body[data-y='top'] #bubble::after {
 
 #summary {
   margin: 8px 0 12px;
-  max-height: 3.6em;
-  overflow: hidden;
+  /* The user approves exactly this text: it wraps and scrolls, never clips. */
+  max-height: 5em;
+  overflow-x: hidden;
+  overflow-y: auto;
   white-space: pre-wrap;
-  word-break: break-all;
+  overflow-wrap: anywhere;
   font:
     12px/1.5 ui-monospace,
     'Cascadia Mono',

@@ -1,10 +1,35 @@
 import { BrowserWindow, net, safeStorage, shell } from 'electron';
+import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { ToolRegistry } from '@ascua/assistant';
+import { IPC } from '@ascua/ipc';
+import { AssistantService } from './assistant/assistant-service';
+import { registerAssistantIpc } from './assistant/assistant-ipc';
+import {
+  windowCapability,
+  type RoomControl,
+} from './assistant/capabilities/window-capability';
+import { UiContextStore } from './assistant/ui-context';
+import { uiCapability } from './assistant/capabilities/ui-capability';
+import { projectsCapability } from './assistant/capabilities/projects-capability';
+import { filesCapability } from './assistant/capabilities/files-capability';
+import { terminalsCapability } from './assistant/capabilities/terminals-capability';
+import { sourceControlCapability } from './assistant/capabilities/source-control-capability';
+import {
+  AssistantConfirmer,
+  CONFIRM_TIMEOUT_MS,
+} from './permissions/assistant-confirmer';
+import { resolveClaude } from './assistant/engines/claude-code/claude-binary';
+import {
+  ClaudeCodeEngine,
+  type SpawnLike,
+} from './assistant/engines/claude-code/claude-code-engine';
+import { McpHttpServer } from './assistant/mcp/mcp-http-server';
+import { join } from 'node:path';
 import { DIRECT_MODE } from '@ascua/chat';
 import { LOCATE_MODE, MAKE_MODE, REVIEW_MODE } from './chats/harness/nxy-modes';
-import { IPC } from '@ascua/ipc';
 import { bridgeToRenderer, ChatEventBus } from './chats/chat-event-bus';
 import { ChatService } from './chats/chat-service';
 import { registerChatIpc } from './chats/chats-ipc';
@@ -95,8 +120,9 @@ export default class App {
     App.application.on('activate', App.onActivate);
 
     App.application.whenReady().then(() => {
+      const confirmer = new AssistantConfirmer();
       const permissions = new PermissionBridge({
-        hooks: new HookServer(),
+        sources: [new HookServer(), confirmer],
         send: (channel, payload) => App.controller.send(channel, payload),
         rendererReady: () => App.controller.isRendererReady,
         onActiveChange: () => App.controller.refreshInteraction(),
@@ -116,7 +142,8 @@ export default class App {
         resolveShell(process.platform, process.env, existsSync),
       );
       registerTerminalIpc(manager);
-      registerFileIpc(new ProjectFiles(repository));
+      const files = new ProjectFiles(repository);
+      registerFileIpc(files);
       const settings = new JsonSettingsRepository(
         join(App.application.getPath('userData'), 'settings.json'),
         () =>
@@ -153,6 +180,52 @@ export default class App {
         openExternal: (url) => shell.openExternal(url),
       });
       registerSourceControlIpc(sourceControl);
+
+      const room: RoomControl = {
+        isOpen: () => App.controller.isExpanded(),
+        open: () => void App.controller.toggleFullscreen(),
+        collapse: () => App.controller.exitFullscreen(),
+        navigate: (target) =>
+          App.controller.send(IPC.assistantNavigate, target),
+      };
+      const uiContext = new UiContextStore();
+      const registry = new ToolRegistry(
+        [
+          windowCapability({ room, projects: repository, context: uiContext }),
+          uiCapability(uiContext),
+          projectsCapability(repository),
+          filesCapability(files),
+          terminalsCapability(manager, repository),
+          sourceControlCapability(sourceControl),
+        ],
+        confirmer,
+      );
+      const mcp = new McpHttpServer(registry);
+      const engine = new ClaudeCodeEngine({
+        resolve: () => resolveClaude(process.platform, process.env, existsSync),
+        spawn: spawn as unknown as SpawnLike,
+        workDir: join(App.application.getPath('userData'), 'assistant'),
+        endpoint: () => mcp.start(),
+        language: () => settings.get().then((s) => s.language),
+        tools: () => registry.list().map((tool) => tool.name),
+        toolTimeoutMs: CONFIRM_TIMEOUT_MS + 30_000,
+        log: App.isDevelopmentMode()
+          ? (event, data) =>
+              console.info('[assistant:timing]', event, JSON.stringify(data))
+          : undefined,
+      });
+      // Cancel, reset or a crash must not leave a stale confirmation bubble.
+      engine.onEvent((event) => {
+        if (event.type === 'turnDone' || event.type === 'error') {
+          confirmer.dismissAll();
+        }
+      });
+      const assistant = new AssistantService({
+        engine,
+        send: (channel, payload) => App.controller.send(channel, payload),
+      });
+      registerAssistantIpc(assistant, uiContext);
+      App.application.on('will-quit', () => void mcp.stop());
       registerRepositoryLinkIpc(
         new RepositoryLinks(repository, settings, sourceControl, nodeGit, () =>
           App.application.getPath('home'),

@@ -63,6 +63,14 @@ describe('TerminalManager', () => {
     expect(spawn.type === 'spawn' && spawn.env['CHERE_INVOKING']).toBe('1');
   });
 
+<<<<<<< HEAD
+  it('starts every pista of a project and ignores unknown projects', async () => {
+    const { manager, requests } = setup();
+    const started = await manager.startProject('p1');
+    expect(started.map((s) => s.terminalId)).toEqual(['t1', 't2']);
+    expect(requests.filter((r) => r.type === 'spawn')).toHaveLength(2);
+    expect(await manager.startProject('nope')).toEqual([]);
+=======
   it('openCommand spawns the given argv directly', async () => {
     const { manager, requests } = setup();
     const session = await manager.openCommand('p1', {
@@ -77,6 +85,7 @@ describe('TerminalManager', () => {
       args: ['/login'],
       cwd: project.path,
     });
+>>>>>>> origin/master
   });
 
   it('does not respawn a running terminal', async () => {

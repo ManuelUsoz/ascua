@@ -13,6 +13,15 @@ export interface Seed {
   language?: 'es' | 'en';
   /** Projects written to projects.json before launch; get the fixture folders. */
   projects?: (dirs: { projectDir: string; outside: string }) => unknown[];
+  /** Extra environment for the launched app (e.g. `ASCUA_CLAUDE_CLI`). */
+  env?: Record<string, string>;
+  /** Extra command-line switches (e.g. `--use-fake-device-for-media-stream`). */
+  args?: string[];
+  /**
+   * Written to settings.json. Defaults to autoSpeak off so the scenarios that
+   * do not fake the voice never start the real Supertonic download.
+   */
+  voice?: { enabled: boolean; autoSpeak: boolean; style: string };
 }
 
 export interface Ascua {
@@ -126,7 +135,11 @@ export function useAscua(seed: Seed = {}): Ascua {
     state.projectDir = projectDir;
     fs.writeFileSync(
       path.join(data, 'settings.json'),
-      JSON.stringify({ version: 1, language: seed.language ?? 'es' }),
+      JSON.stringify({
+        version: 1,
+        language: seed.language ?? 'es',
+        voice: seed.voice ?? { enabled: true, autoSpeak: false, style: 'F1' },
+      }),
     );
     if (seed.projects) {
       fs.writeFileSync(
@@ -147,21 +160,24 @@ export function useAscua(seed: Seed = {}): Ascua {
       process.platform === 'linux' && process.env['ELECTRON_DISABLE_SANDBOX']
         ? ['--no-sandbox']
         : [];
+    const extra = seed.args ?? [];
     const app = await _electron.launch(
       packaged
         ? {
             executablePath: path.resolve(packaged),
-            args: [`--user-data-dir=${data}`, ...noSandbox],
+            args: [`--user-data-dir=${data}`, ...noSandbox, ...extra],
+            env: { ...process.env, ...seed.env } as Record<string, string>,
             timeout: 40_000,
           }
         : {
             // eslint-disable-next-line @typescript-eslint/no-require-imports
             executablePath: require('electron') as string,
-            args: [`--user-data-dir=${data}`, ...noSandbox, main],
-            env: { ...process.env, ASCUA_RENDERER: 'dist' } as Record<
-              string,
-              string
-            >,
+            args: [`--user-data-dir=${data}`, ...noSandbox, ...extra, main],
+            env: {
+              ...process.env,
+              ASCUA_RENDERER: 'dist',
+              ...seed.env,
+            } as Record<string, string>,
             timeout: 40_000,
           },
     );

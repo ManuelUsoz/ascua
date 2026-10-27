@@ -8,18 +8,21 @@ import { PermissionBubble } from './permission-bubble';
 
 const edit: PermissionRequest = {
   id: 1,
+  source: 'hook',
   tool: 'Edit',
   summary: 'src/app.ts',
   input: {},
 };
 const wipe: PermissionRequest = {
   id: 2,
+  source: 'hook',
   tool: 'Bash',
   summary: 'rm -rf dist',
   input: {},
 };
 const ask: PermissionRequest = {
   id: 3,
+  source: 'hook',
   tool: 'AskUserQuestion',
   summary: 'Which?',
   input: {},
@@ -87,6 +90,34 @@ describe('PermissionBubble', () => {
     expect(
       element.querySelector<HTMLElement>('#bubble-face .ascua')?.dataset['act'],
     ).toBe('alert');
+  });
+
+  it('titles an assistant request in Spanish and hides the terminal button', async () => {
+    push({
+      id: 9,
+      source: 'assistant',
+      tool: 'terminals_write',
+      params: { name: 'api', project: 'P' },
+      summary: 'npm test',
+      input: {},
+    });
+    await settle();
+    expect(element.querySelector('#bubble')?.getAttribute('data-source')).toBe(
+      'assistant',
+    );
+    expect(text('#tool')).toBe('Escribir en api de P');
+    expect(text('#summary')).toBe('npm test');
+    expect(
+      [...element.querySelectorAll('button')].map((b) => b.textContent?.trim()),
+    ).toEqual(['Aprobar', 'Rechazar']);
+  });
+
+  it('renders a long command in full so the user approves all of it', async () => {
+    const long = `echo ${'a'.repeat(900)} && rm -rf /tail-end-marker`;
+    push({ ...wipe, id: 20, summary: long });
+    await settle();
+    expect(text('#summary')).toBe(long);
+    expect(element.querySelector('#summary')?.tagName).toBe('PRE');
   });
 
   it('answers each request with the button pressed', async () => {

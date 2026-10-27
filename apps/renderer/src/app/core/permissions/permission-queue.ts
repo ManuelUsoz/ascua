@@ -13,6 +13,19 @@ import { RoomState } from '../room/room-state';
 import { actFor } from './permission-act';
 
 /**
+ * Write tools with a `bubble.tool.<tool>` headline in the catalogs
+ * (permission-queue.spec checks es and en have each one).
+ */
+export const ASSISTANT_TOOL_TITLES: ReadonlySet<string> = new Set([
+  'terminals_start',
+  'terminals_start_all',
+  'terminals_stop',
+  'terminals_open_shell',
+  'terminals_close_shell',
+  'terminals_write',
+]);
+
+/**
  * Claude Code permission requests waiting for an answer, oldest first. Main
  * keeps the hooks and re-sends pending requests on reload; this is the
  * renderer's view of them.
@@ -30,6 +43,16 @@ export class PermissionQueue {
   readonly currentAct = computed(() => {
     const current = this.current();
     return current ? actFor(current) : undefined;
+  });
+  readonly isAssistant = computed(() => this.current()?.source === 'assistant');
+  /** The assistant's request headline; a hook request shows its raw tool. */
+  readonly title = computed<Text | undefined>(() => {
+    const current = this.current();
+    if (current?.source !== 'assistant') return undefined;
+    const key = ASSISTANT_TOOL_TITLES.has(current.tool)
+      ? `bubble.tool.${current.tool}`
+      : 'bubble.tool.other';
+    return text(key, { ...current.params, tool: current.tool });
   });
   readonly queuedText = computed<Text | undefined>(() =>
     this.requests().length > 1
@@ -70,8 +93,9 @@ export class PermissionQueue {
     const wasEmpty = this.requests().length === 0;
     this.requests.update((queue) => [...queue, request]);
     if (wasEmpty) this.companion.need(actFor(request));
-    // A request that arrives while the room is open brings the bubble back.
-    this.room.collapse();
+    // A hook request that arrives while the room is open brings the bubble
+    // back; the assistant's is shown over the open room instead.
+    if (request.source !== 'assistant') this.room.collapse();
   }
 
   private dismiss(id: number): void {

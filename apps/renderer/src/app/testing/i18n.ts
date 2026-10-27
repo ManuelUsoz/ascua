@@ -12,8 +12,13 @@ import settingsEn from '../../i18n/settings/en.json';
 import settingsEs from '../../i18n/settings/es.json';
 import repositoriesEn from '../../i18n/repositories/en.json';
 import repositoriesEs from '../../i18n/repositories/es.json';
+<<<<<<< HEAD
+import assistantEn from '../../i18n/assistant/en.json';
+import assistantEs from '../../i18n/assistant/es.json';
+=======
 import chatsEn from '../../i18n/chats/en.json';
 import chatsEs from '../../i18n/chats/es.json';
+>>>>>>> origin/master
 
 /** Transloco with every catalog preloaded; add scope catalogs here as they appear. */
 export function i18nTesting(lang: Language = 'es') {
@@ -31,8 +36,13 @@ export function i18nTesting(lang: Language = 'es') {
       'settings/en': settingsEn,
       'repositories/es': repositoriesEs,
       'repositories/en': repositoriesEn,
+<<<<<<< HEAD
+      'assistant/es': assistantEs,
+      'assistant/en': assistantEn,
+=======
       'chats/es': chatsEs,
       'chats/en': chatsEn,
+>>>>>>> origin/master
     },
     translocoConfig: {
       availableLangs: ['es', 'en'],

@@ -1,0 +1,13 @@
+{"type":"system","subtype":"init","cwd":"/home/user/assistant","session_id":"00000000-0000-4000-8000-000000000001","tools":["WebSearch","mcp__ascua__projects_list"],"mcp_servers":[{"name":"ascua","status":"connected"}],"model":"claude-model","permissionMode":"default","claude_code_version":"2.1.310"}
+{"type":"system","subtype":"status","status":"requesting","session_id":"00000000-0000-4000-8000-000000000001"}
+{"type":"stream_event","event":{"type":"message_start","message":{"role":"assistant","content":[]}},"session_id":"00000000-0000-4000-8000-000000000001","parent_tool_use_id":null}
+{"type":"stream_event","event":{"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_01","name":"mcp__ascua__projects_list","input":{}}},"session_id":"00000000-0000-4000-8000-000000000001","parent_tool_use_id":null}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_01","name":"mcp__ascua__projects_list","input":{}}],"stop_reason":null},"session_id":"00000000-0000-4000-8000-000000000001","parent_tool_use_id":null}
+{"type":"user","message":{"role":"user","content":[{"tool_use_id":"toolu_01","type":"tool_result","content":[{"type":"text","text":"[{\"id\":\"p1\",\"name\":\"Proyecto demo\"}]"}]}]},"session_id":"00000000-0000-4000-8000-000000000001","parent_tool_use_id":null}
+{"type":"stream_event","event":{"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}},"session_id":"00000000-0000-4000-8000-000000000001","parent_tool_use_id":null}
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Tienes "}},"session_id":"00000000-0000-4000-8000-000000000001","parent_tool_use_id":null}
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"un proyecto."}},"session_id":"00000000-0000-4000-8000-000000000001","parent_tool_use_id":null}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Tienes un proyecto."}],"stop_reason":null},"session_id":"00000000-0000-4000-8000-000000000001","parent_tool_use_id":null}
+{"type":"stream_event","event":{"type":"message_stop"},"session_id":"00000000-0000-4000-8000-000000000001","parent_tool_use_id":null}
+{"type":"rate_limit_event","rate_limit_info":{"status":"allowed"},"session_id":"00000000-0000-4000-8000-000000000001"}
+{"type":"result","subtype":"success","is_error":false,"stop_reason":"end_turn","session_id":"00000000-0000-4000-8000-000000000001","result":"Tienes un proyecto.","num_turns":2}

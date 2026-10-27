@@ -19,6 +19,11 @@ export const appRoutes: Route[] = [
     data: { area: 'nav.repositories', side: 'repositories' },
   },
   {
+    path: 'asistente',
+    loadChildren: () => import('./features/assistant/assistant.routes'),
+    data: { area: 'nav.assistant' },
+  },
+  {
     path: 'ajustes',
     loadChildren: () => import('./features/settings/settings.routes'),
     data: { area: 'nav.settings' },

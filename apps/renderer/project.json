@@ -5,7 +5,12 @@
   "prefix": "app",
   "sourceRoot": "apps/renderer/src",
   "tags": [],
-  "implicitDependencies": ["ascua-character", "ascua-ipc", "source-control"],
+  "implicitDependencies": [
+    "ascua-character",
+    "ascua-ipc",
+    "source-control",
+    "assistant"
+  ],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:browser-esbuild",
@@ -15,10 +20,16 @@
         "index": "apps/renderer/src/index.html",
         "main": "apps/renderer/src/main.ts",
         "tsConfig": "apps/renderer/tsconfig.app.json",
+        "webWorkerTsConfig": "apps/renderer/tsconfig.worker.json",
         "assets": [
           {
             "glob": "**/*",
             "input": "apps/renderer/public"
+          },
+          {
+            "glob": "ort-wasm-simd-threaded.jsep.{mjs,wasm}",
+            "input": "node_modules/@huggingface/transformers/dist",
+            "output": "voice-runtime"
           }
         ],
         "styles": ["apps/renderer/src/styles.css"]
@@ -37,6 +48,11 @@
               "maximumError": "8kb"
             }
           ],
+          "optimization": {
+            "scripts": true,
+            "styles": { "minify": true, "inlineCritical": false },
+            "fonts": false
+          },
           "outputHashing": "all"
         },
         "development": {
