@@ -3,6 +3,7 @@ import { provideTranslocoScope } from '@jsverse/transloco';
 import { scopeResolver } from '../../core/i18n/provide-i18n';
 import { ProjectClonePage } from './project-clone-page';
 import { ProjectFormPage } from './project-form-page';
+import { ProjectMethodologyPage } from './project-methodology-page';
 import { ProjectPage } from './project-page';
 import { ProjectsIndexPage } from './projects-index-page';
 
@@ -35,6 +36,11 @@ export default [
         path: ':projectId/editar',
         component: ProjectFormPage,
         data: { section: 'nav.edit' },
+      },
+      {
+        path: ':projectId/metodologia',
+        component: ProjectMethodologyPage,
+        data: { section: 'projects.methodology.title' },
       },
       {
         path: ':projectId',

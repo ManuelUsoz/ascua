@@ -1,0 +1,58 @@
+<div class="as-page-head">
+  <h1>{{ 'projects.methodology.title' | transloco }}</h1>
+</div>
+
+@if (loading()) {
+  <app-spinner />
+} @else {
+  <section class="as-panel as-form__panel">
+    <div class="as-form__field">
+      <label class="as-label" for="pm-rules">{{
+        'projects.methodology.rules' | transloco
+      }}</label>
+      <textarea
+        id="pm-rules"
+        class="as-input"
+        rows="16"
+        [value]="rules()"
+        (input)="onInput($event)"
+      ></textarea>
+      <p class="as-hint">{{ 'projects.methodology.hint' | transloco }}</p>
+    </div>
+    @if (error(); as err) {
+      <p class="as-form__error" role="alert">
+        {{ err.key | transloco: err.params }}
+      </p>
+    }
+    @if (saved()) {
+      <p class="as-hint" role="status">
+        {{ 'projects.methodology.saved' | transloco }}
+      </p>
+    }
+    <div class="as-form__actions">
+      <button
+        appButton
+        type="button"
+        variant="primary"
+        [disabled]="busy()"
+        (clicked)="save()"
+      >
+        {{ 'projects.methodology.save' | transloco }}
+      </button>
+      <button
+        appButton
+        type="button"
+        variant="quiet"
+        [disabled]="busy()"
+        (clicked)="reset()"
+      >
+        {{ 'projects.methodology.reset' | transloco }}
+      </button>
+      <a
+        class="as-btn as-btn--ghost"
+        [routerLink]="['/proyectos', projectId()]"
+        >{{ 'projects.form.cancel' | transloco }}</a
+      >
+    </div>
+  </section>
+}

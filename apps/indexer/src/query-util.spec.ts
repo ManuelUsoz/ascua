@@ -95,13 +95,13 @@ let t: Thing;
 
   it('captures interface members owned by the interface', async () => {
     const defs = await QueryUtil.definitionsInSource(
-      'interface Shape { indexProject(root: string): void; size: number }',
+      'interface Shape { indexProject(root: string): void; size: number; each: () => void }',
     );
     expect(
       defs.filter((d) => d.kind === 'method').map((d) => [d.name, d.owner]),
     ).toEqual([
       ['indexProject', 'Shape'],
-      ['size', 'Shape'],
+      ['each', 'Shape'],
     ]);
   });
 
@@ -145,6 +145,28 @@ class Svc {
     );
     expect(cls.extends).toEqual([{ name: 'A', qualifier: 'ns' }]);
     expect(cls.implements).toEqual([{ name: 'I' }, { name: 'J' }]);
+  });
+
+  it('reads satisfies from both variable forms', async () => {
+    const defs = await QueryUtil.definitionsInSource(
+      'const a = { x: 1 } satisfies I;\nconst b: ns.J = { x: 1 };',
+    );
+    const vars = defs.filter((d) => d.kind === 'variable');
+    expect(vars.map((d) => [d.name, d.satisfies])).toEqual([
+      ['a', [{ name: 'I' }]],
+      ['b', [{ name: 'J', qualifier: 'ns' }]],
+    ]);
+  });
+
+  it('ignores members of type literals and data properties', async () => {
+    const defs = await QueryUtil.definitionsInSource(
+      "type E = { type: 'a'; turn: string } | { type: 'b'; run(): void };\ninterface I { name: string; send: (x: string) => void; stop(): void }",
+    );
+    expect(defs.map((d) => [d.kind, d.name, d.owner])).toEqual([
+      ['interface', 'I', undefined],
+      ['method', 'send', 'I'],
+      ['method', 'stop', 'I'],
+    ]);
   });
 
   it('captures interfaces and their extends', async () => {

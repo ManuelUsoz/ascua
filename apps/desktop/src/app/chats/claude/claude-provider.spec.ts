@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ChatError, type AgentEvent, type OpenOptions } from '@ascua/chat';
+import {
+  ChatError,
+  searcherAgent,
+  type AgentEvent,
+  type OpenOptions,
+} from '@ascua/chat';
 import { ClaudeProvider } from './claude-provider';
 
 type Msg = Record<string, unknown>;
@@ -160,6 +165,29 @@ describe('ClaudeProvider', () => {
     s.close();
   });
 
+  it('sets in-memory hooks and the system append when the turn has gates', async () => {
+    const seen: Record<string, any>[] = [];
+    const { sdk } = fakeSdk(() => undefined);
+    const orig = sdk.query;
+    sdk.query = (a: any) => {
+      seen.push(a.options);
+      return orig(a);
+    };
+    const gate = {
+      id: 'g',
+      on: 'beforeTool' as const,
+      check: () => ({ allow: true as const }),
+    };
+    (
+      await open(provider(sdk), { turn: { gates: [gate], systemAppend: 'X' } })
+    ).close();
+    (await open(provider(sdk))).close();
+    expect(seen[0]['hooks'].PreToolUse).toHaveLength(1);
+    expect(seen[0]['hooks'].PostToolUse).toHaveLength(1);
+    expect(seen[0]['systemPrompt']).toMatchObject({ append: 'X' });
+    expect(seen[1]['hooks']).toBeUndefined();
+  });
+
   it('maps mcpServers to stdio options and allows them when restricted', async () => {
     const seen: Record<string, any>[] = [];
     const { sdk } = fakeSdk(() => undefined);
@@ -193,6 +221,30 @@ describe('ClaudeProvider', () => {
     expect(seen[0]['allowedTools']).toBeUndefined();
     expect(seen[1]['mcpServers']).toBeUndefined();
     expect(seen[2]['allowedTools']).toContain('mcp__ascua-indexer');
+  });
+
+  it('passes the searcher subagent when the indexer is present', async () => {
+    const seen: Record<string, any>[] = [];
+    const { sdk } = fakeSdk(() => undefined);
+    const orig = sdk.query;
+    sdk.query = (a: any) => {
+      seen.push(a.options);
+      return orig(a);
+    };
+    const spec = { name: 'ascua-indexer', command: 'node', args: ['x.mjs'] };
+    (
+      await open(provider(sdk), {
+        mcpServers: [spec],
+        turn: { agents: [searcherAgent()] },
+      })
+    ).close();
+    (
+      await open(provider(sdk), { turn: { agents: [searcherAgent()] } })
+    ).close();
+    expect(seen[0]['agents']['searcher'].tools).toEqual([
+      'mcp__ascua-indexer',
+    ]);
+    expect(seen[1]['agents']).toBeUndefined();
   });
 
   it('emits custom commands after init and maps deniedTools', async () => {

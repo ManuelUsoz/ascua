@@ -108,6 +108,7 @@
       "agentMissing": "The provider's agent was not found.",
       "notFound": "The chat or request no longer exists.",
       "invalidInput": "That model, effort or mode is not valid.",
+      "invalidMethodology": "The methodology is not valid: it cannot be blank or exceed 20000 characters.",
       "busy": "The chat is busy. Wait for it to finish.",
       "startFailed": "Could not start the chat.",
       "promptFailed": "Could not send the message.",

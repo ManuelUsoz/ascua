@@ -44,6 +44,12 @@
         <app-icon name="stop" />{{ 'projects.page.stopAll' | transloco }}
       </button>
       <a
+        class="as-btn as-btn--ghost as-btn--s"
+        [routerLink]="['/proyectos', p.id, 'metodologia']"
+      >
+        {{ 'projects.page.methodology' | transloco }}
+      </a>
+      <a
         class="as-btn as-btn--ghost as-btn--s as-btn--icon"
         routerLink="editar"
         [attr.aria-label]="'projects.page.edit' | transloco"

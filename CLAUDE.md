@@ -95,3 +95,7 @@ No hardcoded UI text. Templates use `| transloco`. TS models return `Text`,
 not strings. Main returns `AscuaError` codes; the renderer maps them to
 `errors.<code>`. Catalogs live in `apps/renderer/src/i18n/` (es and en must
 have the same keys). Use `// i18n-ignore` only for legitimate non-UI literals.
+
+## Ascua mcp harness
+
+- If available prefer using rather than Glob, Grep, ascua mcp for searching through the codebase as the mcp indexes files for fast search

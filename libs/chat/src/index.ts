@@ -9,6 +9,8 @@ export * from './lib/transcript';
 export * from './lib/activity';
 export * from './lib/markdown';
 export * from './lib/harness';
+export * from './lib/methodology';
+export * from './lib/searcher';
 export * from './lib/ports';
 export * from './lib/commands';
 export * from './lib/catalog';

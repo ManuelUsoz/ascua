@@ -28,6 +28,7 @@ import {
   type QuestionRequest,
   type UsageLedger,
 } from '@ascua/chat';
+import { chatLog } from './chat-log';
 import type { ChatSessionPatch, ChatStartOptions } from '@ascua/ipc';
 import type { ProjectRepository } from '../projects/project-repository';
 import type { HarnessHost } from './harness/harness-host';
@@ -519,14 +520,16 @@ export class ChatService {
         const provider = this.o.registry.get(record.provider);
         if (!provider) throw new ChatError('providerNotConfigured');
         const session = toSession(record);
+        const mcpServers = await this.mcpServers(record.projectId, cwd);
         const setup = await this.o.harness.setup(record.mode, {
           projectPath: cwd,
           prompt: text,
           session,
+          mcpServers: mcpServers.map((s) => s.name),
         });
         const opened = await provider.open({
           cwd,
-          mcpServers: await this.mcpServers(record.projectId, cwd),
+          mcpServers,
           resumeToken: record.resumeToken,
           turn: setup,
           runtime: {
@@ -633,7 +636,14 @@ export class ChatService {
 
   private onAgentEvent(sessionId: string, e: AgentEvent): void {
     const run = this.runs.get(sessionId);
-    if (!run || run.dead) return;
+    if (!run || run.dead) {
+      chatLog('agent event dropped: no active run', {
+        sessionId,
+        type: e.type,
+        dead: run?.dead,
+      });
+      return;
+    }
     if (e.type === 'sessionInfo') {
       if (e.commands || e.models) {
         const projectId = run.projectId;

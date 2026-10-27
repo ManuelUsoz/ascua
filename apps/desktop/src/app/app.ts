@@ -27,8 +27,8 @@ import {
   type SpawnLike,
 } from './assistant/engines/claude-code/claude-code-engine';
 import { McpHttpServer } from './assistant/mcp/mcp-http-server';
-import { DIRECT_MODE } from '@ascua/chat';
-import { LOCATE_MODE, MAKE_MODE, REVIEW_MODE } from './chats/harness/nxy-modes';
+import { createNxyModes } from './chats/harness/nxy-modes';
+import { MethodologyStore } from './chats/harness/methodology-store';
 import { bridgeToRenderer, ChatEventBus } from './chats/chat-event-bus';
 import { ChatService } from './chats/chat-service';
 import { registerChatIpc } from './chats/chats-ipc';
@@ -243,16 +243,14 @@ export default class App {
         providers: { claude: new ClaudeProvider() },
         settings,
       });
+      const methodologyStore = new MethodologyStore(
+        join(userData, 'methodologies'),
+      );
       const chats = new ChatService({
         store: new JsonChatSessionStore(join(userData, 'chats')),
         ledger: new JsonUsageLedger(join(userData, 'usage')),
         registry: chatRegistry,
-        harness: new HarnessHost([
-          DIRECT_MODE,
-          LOCATE_MODE,
-          MAKE_MODE,
-          REVIEW_MODE,
-        ]),
+        harness: new HarnessHost(createNxyModes(methodologyStore)),
         projects: repository,
         bus: chatBus,
         ids: randomUUID,
@@ -294,6 +292,7 @@ export default class App {
         manager,
         (channel, payload) => App.controller.send(channel, payload),
         () => settings.get(),
+        methodologyStore,
       );
       registerProjectIpc(repository, {
         window: () => App.controller.window,

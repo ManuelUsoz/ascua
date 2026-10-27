@@ -9,6 +9,7 @@ import type {
 } from '@anthropic-ai/claude-agent-sdk';
 import {
   ChatError,
+  SessionTrace,
   type AgentProvider,
   type AgentEvent,
   type ChatCommand,
@@ -40,6 +41,9 @@ import {
   toUsage,
   toSdkMcpServers,
 } from './claude-mapping';
+import { chatLog } from '../chat-log';
+import { toSdkHooks } from './claude-hooks';
+import { toSdkAgents } from './claude-agents';
 import {
   claudeEnv,
   claudeExecutable,
@@ -343,8 +347,21 @@ export class ClaudeProvider implements AgentProvider {
       };
     }
 
+    if (options.turn.gates?.length) {
+      opts.hooks = toSdkHooks(options.turn.gates, new SessionTrace(), (name) =>
+        (Object.keys(TOOL_NAMES) as ToolKind[]).find((k) =>
+          TOOL_NAMES[k].includes(name),
+        ),
+      );
+    }
+
     const denied = options.turn.deniedTools?.flatMap((k) => TOOL_NAMES[k]);
     if (denied?.length) opts.disallowedTools = denied;
+
+    if (options.turn.agents?.length) {
+      const agents = toSdkAgents(options.turn.agents, TOOL_NAMES, mcp);
+      if (Object.keys(agents).length) opts.agents = agents;
+    }
 
     let q: Query;
     try {
@@ -430,6 +447,19 @@ class ClaudeSession implements ProviderSession {
       try {
         for await (const msg of q) {
           const events: AgentEvent[] = mapper.map(msg);
+          if (msg.type !== 'stream_event') {
+            const meta = msg as unknown as {
+              subtype?: string;
+              parent_tool_use_id?: string | null;
+            };
+            chatLog('sdk message', {
+              type: msg.type,
+              subtype: meta.subtype,
+              parent: meta.parent_tool_use_id ?? undefined,
+              events: events.map((e) => e.type),
+              turnActive: !!this.turn,
+            });
+          }
           for (const e of events) this.options.onEvent(e);
           if (msg.type === 'result') this.settle(msg, mapper.takeError());
         }
@@ -442,7 +472,10 @@ class ClaudeSession implements ProviderSession {
 
   private settle(result: SDKResultMessage, recorded?: ChatError): void {
     const turn = this.turn;
-    if (!turn) return;
+    if (!turn) {
+      chatLog('result without active turn (unsolicited, e.g. background task)');
+      return;
+    }
     const r = result as unknown as {
       is_error?: boolean;
       terminal_reason?: string;

@@ -10,6 +10,7 @@ import {
   type Definition,
 } from '../query-util';
 import { changedFiles } from '../scan/changed-files';
+import { readPathAliases } from '../scan/tsconfig-paths';
 
 export interface IndexerServiceShape {
   /** Indexes changed files; prints `{done,total}` JSON lines on stdout. */
@@ -50,6 +51,7 @@ export class IndexerService extends Context.Service<
         provide(
           Effect.gen(function* () {
             const { changed, deleted } = yield* changedFiles(root);
+            const aliases = yield* readPathAliases(root);
             const total = changed.length;
             yield* progress(0, total);
 
@@ -140,6 +142,7 @@ export class IndexerService extends Context.Service<
                     const heritage = [
                       ['extends', definition.extends],
                       ['implements', definition.implements],
+                      ['satisfies', definition.satisfies],
                     ] as const;
                     for (const [kind, refs] of heritage) {
                       for (const ref of refs ?? []) {
@@ -161,6 +164,7 @@ export class IndexerService extends Context.Service<
                       file.path,
                       imp.specifier,
                       known,
+                      aliases,
                     );
                     yield* db.run(
                       'INSERT INTO imports (file_id, kind, local_name, imported_name, specifier, target_path, target_module, line) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -215,13 +219,18 @@ export class IndexerService extends Context.Service<
             }>(
               `SELECT i.id, f.path, i.specifier, i.target_path
                  FROM imports i JOIN files f ON f.id = i.file_id
-                WHERE i.specifier LIKE '.%'`,
+                WHERE i.specifier LIKE '.%' OR i.target_path IS NULL`,
             );
             for (const row of stale) {
               if (row.target_path !== null && current.has(row.target_path)) {
                 continue;
               }
-              const target = resolveSpecifier(row.path, row.specifier, current);
+              const target = resolveSpecifier(
+                row.path,
+                row.specifier,
+                current,
+                aliases,
+              );
               if (target === row.target_path) continue;
               yield* db.run(
                 'UPDATE imports SET target_path = ?, target_module = ? WHERE id = ?',

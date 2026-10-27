@@ -29,8 +29,14 @@ dentro de `encodeError(toAssistantError(error))`.
 - `find_callers toAssistantError` → `[]`.
 - `find_callees guarded` sí lista esa llamada en la línea 24.
 
-El índice directo y el inverso no coinciden. Hipótesis: solo se registra la
-llamada más externa de cada expresión.
+**Diagnóstico corregido: no reproducible.** La hipótesis original (solo se
+registra la llamada más externa) era falsa: dos tests de regresión
+(`QueryService nested arrow in call`, `query-service.spec.ts`) pasan sin cambios
+en el código. Además `guarded` es una declaración de función genérica
+(`assistant-ipc.ts:20-26`), no un const flecha. Causa probable, sin verificar:
+`toAssistantError` no es un nombre único y `find_callers` elegía o fusionaba por
+nombre; lo cubre `resolveSymbol` (finding 2/3).
+Estado: no reproducible, tests de regresión añadidos.
 
 ### 2. Nombres ambiguos se fusionan o se eligen en silencio
 
@@ -72,6 +78,13 @@ renderiza este componente" el resultado queda incompleto.
 Preguntas como "dónde está el fail-open del hook" no tienen respuesta con este
 índice.
 
+**Diagnóstico corregido:** el tokenizador FTS `unicode61` (`migrations.ts:50`) no
+parte camelCase, así que `PushToTalk` es un único token y `push`, `to`, `talk`
+no lo encuentran. Arreglo en `searchSymbols` (`query-service.ts`): una consulta
+multipalabra es `(AND de tokens) OR "palabras unidas"*`; `toFtsQuery` no cambia.
+Búsqueda por concepto (semántica) sigue sin existir.
+Estado: arreglado para multipalabra, concepto no soportado.
+
 ### 8. Cobertura: ficheros no `.ts` fuera del índice
 
 `search_symbols hook` encuentra `HookServer` en `permissions/`, pero
@@ -82,6 +95,12 @@ inexistente".
 ### 9. Truncado sin paginación visible
 
 `find_references warm` devuelve `"omitted": 9` sin forma aparente de pedir el resto.
+
+**Diagnóstico corregido:** `omitted` es un tope de tokens (`cap`), no paginación;
+no hay cursor. Ahora las herramientas de lista añaden `truncated: true` cuando
+cortan y la descripción aclara que `omitted` no es paginable.
+Estado: documentado y parcialmente arreglado. Abierto: `find_callees` y
+`find_importers` devuelven arrays desnudos, sin `truncated`.
 
 ### 10. Ruido de specs y helpers en `search_symbols`
 
@@ -108,6 +127,28 @@ resuelto", "externo" o "unsafe".
 
 Devuelve el cuerpo completo: `RoomState` ocupa unos 9 KB. No hay límite de líneas
 ni modo "solo firma". Es el resultado más caro del conjunto para una tarea normal.
+
+## Estado de los findings
+
+| #   | Estado                                                                                                                                                                                                                                                        | Dónde                                              |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1   | no reproducible (causa probable sin verificar: ambigüedad de nombre)                                                                                                                                                                                          | `query-service.spec.ts` ("nested arrow in call")   |
+| 2   | arreglado: `candidates` si es ambiguo; callees llevan `o`/`p`                                                                                                                                                                                                 | `resolveSymbol` en `query-service.ts`, `server.ts` |
+| 3   | arreglado: `Owner.name` y `path#name`                                                                                                                                                                                                                         | `resolveSymbol`, `query-service.spec.ts`           |
+| 4   | arreglado: callees de una clase incluyen sus métodos                                                                                                                                                                                                          | `query-service.ts`, `query-service.spec.ts`        |
+| 5   | arreglado: relación `satisfies`, nuevo kind `variable`; `find_implementations` devuelve `{extends, implements, satisfies, truncated}` (cambio de forma, rompe el array plano). Efecto lateral: las llamadas dentro de esos objetos se atribuyen a la variable | `query-util.ts`, `query-service.ts`, `bench.ts`    |
+| 6   | documentado: las plantillas Angular no están cubiertas                                                                                                                                                                                                        | descripciones en `server.ts`                       |
+| 7   | arreglado para multipalabra (ver arriba); concepto no soportado                                                                                                                                                                                               | `searchSymbols`                                    |
+| 8   | arreglado: distingue lenguaje no soportado de no indexado                                                                                                                                                                                                     | `server.ts` (`canParse`)                           |
+| 9   | documentado + `truncated` (ver arriba)                                                                                                                                                                                                                        | `cap`, `server.ts`                                 |
+| 10  | arreglado: filtros `kind`, `path`, `excludeSpecs`; ranking exacto primero                                                                                                                                                                                     | `searchSymbols`                                    |
+| 11  | arreglado: alias `path`; normaliza `./` y `\`                                                                                                                                                                                                                 | `server.ts`, `query-service.ts`                    |
+| 12  | documentado: `u`/`a` en las descripciones                                                                                                                                                                                                                     | `server.ts`                                        |
+| 13  | arreglado: `signatureOnly` / `maxLines` en `get_symbol_context`                                                                                                                                                                                               | `query-service.ts`, `server.ts`                    |
+
+Huecos abiertos: `find_callees`/`find_importers` sin `truncated`; `find_importers`
+con nombre con puntos informa "unsupported language"; `truncated` de
+`get_symbol_context` no marca los cortes por `maxLines`/`signatureOnly`.
 
 ## Mejoras propuestas
 
@@ -140,16 +181,63 @@ ni modo "solo firma". Es el resultado más caro del conjunto para una tarea norm
 - Los findings **1, 2 y 5** son los que más dañan una feature real. Conviene
   atacarlos primero: identidad de símbolo y el índice inverso de llamadas.
 
+## Segunda ronda (cross-file): estado
+
+Numeración de la segunda prueba de uso, distinta de la lista anterior.
+
+| #   | Finding                                              | Estado    | Causa y arreglo                                                                                                                                                                                                                                         |
+| --- | ---------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Propiedades de type literal indexadas como métodos   | Arreglado | `definitions.scm` capturaba cualquier `property_signature`. Ahora solo las de tipo función y `QueryUtil.isTypeLiteralMember` descarta las que no están en una `interface_declaration`.                                                                  |
+| 2   | Imports `@ascua/*` quedaban `u`                      | Arreglado | Los alias de `tsconfig` (`paths`) no se resolvían. `scan/tsconfig-paths.ts` los lee y `resolveSpecifier` los usa al indexar.                                                                                                                            |
+| 3   | Ruido en callers calificados (`Clase.método`)        | Arreglado | La regla "alcanzable por imports" (archivo de la definición o que la importa, directa o vía barrel) se aplica antes del descarte de nombres de menos de 6 caracteres. `omitted` cuenta solo los name-only de archivos que nunca importan la definición. |
+| 4   | Candidatos ambiguos sin orden ni tope                | Arreglado | `query/ranking.ts` los ordena (declaraciones sobre miembros, código sobre specs), máximo 10 y `moreCandidates` con el resto.                                                                                                                            |
+| 5   | JSON schema grande (`anyOf null`, enum `"Infinity"`) | Arreglado | `Schema.optionalKey` y `Schema.Finite`/`Schema.Int` en lugar de `optional`/`Number`. Test en `server.spec.ts`.                                                                                                                                          |
+| 6   | `search_symbols` mal ordenado                        | Arreglado | Se piden `max(limit*5, 100)` filas y se reordenan con `Ranking` antes de cortar a `limit`.                                                                                                                                                              |
+| 8   | Símbolo desconocido devolvía resultado vacío         | Arreglado | `find_references/callers/callees/implementations` devuelven `undefined` sin definición ni coincidencias y el MCP responde `No indexed symbol matches "<symbol>"` (`isError`).                                                                           |
+
+### Parámetros tipados nuevos
+
+- `search_symbols`: `kind` (`class|interface|function|method|variable`), `owner`.
+- `find_references`: `role` (`call|new|ref|type`), `within`, `excludeSpecs`.
+- `find_callers`: `within`, `excludeSpecs`.
+- `find_importers`: `within`, `excludeSpecs`.
+- `find_implementations`: `relation` (`extends|implements|satisfies`), `within`,
+  `excludeSpecs`.
+- `find_callees`: `onlyResolved`.
+
+`within` es un prefijo de ruta relativo a la raíz de los archivos que USAN el
+símbolo (`path` sigue siendo el archivo de la definición).
+
+### Huecos nuevos
+
+- **Campos de clase que no son funciones** (p. ej. `readonly open = signal(false)`)
+  no se indexan. Herramienta nueva `search_text`: búsqueda literal o regex sobre
+  el texto de los `.ts` indexados. Params: `pattern`, `regex`, `caseSensitive`,
+  `within`, `excludeSpecs`, `limit`, `max_tokens`. Lee de disco: `text` refleja
+  ediciones posteriores al último index y `e` (símbolo envolvente) puede estar
+  desactualizado.
+- **`find_importers`** acepta alias de `tsconfig` (`@ascua/assistant`) y
+  especificadores exactos (`rxjs`), después de los nombres de archivo y antes
+  del modo símbolo.
+- **Plantillas HTML y otros lenguajes**: no soportados por diseño. Todas las
+  descripciones de herramientas lo dicen (constante `ONLY_TS`) y el error de
+  símbolo desconocido sugiere `search_text`.
+
+### Abiertos
+
+- Finding 7: búsqueda por concepto.
+- `find_callees` y `find_importers` no tienen flag `truncated`.
+
 ## Reproducción
 
-| Consulta | Resultado esperado | Resultado observado |
-|---|---|---|
-| `find_callers toAssistantError` | incluir `guarded` (l. 24) | `[]` |
-| `find_callees AssistantService.send` | llamadas de ese método | `[]` |
-| `get_symbol_context AssistantService.send` | cuerpo del método | error "No indexed symbol" |
-| `find_callees RoomState` | llamadas de todos los métodos | 4 llamadas (campos, l. 22–26) |
-| `find_implementations AssistantEngine` | incluir el objeto `satisfies` del spec | solo `ClaudeCodeEngine` |
-| `find_references Avatar` | incluir `app.html` | sin `app.html` |
-| `search_symbols "push to talk"` | coincidencias por tokens | `[]` |
-| `get_file_outline tools/ascua-hook.mjs` | outline o "no soportado" | "not in the index" |
-| `find_importers ./libs/assistant/src/lib/engine` | normalizar ruta | error sin pistas |
+| Consulta                                         | Resultado esperado                     | Resultado observado           |
+| ------------------------------------------------ | -------------------------------------- | ----------------------------- |
+| `find_callers toAssistantError`                  | incluir `guarded` (l. 24)              | `[]`                          |
+| `find_callees AssistantService.send`             | llamadas de ese método                 | `[]`                          |
+| `get_symbol_context AssistantService.send`       | cuerpo del método                      | error "No indexed symbol"     |
+| `find_callees RoomState`                         | llamadas de todos los métodos          | 4 llamadas (campos, l. 22–26) |
+| `find_implementations AssistantEngine`           | incluir el objeto `satisfies` del spec | solo `ClaudeCodeEngine`       |
+| `find_references Avatar`                         | incluir `app.html`                     | sin `app.html`                |
+| `search_symbols "push to talk"`                  | coincidencias por tokens               | `[]`                          |
+| `get_file_outline tools/ascua-hook.mjs`          | outline o "no soportado"               | "not in the index"            |
+| `find_importers ./libs/assistant/src/lib/engine` | normalizar ruta                        | error sin pistas              |

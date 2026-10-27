@@ -18,6 +18,7 @@ import {
 } from '@ascua/ipc';
 import type { TerminalManager } from '../terminals/terminal-manager';
 import type { ChatService } from './chat-service';
+import type { MethodologyStore } from './harness/methodology-store';
 import type { ProviderRegistry } from './provider-registry';
 
 function toError(error: unknown): AscuaError {
@@ -31,6 +32,15 @@ function toError(error: unknown): AscuaError {
 function str(value: unknown): string {
   if (typeof value !== 'string' || value === '') {
     throw new ChatError('notFound');
+  }
+  return value;
+}
+
+const MAX_RULES = 20000;
+
+function methodologyProjectId(value: unknown): string {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) {
+    throw new ChatError('invalidMethodology');
   }
   return value;
 }
@@ -119,6 +129,7 @@ export function registerChatIpc(
   terminals: Pick<TerminalManager, 'openCommand' | 'onExit'>,
   send: (channel: string, payload: unknown) => void,
   getSettings: () => Promise<unknown>,
+  methodologies: Pick<MethodologyStore, 'load' | 'save' | 'reset'>,
   timers: LoginTimers = {
     setInterval: (fn, ms) => setInterval(fn, ms),
     clearInterval: (h) => clearInterval(h as NodeJS.Timeout),
@@ -169,6 +180,42 @@ export function registerChatIpc(
     throw new Error(encodeError(toError(error)));
   };
 
+  ipcMain.handle(IPC.methodologyGet, async (_e, projectId: unknown) => {
+    try {
+      return await methodologies.load(methodologyProjectId(projectId));
+    } catch (error) {
+      return toError(error);
+    }
+  });
+  ipcMain.handle(
+    IPC.methodologySave,
+    async (_e, projectId: unknown, rules: unknown) => {
+      try {
+        const id = methodologyProjectId(projectId);
+        if (
+          typeof rules !== 'string' ||
+          rules.trim() === '' ||
+          rules.length > MAX_RULES
+        ) {
+          throw new ChatError('invalidMethodology');
+        }
+        const next = { ...(await methodologies.load(id)), rules };
+        await methodologies.save(id, next);
+        return next;
+      } catch (error) {
+        return toError(error);
+      }
+    },
+  );
+  ipcMain.handle(IPC.methodologyReset, async (_e, projectId: unknown) => {
+    try {
+      const id = methodologyProjectId(projectId);
+      await methodologies.reset(id);
+      return await methodologies.load(id);
+    } catch (error) {
+      return toError(error);
+    }
+  });
   ipcMain.handle(IPC.chatProviders, () => registry.list().catch(thrown));
   ipcMain.handle(IPC.chatProviderAuth, async (_e, id: unknown) => {
     try {

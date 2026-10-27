@@ -15,14 +15,17 @@ import {
   type TurnResult,
   type UsageEntry,
   type UsageLedger,
-  DIRECT_MODE,
   addUsage,
   EMPTY_USAGE,
 } from '@ascua/chat';
 import type { Project } from '@ascua/ipc';
 import { ChatService } from './chat-service';
 import { HarnessHost } from './harness/harness-host';
-import { LOCATE_MODE, MAKE_MODE, REVIEW_MODE } from './harness/nxy-modes';
+import {
+  DEFAULT_METHODOLOGY,
+  type MethodologyStore,
+} from './harness/methodology-store';
+import { createNxyModes } from './harness/nxy-modes';
 import { ProviderRegistry } from './provider-registry';
 
 const project = { id: 'p1', name: 'Demo', path: '/demo', terminals: [] };
@@ -149,12 +152,11 @@ function setup(
         update: async () => undefined,
       },
     }),
-    harness: new HarnessHost([
-      DIRECT_MODE,
-      LOCATE_MODE,
-      MAKE_MODE,
-      REVIEW_MODE,
-    ]),
+    harness: new HarnessHost(
+      createNxyModes({
+        load: async () => DEFAULT_METHODOLOGY,
+      } as unknown as MethodologyStore),
+    ),
     projects: {
       get: async (id: string) =>
         id === 'p1' ? (project as Project) : undefined,

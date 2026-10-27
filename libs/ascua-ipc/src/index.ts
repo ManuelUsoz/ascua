@@ -10,6 +10,7 @@ import type {
   ChatModeId,
   ChatSession,
   ChatTranscript,
+  Methodology,
   ModelCatalog,
   PermissionMode,
   ProviderAuth,
@@ -127,6 +128,9 @@ export const IPC = {
   resolveChatQuestion: 'ascua:chats:resolve-question',
   chatEvent: 'ascua:chats:event',
   chatProviderAuthChanged: 'ascua:chats:provider-auth-changed',
+  methodologyGet: 'ascua:methodology:get',
+  methodologySave: 'ascua:methodology:save',
+  methodologyReset: 'ascua:methodology:reset',
   indexProject: 'ascua:indexer:index',
   reindexProject: 'ascua:indexer:reindex',
   indexProgress: 'ascua:indexer:progress',
@@ -347,6 +351,7 @@ export const CHAT_ERROR_CODES = [
   'chat.agentMissing',
   'chat.notFound',
   'chat.invalidInput',
+  'chat.invalidMethodology',
   'chat.busy',
   'chat.startFailed',
   'chat.promptFailed',
@@ -677,6 +682,8 @@ export interface AssistantSnapshot {
 }
 
 /** The API exposed by the preload script as `window.ascua`. */
+export type MethodologyDto = Methodology;
+
 export interface AscuaApi {
   toggleFullscreen(): Promise<BloomOrigin>;
   exitFullscreen(): Promise<void>;
@@ -901,12 +908,19 @@ export interface AscuaApi {
   onChatProviderAuthChanged(
     callback: (auth: ProviderAuthChange) => void,
   ): () => void;
+  /** Per-project chat methodology (saved one or the built-in default). */
+  getMethodology(projectId: string): Promise<MethodologyDto | AscuaError>;
+  /** Saves the rules text; the title and tool hints are kept. */
+  saveMethodology(
+    projectId: string,
+    rules: string,
+  ): Promise<MethodologyDto | AscuaError>;
+  /** Drops the saved methodology and returns the built-in default. */
+  resetMethodology(projectId: string): Promise<MethodologyDto | AscuaError>;
   /** Starts (or joins) an index run; progress streams through `onIndexProgress`. */
   indexProject(projectId: string): Promise<AscuaError | undefined>;
   reindexProject(projectId: string): Promise<AscuaError | undefined>;
   onIndexProgress(callback: (event: IndexProgress) => void): () => void;
   runBenchmark(projectId: string): Promise<BenchmarkReport | AscuaError>;
-  onBenchmarkProgress(
-    callback: (event: BenchmarkProgress) => void,
-  ): () => void;
+  onBenchmarkProgress(callback: (event: BenchmarkProgress) => void): () => void;
 }

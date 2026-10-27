@@ -4,7 +4,12 @@ import { Query, type Language, type Node, type Tree } from 'web-tree-sitter';
 import { findAsset } from './assets';
 import { ParserUtil, type Grammar } from './parser-util';
 
-export type DefinitionKind = 'function' | 'class' | 'method' | 'interface';
+export type DefinitionKind =
+  | 'function'
+  | 'class'
+  | 'method'
+  | 'interface'
+  | 'variable';
 
 export interface Definition {
   readonly kind: DefinitionKind;
@@ -17,6 +22,8 @@ export interface Definition {
   /** Classes only. */
   readonly extends?: readonly HeritageRef[];
   readonly implements?: readonly HeritageRef[];
+  /** Variables only: `x satisfies I` or `const x: I = {...}`. */
+  readonly satisfies?: readonly HeritageRef[];
 }
 
 export interface HeritageRef {
@@ -65,11 +72,61 @@ export const resolveSpecifier = (
   fromPath: string,
   specifier: string,
   knownPaths: ReadonlySet<string>,
+  aliases: readonly PathAlias[] = [],
 ): string | null => {
-  if (!specifier.startsWith('.')) return null;
+  if (!specifier.startsWith('.')) {
+    for (const joined of aliasTargets(specifier, aliases)) {
+      const found = firstKnown(joined, knownPaths);
+      if (found) return found;
+    }
+    return null;
+  }
   const from = fromPath.replace(/\\/g, '/');
   const joined = posix.normalize(posix.join(posix.dirname(from), specifier));
   if (joined === '..' || joined.startsWith('../')) return null;
+  return firstKnown(joined, knownPaths);
+};
+
+/** A tsconfig `paths` entry; targets are root-relative posix paths. */
+export interface PathAlias {
+  /** `@scope/lib` or `@scope/*`. */
+  readonly pattern: string;
+  readonly targets: readonly string[];
+}
+
+/** Root-relative candidates for a bare specifier, from tsconfig `paths`. */
+const aliasTargets = (
+  specifier: string,
+  aliases: readonly PathAlias[],
+): string[] => {
+  const out: string[] = [];
+  for (const { pattern, targets } of aliases) {
+    const star = pattern.indexOf('*');
+    if (star < 0) {
+      if (pattern === specifier) out.push(...targets);
+      continue;
+    }
+    const head = pattern.slice(0, star);
+    const tail = pattern.slice(star + 1);
+    if (
+      specifier.length >= head.length + tail.length &&
+      specifier.startsWith(head) &&
+      specifier.endsWith(tail)
+    ) {
+      const middle = specifier.slice(
+        head.length,
+        specifier.length - tail.length,
+      );
+      out.push(...targets.map((target) => target.replace('*', middle)));
+    }
+  }
+  return out;
+};
+
+const firstKnown = (
+  joined: string,
+  knownPaths: ReadonlySet<string>,
+): string | null => {
   const base = joined.replace(/\.(js|jsx|mjs|cjs)$/, '');
   const candidates = [
     joined,
@@ -87,6 +144,7 @@ const KINDS: ReadonlySet<string> = new Set<DefinitionKind>([
   'class',
   'method',
   'interface',
+  'variable',
 ]);
 const FUNCTION_NODES: ReadonlySet<string> = new Set([
   'function_declaration',
@@ -142,6 +200,7 @@ export class QueryUtil {
       const whole = captures.find((capture) => KINDS.has(capture.name));
       if (!name || !whole) continue;
       const kind = whole.name as DefinitionKind;
+      if (QueryUtil.isTypeLiteralMember(whole.node)) continue;
       const owner =
         kind === 'method' ? QueryUtil.ownerNameAround(whole.node) : undefined;
       definitions.push({
@@ -150,6 +209,7 @@ export class QueryUtil {
         ...(owner && { owner }),
         ...((kind === 'class' || kind === 'interface') &&
           QueryUtil.heritageOf(whole.node)),
+        ...(kind === 'variable' && QueryUtil.satisfiesOf(whole.node)),
         startLine: whole.node.startPosition.row + 1,
         endLine: whole.node.endPosition.row + 1,
       });
@@ -390,6 +450,19 @@ export class QueryUtil {
     };
   }
 
+  /** `satisfies` targets of a variable declarator. */
+  private static satisfiesOf(node: Node): Pick<Definition, 'satisfies'> {
+    const value = node.childForFieldName('value');
+    const typeNode =
+      value?.type === 'satisfies_expression'
+        ? value.namedChildren[value.namedChildren.length - 1]
+        : node
+            .childForFieldName('type')
+            ?.namedChildren.find((child) => child.type !== 'type_arguments');
+    const ref = typeNode ? QueryUtil.heritageRef(typeNode) : undefined;
+    return ref ? { satisfies: [ref] } : {};
+  }
+
   private static heritageRef(node: Node): HeritageRef | undefined {
     switch (node.type) {
       case 'identifier':
@@ -425,6 +498,17 @@ export class QueryUtil {
   }
 
   /** Walks up the tree to the class or interface a method belongs to. */
+  /** Signatures inside `type X = { ... }` or a union: no owner, not definitions. */
+  private static isTypeLiteralMember(node: Node): boolean {
+    if (
+      node.type !== 'method_signature' &&
+      node.type !== 'property_signature'
+    ) {
+      return false;
+    }
+    return node.parent?.parent?.type !== 'interface_declaration';
+  }
+
   private static ownerNameAround(node: Node): string | undefined {
     for (let up = node.parent; up; up = up.parent) {
       if (CLASS_NODES.has(up.type) || up.type === 'interface_declaration') {

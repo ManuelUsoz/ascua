@@ -39,7 +39,16 @@
     "newChat": "New chat",
     "stopAll": "Stop all",
     "edit": "Edit project",
+    "methodology": "Methodology",
     "sections": "Project sections"
+  },
+  "methodology": {
+    "title": "Methodology",
+    "rules": "Rules",
+    "hint": "Injected into this project's chats. Stored in Ascua, not in the project folder.",
+    "save": "Save",
+    "reset": "Restore default",
+    "saved": "Saved."
   },
   "indexing": {
     "bar": "Indexing progress"

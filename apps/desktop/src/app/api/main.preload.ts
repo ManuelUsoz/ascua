@@ -17,6 +17,7 @@ import {
   type Layout,
   type PermissionDecision,
   type PickTerminalFolderResult,
+  type MethodologyDto,
   type ProviderAuthChange,
   type Project,
   type RepositoryLink,
@@ -331,6 +332,18 @@ const api: AscuaApi = {
   onChatEvent: (callback) => listen<ChatEvent>(IPC.chatEvent, callback),
   onChatProviderAuthChanged: (callback) =>
     listen<ProviderAuthChange>(IPC.chatProviderAuthChanged, callback),
+  getMethodology: (projectId) =>
+    ipcRenderer.invoke(IPC.methodologyGet, projectId) as Promise<
+      MethodologyDto | AscuaError
+    >,
+  saveMethodology: (projectId, rules) =>
+    ipcRenderer.invoke(IPC.methodologySave, projectId, rules) as Promise<
+      MethodologyDto | AscuaError
+    >,
+  resetMethodology: (projectId) =>
+    ipcRenderer.invoke(IPC.methodologyReset, projectId) as Promise<
+      MethodologyDto | AscuaError
+    >,
   indexProject: (projectId) =>
     ipcRenderer.invoke(IPC.indexProject, projectId) as Promise<
       AscuaError | undefined

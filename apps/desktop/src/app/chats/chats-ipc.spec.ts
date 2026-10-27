@@ -50,6 +50,7 @@ function setup(states: Array<'loggedIn' | 'loggedOut'>) {
     terminals as never,
     send,
     async () => ({}),
+    {} as never,
     timers,
   );
   const login = () => handlers.get(IPC.chatProviderLogin)!({}, 'p1', 'claude');
@@ -113,6 +114,54 @@ describe('chat provider login watcher', () => {
   });
 });
 
+describe('methodology ipc', () => {
+  function register() {
+    handlers.clear();
+    const current = { id: 'm', title: 'T', rules: 'old', tools: [] };
+    const store = {
+      load: vi.fn(async () => current),
+      save: vi.fn(async () => undefined),
+      reset: vi.fn(async () => undefined),
+    };
+    registerChatIpc(
+      {} as never,
+      {} as never,
+      {} as never,
+      vi.fn(),
+      async () => ({}),
+      store as never,
+    );
+    return { store, current };
+  }
+
+  it('gets, saves rules keeping the rest, and resets', async () => {
+    const { store, current } = register();
+    await expect(handlers.get(IPC.methodologyGet)!({}, 'p1')).resolves.toEqual(
+      current,
+    );
+    await expect(
+      handlers.get(IPC.methodologySave)!({}, 'p1', 'new'),
+    ).resolves.toEqual({ ...current, rules: 'new' });
+    expect(store.save).toHaveBeenCalledWith('p1', { ...current, rules: 'new' });
+    await handlers.get(IPC.methodologyReset)!({}, 'p1');
+    expect(store.reset).toHaveBeenCalledWith('p1');
+  });
+
+  it('rejects bad ids and rules', async () => {
+    const { store } = register();
+    const invalid = { code: 'chat.invalidMethodology' };
+    await expect(
+      handlers.get(IPC.methodologyGet)!({}, '../x'),
+    ).resolves.toEqual(invalid);
+    for (const rules of [undefined, '', '  ', 'x'.repeat(20001)]) {
+      await expect(
+        handlers.get(IPC.methodologySave)!({}, 'p1', rules),
+      ).resolves.toEqual(invalid);
+    }
+    expect(store.save).not.toHaveBeenCalled();
+  });
+});
+
 describe('resolve chat question', () => {
   function register() {
     handlers.clear();
@@ -123,6 +172,7 @@ describe('resolve chat question', () => {
       {} as never,
       vi.fn(),
       async () => ({}),
+      {} as never,
       {
         setInterval: vi.fn(),
         clearInterval: vi.fn(),

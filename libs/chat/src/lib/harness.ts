@@ -8,12 +8,22 @@ export type AgentRole =
   | 'planner'
   | 'implementer'
   | 'reviewer'
-  | 'tester';
+  | 'tester'
+  | 'searcher';
 
+/**
+ * Provider-agnostic subagent spec. Provider adapters map it (Claude ->
+ * `options.agents`).
+ */
 export interface AgentDefinition {
   role: AgentRole;
+  /** When the parent agent should delegate to it. */
+  description: string;
   instructions: string;
   tools: ToolKind[];
+  /** Names of MCP servers whose tools it may use, besides `tools`. */
+  mcpServers?: string[];
+  model?: string;
 }
 
 export interface AgentRunRecord {
@@ -23,8 +33,44 @@ export interface AgentRunRecord {
   status: 'running' | 'done' | 'failed';
 }
 
+export interface ToolHint {
+  /** Tool or capability the agent should reach for. */
+  tool: string;
+  /** When to use it. */
+  when: string;
+}
+
+export interface Methodology {
+  id: string;
+  title: string;
+  rules: string;
+  tools: ToolHint[];
+}
+
+/** Records tool names used during a session so gates can inspect them. */
+export interface SessionTraceView {
+  readonly names: readonly string[];
+  used(pattern: string | RegExp): boolean;
+}
+
+export interface GateEvent {
+  kind?: ToolKind;
+  toolName: string;
+  input: unknown;
+  trace: SessionTraceView;
+}
+
+export type GateVerdict = { allow: true } | { allow: false; reason: string };
+
+export interface HarnessGate {
+  id: string;
+  on: 'beforeTool' | 'beforeStop';
+  check(e: GateEvent): GateVerdict;
+}
+
 /** What the provider receives for a turn. */
 export interface TurnSetup {
+  gates?: HarnessGate[];
   systemAppend?: string;
   allowedTools?: ToolKind[];
   deniedTools?: ToolKind[];
@@ -35,6 +81,8 @@ export interface HarnessContext {
   projectPath: string;
   prompt: string;
   session: ChatSession;
+  /** Names of the MCP servers this turn will carry. */
+  mcpServers?: string[];
 }
 
 export interface HarnessMode {

@@ -3,12 +3,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { NodeFileSystem, NodePath } from '@effect/platform-node';
 import { Cause, Effect, Exit, Layer, Stream } from 'effect';
+import { Tool } from 'effect/ai';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SqliteClient } from '../db/sqlite-client';
 import { IndexerService } from '../index/indexer-service';
 import { MetricsService } from '../metrics/metrics-service';
 import { QueryService } from '../query/query-service';
-import { handlers, IndexerToolkit } from './server';
+import { handlers, IndexerToolkit, ONLY_TS } from './server';
 
 let root: string;
 
@@ -52,7 +53,7 @@ const call = (
     | 'get_file_outline'
     | 'get_symbol_context'
     | 'find_importers',
-  params: Record<string, string | number>,
+  params: Record<string, string | number | boolean>,
 ) =>
   Effect.gen(function* () {
     const toolkit = yield* IndexerToolkit;
@@ -186,6 +187,220 @@ describe('MCP tool instrumentation', () => {
     );
     expect(out[0].isFailure).toBe(false);
     expect(String(out[0].result)).toContain('parseThing');
+  });
+
+  it('tells an unsupported language from a missing file', async () => {
+    const out = await run(
+      MetricsService.layer,
+      Effect.gen(function* () {
+        return [
+          yield* callFull('get_file_outline', { path: 'tools/hook.mjs' }),
+          yield* callFull('get_file_outline', { path: 'src/nope.ts' }),
+          yield* callFull('find_importers', { target: 'tools/hook.mjs' }),
+        ];
+      }),
+    );
+    expect(String(out[0][0].result)).toContain('unsupported language');
+    expect(String(out[1][0].result)).toContain('is not in the index');
+    expect(String(out[2][0].result)).toContain('unsupported language');
+  });
+
+  it('does not report a dotted symbol ref as unsupported language', async () => {
+    const out = await run(
+      MetricsService.layer,
+      Effect.gen(function* () {
+        return yield* callFull('find_importers', { target: 'Owner.name' });
+      }),
+    );
+    expect(String(out[0].result)).not.toContain('unsupported language');
+  });
+
+  it('accepts file/path aliases and a leading ./', async () => {
+    const out = await run(
+      MetricsService.layer,
+      Effect.gen(function* () {
+        return [
+          yield* callFull('get_file_outline', { file: './src/a.ts' }),
+          yield* callFull('find_importers', { path: './src/a.ts' }),
+        ];
+      }),
+    );
+    expect(out[0][0].isFailure).toBe(false);
+    expect(String(out[0][0].result)).toContain('parseThing');
+    expect(out[1][0].isFailure).toBe(false);
+  });
+
+  it('search_symbols and get_symbol_context accept the new options', async () => {
+    const out = await run(
+      MetricsService.layer,
+      Effect.gen(function* () {
+        return [
+          yield* call('search_symbols', {
+            query: 'parse',
+            kind: 'class',
+            excludeSpecs: true,
+          }),
+          yield* callFull('get_symbol_context', {
+            symbol: 'parseThing',
+            signatureOnly: true,
+          }),
+        ];
+      }),
+    );
+    expect(JSON.parse(out[0][0] as string).hits).toEqual([]);
+    expect(String(out[1][0].result)).not.toContain('return 1');
+  });
+
+  it.each([
+    'find_references',
+    'find_callers',
+    'find_callees',
+    'find_implementations',
+  ] as const)('%s reports an unknown symbol as an error', async (tool) => {
+    const out = await run(
+      MetricsService.layer,
+      Effect.gen(function* () {
+        const toolkit = yield* IndexerToolkit;
+        const exit = yield* Effect.exit(
+          Effect.gen(function* () {
+            const stream = yield* toolkit.handle(tool, {
+              symbol: 'NoSuchThing',
+            } as never);
+            return yield* Stream.runCollect(stream as Stream.Stream<unknown>);
+          }),
+        );
+        return Exit.isFailure(exit) ? String(Cause.squash(exit.cause)) : '';
+      }),
+    );
+    expect(out).toContain('No indexed symbol matches "NoSuchThing"');
+  });
+
+  it('accepts the typed filters', async () => {
+    const out = await run(
+      MetricsService.layer,
+      Effect.gen(function* () {
+        const toolkit = yield* IndexerToolkit;
+        const handle = (name: string, params: Record<string, unknown>) =>
+          Effect.gen(function* () {
+            const stream = yield* toolkit.handle(
+              name as never,
+              params as never,
+            );
+            const res = yield* Stream.runCollect(
+              stream as Stream.Stream<unknown>,
+            );
+            return String(
+              (Array.from(res as Iterable<{ result: unknown }>)[0] ?? {})
+                .result,
+            );
+          });
+        return [
+          yield* handle('search_symbols', { query: 'parse', owner: 'X' }),
+          yield* handle('find_references', {
+            symbol: 'parseThing',
+            role: 'call',
+            within: 'src',
+            excludeSpecs: true,
+          }),
+          yield* handle('find_callers', {
+            symbol: 'parseThing',
+            within: 'src',
+            excludeSpecs: true,
+          }),
+          yield* handle('find_callees', {
+            symbol: 'parseThing',
+            onlyResolved: true,
+          }),
+          yield* handle('find_implementations', {
+            symbol: 'parseThing',
+            relation: 'extends',
+          }),
+          yield* handle('find_importers', {
+            target: 'src/a.ts',
+            within: 'src',
+            excludeSpecs: true,
+          }),
+        ];
+      }),
+    );
+    expect(JSON.parse(out[0]).hits).toEqual([]);
+    expect(JSON.parse(out[1]).hits).toEqual([]);
+  });
+
+  it('states the TypeScript-only scope in every tool description', () => {
+    const tools = Object.values(IndexerToolkit.tools);
+    expect(tools.length).toBeGreaterThan(8);
+    for (const t of tools) expect(t.description).toContain(ONLY_TS);
+  });
+
+  it('unknown symbol errors point to search_text', async () => {
+    const out = await run(
+      MetricsService.layer,
+      Effect.gen(function* () {
+        return yield* callFull('get_symbol_context', { symbol: 'Nope' });
+      }),
+    );
+    expect(String(out[0].result)).toContain('search_text');
+  });
+
+  it('search_text finds class fields and reports invalid regex', async () => {
+    writeFileSync(
+      join(root, 'src', 'f.ts'),
+      'export class Panel {\n  readonly open = signal(false);\n}\n',
+    );
+    const out = await run(
+      MetricsService.layer,
+      Effect.gen(function* () {
+        const toolkit = yield* IndexerToolkit;
+        const handle = (params: Record<string, unknown>) =>
+          Effect.gen(function* () {
+            const exit = yield* Effect.exit(
+              Effect.gen(function* () {
+                const stream = yield* toolkit.handle(
+                  'search_text',
+                  params as never,
+                );
+                return yield* Stream.runCollect(
+                  stream as Stream.Stream<unknown>,
+                );
+              }),
+            );
+            if (Exit.isFailure(exit)) {
+              const failure = exit.cause.reasons.find(Cause.isFailReason);
+              expect(Cause.hasDies(exit.cause)).toBe(false);
+              return String(failure?.error);
+            }
+            return String(
+              (Array.from(exit.value as Iterable<{ result: unknown }>)[0] ?? {})
+                .result,
+            );
+          });
+        return [
+          yield* handle({ pattern: 'open = signal' }),
+          yield* handle({ pattern: '(', regex: true }),
+          (yield* (yield* MetricsService).totals())
+            .filter((t) => t.tool === 'search_text')
+            .map((t) => t.calls),
+        ];
+      }),
+    );
+    expect(out[2]).toEqual([2]);
+    expect(String(out[1])).toMatch(/^Invalid pattern: /);
+    expect(JSON.parse(out[0]).hits[0]).toMatchObject({
+      p: 'src/f.ts',
+      l: 2,
+      e: 'Panel',
+    });
+    expect(out[1]).toContain('Invalid pattern');
+  });
+
+  it('keeps the JSON schema small: no null unions nor Infinity', () => {
+    const schemas = JSON.stringify(
+      Object.values(IndexerToolkit.tools).map((t) => Tool.getJsonSchema(t)),
+    );
+    expect(schemas).not.toContain('Infinity');
+    expect(schemas).not.toContain('"null"');
+    expect(schemas).toContain('"extends"');
   });
 
   it('still returns the result when recording fails', async () => {

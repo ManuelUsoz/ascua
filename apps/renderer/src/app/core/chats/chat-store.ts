@@ -3,6 +3,7 @@ import {
   DestroyRef,
   inject,
   Injectable,
+  isDevMode,
   signal,
 } from '@angular/core';
 import type {
@@ -544,6 +545,11 @@ export class ChatStore {
 
   private apply(event: ChatEvent): void {
     const id = event.sessionId;
+    if (isDevMode() && event.type !== 'messageDelta') {
+      console.info('[chats:debug]', event.type, id, {
+        hasTranscript: !!this.transcripts()[id],
+      });
+    }
     if (event.type === 'statusChanged') {
       this.statuses.update((s) => ({ ...s, [id]: event.status }));
     } else if (event.type === 'sessionUpdated') {
