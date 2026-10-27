@@ -125,6 +125,10 @@
       "openFailed": "Could not open the terminal",
       "openFailedWith": "Could not open the terminal: {{detail}}"
     },
+    "indexer": {
+      "failed": "Could not index the project.",
+      "notFound": "The indexer was not found."
+    },
     "file": {
       "gone": "The file no longer exists.",
       "readDenied": "No permission to read the file.",

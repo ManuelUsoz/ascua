@@ -1,7 +1,7 @@
 import { BrowserWindow, net, safeStorage, shell } from 'electron';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { DIRECT_MODE } from '@ascua/chat';
 import { LOCATE_MODE, MAKE_MODE, REVIEW_MODE } from './chats/harness/nxy-modes';
 import { IPC } from '@ascua/ipc';
@@ -27,6 +27,8 @@ import {
 } from './permissions/permission-bridge';
 import { JsonProjectRepository } from './projects/json-project-repository';
 import { registerProjectIpc } from './projects/project-ipc';
+import { IndexerService } from './indexer/indexer-service';
+import { registerIndexerIpc } from './indexer/indexer-ipc';
 import { registerRepositoryLinkIpc } from './projects/repository-link-ipc';
 import { nodeGit, RepositoryLinks } from './projects/repository-links';
 import {
@@ -209,7 +211,20 @@ export default class App {
           },
         },
       });
-      App.application.on('will-quit', () => chats.dispose());
+      const indexer = new IndexerService({
+        projects: repository,
+        push: (event) => App.controller.send(IPC.indexProgress, event),
+        isPackaged: App.application.isPackaged,
+        resourcesPath: process.resourcesPath,
+        userDataPath: App.application.getPath('userData'),
+        // Dev app path is <repo>/dist/apps/desktop; the indexer build is <repo>/dist/apps/indexer.
+        devRoot: resolve(App.application.getAppPath(), '..', '..', '..'),
+      });
+      registerIndexerIpc(indexer);
+      App.application.on('will-quit', () => {
+        chats.dispose();
+        indexer.dispose();
+      });
       guardQuit({
         text,
         manager,

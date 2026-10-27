@@ -107,6 +107,8 @@ export const IPC = {
   abortChat: 'ascua:chats:abort',
   resolveChatPermission: 'ascua:chats:resolve-permission',
   chatEvent: 'ascua:chats:event',
+  indexProject: 'ascua:indexer:index',
+  indexProgress: 'ascua:indexer:progress',
 } as const;
 
 export const LANGUAGES = ['es', 'en'] as const;
@@ -221,8 +223,23 @@ export const CHAT_ERROR_CODES = [
   'chat.unknown',
 ] as const satisfies readonly `chat.${ChatErrorKind}`[];
 
+export const INDEXER_ERROR_CODES = [
+  'indexer.failed',
+  'indexer.notFound',
+] as const;
+
+/** Progress of a project index run, pushed on `IPC.indexProgress`. */
+export interface IndexProgress {
+  projectId: string;
+  done: number;
+  total: number;
+  state: 'running' | 'done' | 'error';
+  error?: AscuaError;
+}
+
 /** Every error code the renderer translates as `errors.<code>`. */
 export type ErrorCode =
+  | (typeof INDEXER_ERROR_CODES)[number]
   | (typeof COMMON_ERROR_CODES)[number]
   | (typeof PROJECT_ERROR_CODES)[number]
   | (typeof CLONE_ERROR_CODES)[number]
@@ -674,4 +691,7 @@ export interface AscuaApi {
     allow: boolean,
   ): Promise<AscuaError | undefined>;
   onChatEvent(callback: (event: ChatEvent) => void): () => void;
+  /** Starts (or joins) an index run; progress streams through `onIndexProgress`. */
+  indexProject(projectId: string): Promise<AscuaError | undefined>;
+  onIndexProgress(callback: (event: IndexProgress) => void): () => void;
 }

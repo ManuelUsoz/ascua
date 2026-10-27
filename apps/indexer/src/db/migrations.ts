@@ -1,0 +1,108 @@
+import type { DatabaseSync as Database } from 'node:sqlite';
+
+export interface Migration {
+  readonly version: number;
+  readonly name: string;
+  readonly sql: string;
+}
+
+/**
+ * Append-only: never edit a shipped migration, add a new one. `kind` and
+ * `language` intentionally have no CHECK because their sets will grow and
+ * SQLite can only widen a CHECK by rebuilding the table; TypeScript validates
+ * them. Lines are 1-based and inclusive.
+ */
+export const MIGRATIONS: readonly Migration[] = [
+  {
+    version: 1,
+    name: 'files-and-symbols',
+    sql: `
+      CREATE TABLE files (
+        id INTEGER PRIMARY KEY,
+        path TEXT NOT NULL UNIQUE,
+        content_hash TEXT NOT NULL,
+        language TEXT NOT NULL
+      );
+      CREATE TABLE symbols (
+        id INTEGER PRIMARY KEY,
+        file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        start_line INTEGER NOT NULL CHECK (start_line >= 1),
+        end_line INTEGER NOT NULL CHECK (end_line >= start_line),
+        signature TEXT
+      );
+      CREATE INDEX symbols_file_id ON symbols(file_id);
+      CREATE INDEX symbols_name ON symbols(name);
+    `,
+  },
+  {
+    version: 2,
+    name: 'symbol-owner-and-fts',
+    // FTS5 keyed by symbols.id: path lives in files, so the triggers copy it
+    // into the index. Deleting a file cascades to symbols, whose delete
+    // trigger removes the FTS rows. Renaming a file path is not mirrored
+    // (the indexer deletes and re-inserts files).
+    sql: `
+      ALTER TABLE symbols ADD COLUMN owner TEXT NULL;
+      CREATE VIRTUAL TABLE symbols_fts USING fts5(
+        name, signature, path,
+        tokenize = 'unicode61'
+      );
+      CREATE TRIGGER symbols_ai AFTER INSERT ON symbols BEGIN
+        INSERT INTO symbols_fts (rowid, name, signature, path)
+        VALUES (
+          new.id, new.name, coalesce(new.signature, ''),
+          (SELECT path FROM files WHERE id = new.file_id)
+        );
+      END;
+      CREATE TRIGGER symbols_ad AFTER DELETE ON symbols BEGIN
+        DELETE FROM symbols_fts WHERE rowid = old.id;
+      END;
+      CREATE TRIGGER symbols_au AFTER UPDATE ON symbols BEGIN
+        DELETE FROM symbols_fts WHERE rowid = old.id;
+        INSERT INTO symbols_fts (rowid, name, signature, path)
+        VALUES (
+          new.id, new.name, coalesce(new.signature, ''),
+          (SELECT path FROM files WHERE id = new.file_id)
+        );
+      END;
+    `,
+  },
+];
+
+export const migrate = (
+  db: Database,
+  migrations: readonly Migration[] = MIGRATIONS,
+): number => {
+  migrations.forEach((m, index) => {
+    if (m.version !== index + 1) {
+      throw new Error(
+        `migration ${m.name} has version ${m.version}, expected ${index + 1}`,
+      );
+    }
+  });
+
+  const current = (
+    db.prepare('PRAGMA user_version').get() as { user_version: number }
+  ).user_version;
+  if (current > migrations.length) {
+    throw new Error(
+      `database is at version ${current}, newer than this indexer (${migrations.length})`,
+    );
+  }
+
+  const pending = migrations.slice(current);
+  for (const { sql, version } of pending) {
+    db.exec('BEGIN');
+    try {
+      db.exec(sql);
+      db.exec(`PRAGMA user_version = ${version}`);
+      db.exec('COMMIT');
+    } catch (error) {
+      db.exec('ROLLBACK');
+      throw error;
+    }
+  }
+  return pending.length;
+};

@@ -1,0 +1,91 @@
+{
+  "name": "indexer",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/indexer/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/apps/indexer",
+        "format": ["esm"],
+        "bundle": true,
+        "main": "apps/indexer/src/main.ts",
+        "tsConfig": "apps/indexer/tsconfig.app.json",
+        "assets": [],
+        "generatePackageJson": false,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".mjs"
+          },
+          "banner": {
+            "js": "import{createRequire as __cr}from'node:module';const require=__cr(import.meta.url);"
+          }
+        },
+        "thirdParty": true,
+        "deleteOutputPath": false
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".mjs"
+            },
+            "banner": {
+              "js": "import{createRequire as __cr}from'node:module';const require=__cr(import.meta.url);"
+            }
+          }
+        }
+      },
+      "dependsOn": ["copy-assets"]
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "indexer:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "indexer:build:development"
+        },
+        "production": {
+          "buildTarget": "indexer:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "coverage/apps/indexer"
+      }
+    },
+    "copy-assets": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/tools/indexer-assets.mjs",
+        "{projectRoot}/src/queries/**/*",
+        {
+          "externalDependencies": ["web-tree-sitter", "tree-sitter-typescript"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/dist/apps/indexer/*.{wasm,scm}"],
+      "options": {
+        "command": "node tools/indexer-assets.mjs",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

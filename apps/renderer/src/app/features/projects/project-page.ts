@@ -3,7 +3,9 @@ import {
   Component,
   computed,
   inject,
+  effect,
   input,
+  untracked,
 } from '@angular/core';
 import {
   ActivatedRoute,
@@ -17,9 +19,11 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { errorText } from '../../core/i18n/app-error';
 import type { Text } from '../../core/i18n/text';
 import { ProjectStore } from '../../core/projects/project-store';
+import { IndexStore } from '../../core/projects/index-store';
 import { TerminalSessions } from '../../core/terminals/terminal-sessions';
 import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
+import { ProgressBar } from '../../shared/progress/progress-bar';
 import { PistaEditor } from '../terminals/pista-editor';
 import { PistaForm } from '../terminals/pista-form';
 
@@ -34,6 +38,7 @@ import { PistaForm } from '../terminals/pista-form';
     Icon,
     Button,
     PistaForm,
+    ProgressBar,
   ],
   templateUrl: './project-page.html',
   providers: [PistaEditor],
@@ -45,12 +50,37 @@ export class ProjectPage {
   protected readonly store = inject(ProjectStore);
   protected readonly sessions = inject(TerminalSessions);
   protected readonly editor = inject(PistaEditor);
+  protected readonly indexing = inject(IndexStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly project = computed(() =>
     this.store.byId(this.projectId()),
   );
+  /** Id of the opened project once it exists; unchanged by edits to other fields. */
+  private readonly indexTarget = computed(() =>
+    this.project() ? this.projectId() : undefined,
+  );
+  protected readonly index = computed(() =>
+    this.indexing.progress(this.projectId()),
+  );
+  protected readonly indexError = computed(() => {
+    const error = this.index()?.error;
+    return error ? errorText(error) : undefined;
+  });
+
+  constructor() {
+    effect(() => {
+      const id = this.indexTarget();
+      if (id) untracked(() => void this.indexing.start(id));
+    });
+    effect(() =>
+      console.log('[index] page reads', {
+        projectId: this.projectId(),
+        index: this.index(),
+      }),
+    );
+  }
   protected readonly counts = computed(() => {
     const project = this.project();
     return project ? this.sessions.counts(project) : { running: 0, total: 0 };

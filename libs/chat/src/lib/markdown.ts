@@ -177,7 +177,7 @@ export function parseInline(src: string): MdInline[] {
       if (end > 0) {
         out.push({
           kind: 'code',
-          text: src.slice(i + n, end).replace(/^ (.*) $/s, '$1'),
+          text: src.slice(i + n, end).replace(/^ ([\s\S]*) $/, '$1'),
         });
         i = end + n;
         continue;

@@ -129,3 +129,29 @@
     animation: none !important;
   }
 }
+
+.as-progress {
+  display: block;
+  flex: 0 1 240px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.as-progress__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--violeta);
+  transform-origin: left;
+  transition: transform 200ms ease-out;
+}
+.as-progress__fill[data-complete] {
+  background: var(--ok);
+}
+@media (prefers-reduced-motion: reduce) {
+  .as-progress__fill {
+    transition: none;
+  }
+}

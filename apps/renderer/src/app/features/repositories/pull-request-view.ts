@@ -24,6 +24,7 @@ import type { Text } from '../../core/i18n/text';
 import { SourceControlStore } from '../../core/source-control/source-control-store';
 import { Button } from '../../shared/button/button';
 import { Icon } from '../../shared/icon/icon';
+import { ProgressBar } from '../../shared/progress/progress-bar';
 import { Spinner } from '../../shared/spinner/spinner';
 import { RelativeTimePipe } from '../../shared/time/relative-time.pipe';
 import { CommitDiffView } from './commit-diff-view';
@@ -44,6 +45,7 @@ type PrTab = 'files' | 'commits';
     Icon,
     RelativeTimePipe,
     Spinner,
+    ProgressBar,
     Button,
     FileDiff,
     DiffFileList,
@@ -116,10 +118,6 @@ export class PullRequestView {
     () => this.files().filter((f) => this.viewed().has(f.file.path)).length,
   );
 
-  protected readonly viewedPercent = computed(() => {
-    const total = this.files().length;
-    return total ? Math.round((this.viewedCount() / total) * 100) : 0;
-  });
   protected readonly activeFile = signal<number | undefined>(undefined);
   protected readonly tab = signal<PrTab>('files');
 

@@ -40,5 +40,10 @@
     "stopAll": "Stop all",
     "edit": "Edit project",
     "sections": "Project sections"
+  },
+  "indexing": {
+    "bar": "Indexing progress",
+    "progress": "Indexing",
+    "starting": "Indexing"
   }
 }
