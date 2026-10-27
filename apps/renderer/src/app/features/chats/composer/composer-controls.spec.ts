@@ -39,13 +39,33 @@ function setup(inputs: Record<string, unknown> = {}) {
     el.querySelector<HTMLButtonElement>('.chat-composer__perm button')!;
   const menuOptions = () =>
     Array.from(el.querySelectorAll<HTMLElement>('[role="option"]'));
-  return { fixture, selects, pick, changed, permissionTrigger, menuOptions };
+  return {
+    fixture,
+    el,
+    selects,
+    pick,
+    changed,
+    permissionTrigger,
+    menuOptions,
+  };
 }
 
 const texts = (s: HTMLSelectElement) =>
   Array.from(s.options).map((o) => o.textContent?.trim());
 
 describe('ComposerControls', () => {
+  it('renders the provider picker to the left of the model selector', () => {
+    const { el } = setup();
+    const provider = el.querySelector('app-provider-select');
+    const model = el.querySelector('.chat-composer__select--model');
+    expect(provider).not.toBeNull();
+    expect(model).not.toBeNull();
+    expect(
+      provider!.compareDocumentPosition(model!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it('lists the models with the provider default and Spanish labels', () => {
     const { fixture, selects, permissionTrigger, menuOptions } = setup();
     expect(texts(selects()[0]!)).toEqual([

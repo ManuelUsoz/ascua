@@ -12,6 +12,8 @@
   --ink: #f4f0fd;
   --ink-muted: #aca2c9;
   --ink-faint: #8d83ae;
+  /* Claude brand orange, used by the composer provider marks. */
+  --claude: #d97757;
   --violeta: #c48bff;
   --violeta-wash: #b46eff29;
   --violeta-glow: #b46eff33;

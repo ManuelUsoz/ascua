@@ -16,7 +16,8 @@
   "provider": {
     "claude": "Claude",
     "codex": "Codex",
-    "gemini": "Gemini"
+    "gemini": "Gemini",
+    "opencode": "OpenCode"
   },
   "newChat": {
     "title": "New chat",
@@ -39,6 +40,9 @@
       "autoHint": "A classifier approves routine actions; others still ask.",
       "fullAccess": "Full access",
       "fullAccessHint": "Allow commands and edits without prompts."
+    },
+    "provider": {
+      "label": "Provider"
     },
     "model": {
       "label": "Model",

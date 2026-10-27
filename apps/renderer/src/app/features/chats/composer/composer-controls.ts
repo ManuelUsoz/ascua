@@ -17,6 +17,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import type { IconName } from '../../../shared/icon/icon';
 import { Spinner } from '../../../shared/spinner/spinner';
 import { AsSelect, type SelectOption } from '../../../shared/select/select';
+import { ProviderSelect } from './provider-select';
 
 const PERMISSION_ICONS: Record<PermissionMode, IconName> = {
   supervised: 'lock',
@@ -25,13 +26,14 @@ const PERMISSION_ICONS: Record<PermissionMode, IconName> = {
   fullAccess: 'unlock',
 };
 
-/** Model, reasoning effort and permission mode selectors of the composer. */
+/** Provider, model, reasoning effort and permission mode selectors. */
 @Component({
   selector: 'app-composer-controls',
-  imports: [TranslocoPipe, AsSelect, Spinner],
+  imports: [TranslocoPipe, AsSelect, Spinner, ProviderSelect],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'chat-composer__controls' },
   template: `
+    <app-provider-select />
     <select
       class="as-input as-select chat-composer__select chat-composer__select--model"
       [attr.aria-label]="'chats.composer.model.label' | transloco"

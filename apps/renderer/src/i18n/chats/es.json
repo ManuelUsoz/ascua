@@ -16,7 +16,8 @@
   "provider": {
     "claude": "Claude",
     "codex": "Codex",
-    "gemini": "Gemini"
+    "gemini": "Gemini",
+    "opencode": "OpenCode"
   },
   "newChat": {
     "title": "Nuevo chat",
@@ -39,6 +40,9 @@
       "autoHint": "Un clasificador aprueba lo rutinario; el resto pregunta.",
       "fullAccess": "Acceso total",
       "fullAccessHint": "Permite comandos y ediciones sin preguntar."
+    },
+    "provider": {
+      "label": "Proveedor"
     },
     "model": {
       "label": "Modelo",

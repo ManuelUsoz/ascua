@@ -626,6 +626,59 @@ app-chat-session-page,
   width: 14px;
   height: 14px;
 }
+app-provider-select {
+  position: relative;
+  display: inline-flex;
+  order: 4;
+}
+.chat-composer__select--provider {
+  gap: 6px;
+  max-width: 9rem;
+  padding: 0 6px;
+  border-color: transparent;
+  cursor: pointer;
+}
+.chat-composer__select--provider:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
+}
+.chat-composer__provider-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-composer__provider-chevron {
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+.chat-composer__provider-chevron .as-ico {
+  width: 12px;
+  height: 12px;
+}
+.provider-ico {
+  width: 14px;
+  height: 14px;
+  display: block;
+  flex: none;
+}
+.provider-ico--claude {
+  color: var(--claude);
+}
+app-provider-select .as-menu {
+  min-width: 190px;
+}
+app-provider-select .as-menu__option app-provider-icon {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+app-provider-select .as-menu__option--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+app-provider-select .as-menu__option--disabled:hover {
+  background: none;
+}
 .chat-composer__chip {
   order: 2;
 }
