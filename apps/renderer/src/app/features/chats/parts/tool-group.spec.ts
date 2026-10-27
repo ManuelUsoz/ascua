@@ -83,6 +83,48 @@ describe('ToolGroupView', () => {
     );
   });
 
+  it('shortens MCP tool names and keeps the full name in title', () => {
+    const { el, fixture } = render([
+      use({
+        toolUseId: 'm',
+        tool: 'mcp__ascua-indexer__search_symbols',
+        title: 'mcp__ascua-indexer__search_symbols: Metrics',
+      }),
+    ]);
+    button(el).click();
+    fixture.detectChanges();
+    const tool = el.querySelector('.chat-tg__tool') as HTMLElement;
+    expect(tool.textContent).toBe('search_symbols');
+    expect(tool.getAttribute('title')).toBe(
+      'mcp__ascua-indexer__search_symbols',
+    );
+    expect(el.querySelector('.chat-tg__summary')?.textContent).toContain(
+      'search_symbols ×1',
+    );
+  });
+
+  it('shows a result only after clicking its row', () => {
+    const { el, fixture } = render([
+      use({ toolUseId: 'r' }),
+      {
+        kind: 'toolResult',
+        toolUseId: 'r',
+        isError: false,
+        summary: 'found 3',
+      },
+      use({ toolUseId: 'n', title: 'Edit: b.ts', tool: 'edit' }),
+    ]);
+    button(el).click();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.chat-tg__row--btn').length).toBe(1);
+    expect(el.querySelector('.chat-tg__result')).toBeNull();
+    (el.querySelector('.chat-tg__row--btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.chat-tg__result')?.textContent).toContain(
+      'found 3',
+    );
+  });
+
   it('lets the user toggle', () => {
     const { el, fixture } = render([use({ toolUseId: '1' })]);
     button(el).click();
