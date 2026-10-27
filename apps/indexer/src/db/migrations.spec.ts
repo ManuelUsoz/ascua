@@ -40,6 +40,8 @@ describe('migrations', () => {
     expect(userVersion(db)).toBe(MIGRATIONS.length);
     expect(tableExists(db, 'files')).toBe(true);
     expect(tableExists(db, 'symbols')).toBe(true);
+    expect(tableExists(db, 'tool_calls')).toBe(true);
+    expect(userVersion(db)).toBe(3);
   });
 
   it('is idempotent', () => {

@@ -14,6 +14,7 @@ import {
   type ChatCommand,
   type ChatErrorKind,
   type OpenOptions,
+  type McpServerSpec,
   type PermissionMode,
   type ProviderModel,
   type ReasoningEffort,
@@ -43,6 +44,20 @@ const KINDS: Record<string, ToolKind> = {
   WebSearch: 'search',
   WebFetch: 'fetch',
 };
+
+export function toSdkMcpServers(specs: McpServerSpec[]): Options['mcpServers'] {
+  return Object.fromEntries(
+    specs.map((s) => [
+      s.name,
+      {
+        type: 'stdio' as const,
+        command: s.command,
+        args: s.args,
+        ...(s.env ? { env: s.env } : {}),
+      },
+    ]),
+  );
+}
 
 export function toolKind(name: string): ToolKind {
   return KINDS[name] ?? 'other';

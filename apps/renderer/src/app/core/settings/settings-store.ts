@@ -5,7 +5,7 @@ import {
   Injectable,
   signal,
 } from '@angular/core';
-<<<<<<< HEAD
+import type { AgentProviderId } from '@ascua/chat';
 import {
   DEFAULT_VOICE_SETTINGS,
   LANGUAGES,
@@ -13,10 +13,6 @@ import {
   type Settings,
   type VoiceSettings,
 } from '@ascua/ipc';
-=======
-import type { AgentProviderId } from '@ascua/chat';
-import { LANGUAGES, type Language, type Settings } from '@ascua/ipc';
->>>>>>> origin/master
 import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { ASCUA_API } from '../bridge/ascua-api';

@@ -29,6 +29,10 @@ export function indexerEntry(
     : join(devRoot, 'dist', 'apps', 'indexer', 'main.mjs');
 }
 
+export function indexDbPath(userDataPath: string, projectId: string): string {
+  return join(userDataPath, 'indexes', `${projectId}.db`);
+}
+
 const log = (message: string, ...rest: unknown[]) =>
   console.log(`[indexer] ${message}`, ...rest);
 
@@ -94,7 +98,7 @@ export class IndexerService {
       const dir = join(this.options.userDataPath, 'indexes');
       mkdirSync(dir, { recursive: true });
       const entry = indexerEntry(isPackaged, resourcesPath, devRoot);
-      const db = join(dir, `${projectId}.db`);
+      const db = indexDbPath(this.options.userDataPath, projectId);
       log('forking', { entry, entryExists: existsSync(entry), root, db });
       child = this.fork(entry, ['index', root, '--db', db]);
     } catch (e) {

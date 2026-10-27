@@ -69,6 +69,25 @@ export const MIGRATIONS: readonly Migration[] = [
       END;
     `,
   },
+  {
+    version: 3,
+    name: 'mcp-tool-metrics',
+    // started_at is epoch ms; tokens is chars/4 of the response.
+    sql: `
+      CREATE TABLE tool_calls (
+        id INTEGER PRIMARY KEY,
+        tool TEXT NOT NULL,
+        started_at INTEGER NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        tokens INTEGER NOT NULL,
+        max_tokens INTEGER NULL,
+        results INTEGER NULL,
+        ok INTEGER NOT NULL,
+        error TEXT NULL
+      );
+      CREATE INDEX tool_calls_tool_started ON tool_calls(tool, started_at);
+    `,
+  },
 ];
 
 export const migrate = (

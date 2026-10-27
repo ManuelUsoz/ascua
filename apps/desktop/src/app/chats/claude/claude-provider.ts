@@ -34,6 +34,7 @@ import {
   claudeRuntimeOptions,
   toStopReason,
   toUsage,
+  toSdkMcpServers,
 } from './claude-mapping';
 import {
   claudeEnv,
@@ -240,8 +241,13 @@ export class ClaudeProvider implements AgentProvider {
         return session.ask(req).then((d) => toSdkPermission(d, toolInput));
       },
     };
+    const mcp = options.mcpServers ?? [];
+    if (mcp.length) opts.mcpServers = toSdkMcpServers(mcp);
     const allowed = options.turn.allowedTools?.flatMap((k) => TOOL_NAMES[k]);
-    if (allowed?.length) opts.allowedTools = allowed;
+    // `mcp__<server>` allows every tool of that server.
+    if (allowed?.length) {
+      opts.allowedTools = [...allowed, ...mcp.map((s) => `mcp__${s.name}`)];
+    }
     if (options.turn.systemAppend) {
       opts.systemPrompt = {
         type: 'preset',

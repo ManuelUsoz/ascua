@@ -1,6 +1,11 @@
-import { Effect, Layer, Schema } from 'effect';
+import { Cause, Clock, Effect, Exit, Layer, Schema } from 'effect';
 import { McpProtocol, McpServer, Tool, Toolkit } from 'effect/ai';
-import { QueryService } from '../query/query-service';
+import { MetricsService } from '../metrics/metrics-service';
+import {
+  estimateTokens,
+  QueryService,
+  type OutlineNode,
+} from '../query/query-service';
 
 const maxTokens = Schema.optional(Schema.Number).annotateKey({
   description: 'Token budget for the response (estimate: chars/4).',
@@ -42,31 +47,81 @@ export const IndexerToolkit = Toolkit.make(
 
 const json = (value: unknown) => JSON.stringify(value ?? null);
 
-const handlers = (defaultMaxTokens: number | undefined) =>
+const countOutline = (nodes: readonly OutlineNode[]): number =>
+  nodes.reduce((n, node) => n + 1 + countOutline(node.m ?? []), 0);
+
+/** Times the handler and records it; recording never alters the result. */
+const instrument = <A, E>(
+  metrics: MetricsService['Service'],
+  tool: string,
+  maxTokens: number | undefined,
+  results: (value: A) => number | undefined,
+  effect: Effect.Effect<A, E>,
+): Effect.Effect<string, never> =>
+  Effect.gen(function* () {
+    const startedAt = yield* Clock.currentTimeMillis;
+    return yield* effect.pipe(
+      Effect.map((value) => ({ value, text: json(value) })),
+      Effect.orDie,
+      Effect.onExit((exit) =>
+        Effect.gen(function* () {
+          const endedAt = yield* Clock.currentTimeMillis;
+          const ok = Exit.isSuccess(exit);
+          yield* metrics.record({
+            tool,
+            startedAt,
+            durationMs: endedAt - startedAt,
+            tokens: ok ? estimateTokens(exit.value.text) : 0,
+            maxTokens,
+            results: ok ? results(exit.value.value) : undefined,
+            ok,
+            error: ok ? undefined : String(Cause.squash(exit.cause)),
+          });
+        }).pipe(Effect.catchCause(() => Effect.void)),
+      ),
+      Effect.map(({ text }) => text),
+    );
+  });
+
+export const handlers = (defaultMaxTokens: number | undefined) =>
   IndexerToolkit.toLayer(
     Effect.gen(function* () {
       const query = yield* QueryService;
+      const metrics = yield* MetricsService;
       return IndexerToolkit.of({
-        search_symbols: ({ query: q, limit, max_tokens }) =>
-          query
-            .searchSymbols(q, {
-              maxTokens: max_tokens ?? defaultMaxTokens,
-              limit,
-            })
-            .pipe(Effect.map(json), Effect.orDie),
+        search_symbols: ({ query: q, limit, max_tokens }) => {
+          const budget = max_tokens ?? defaultMaxTokens;
+          return instrument(
+            metrics,
+            'search_symbols',
+            budget,
+            (hits) => hits.length,
+            query.searchSymbols(q, { maxTokens: budget, limit }),
+          );
+        },
         get_file_outline: ({ path }) =>
-          query.fileOutline(path).pipe(Effect.map(json), Effect.orDie),
-        get_symbol_context: ({ symbol, max_tokens }) =>
-          query
-            .symbolContext(symbol, {
-              maxTokens: max_tokens ?? defaultMaxTokens,
-            })
-            .pipe(Effect.map(json), Effect.orDie),
+          instrument(
+            metrics,
+            'get_file_outline',
+            undefined,
+            countOutline,
+            query.fileOutline(path),
+          ),
+        get_symbol_context: ({ symbol, max_tokens }) => {
+          const budget = max_tokens ?? defaultMaxTokens;
+          return instrument(
+            metrics,
+            'get_symbol_context',
+            budget,
+            () => undefined,
+            query.symbolContext(symbol, { maxTokens: budget }),
+          );
+        },
       });
     }),
   );
 
-/** MCP stdio server; needs `Stdio`, `QueryService`. */
+/** MCP stdio server; needs `Stdio`, `QueryService`, `MetricsService`. */
 export const mcpLayer = (defaultMaxTokens?: number) =>
   McpServer.toolkit(IndexerToolkit).pipe(
     Layer.provide(handlers(defaultMaxTokens)),

@@ -22,6 +22,28 @@ export interface SymbolRow {
   owner: string | null;
 }
 
+export interface ToolCallRow {
+  id: number;
+  tool: string;
+  started_at: number;
+  duration_ms: number;
+  tokens: number;
+  max_tokens: number | null;
+  results: number | null;
+  ok: number;
+  error: string | null;
+}
+
+/** Aggregate per tool; tool='*' is the overall row. */
+export interface ToolCallTotals {
+  readonly tool: string;
+  readonly calls: number;
+  readonly tokens: number;
+  readonly avgMs: number;
+  readonly maxMs: number;
+  readonly errors: number;
+}
+
 export interface NewFile {
   /** Repo-relative, forward slashes. */
   readonly path: string;

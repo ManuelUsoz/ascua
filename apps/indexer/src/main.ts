@@ -10,10 +10,11 @@ import { Effect, Layer, Logger, Runtime } from 'effect';
 import { IndexerService } from './index/indexer-service';
 import { SqliteClient } from './db/sqlite-client';
 import { mcpLayer } from './mcp/server';
+import { MetricsService } from './metrics/metrics-service';
 import { QueryService } from './query/query-service';
 
 const USAGE =
-  'usage: main.mjs index <root> [--db <file>] | mcp <root> [--db <file>] [--max-tokens <n>]';
+  'usage: main.mjs index <root> [--db <file>] | mcp <root> [--db <file>] [--max-tokens <n>] | stats <root> [--db <file>]';
 
 const flag = (args: string[], name: string): string | undefined => {
   const i = args.indexOf(name);
@@ -35,7 +36,10 @@ process.on('unhandledRejection', (e) => {
 });
 
 const [command, rootArg, ...rest] = process.argv.slice(2);
-if ((command !== 'index' && command !== 'mcp') || !rootArg) {
+if (
+  (command !== 'index' && command !== 'mcp' && command !== 'stats') ||
+  !rootArg
+) {
   process.stderr.write(`${USAGE}\n`);
   process.exit(2);
 }
@@ -64,11 +68,16 @@ const stderrLogger = Logger.layer([
 const mcpRun = mcpLayer(
   Number.isFinite(maxTokens) && maxTokens > 0 ? maxTokens : undefined,
 ).pipe(
-  Layer.provide(QueryService.layer(root)),
+  Layer.provide(Layer.merge(QueryService.layer(root), MetricsService.layer)),
   Layer.provide(base),
   Layer.provide(NodeStdio.layer),
   Layer.provide(stderrLogger),
 );
+
+const statsRun = Effect.gen(function* () {
+  const totals = yield* (yield* MetricsService).totals();
+  process.stdout.write(`${JSON.stringify(totals)}\n`);
+}).pipe(Effect.provide(MetricsService.layer), Effect.provide(base));
 
 if (command === 'index') {
   // The run is a one-shot: building the layer does the work, then exit.
@@ -90,6 +99,8 @@ if (command === 'index') {
         }),
     },
   );
+} else if (command === 'stats') {
+  NodeRuntime.runMain(Effect.scoped(statsRun));
 } else {
   NodeRuntime.runMain(Layer.launch(mcpRun));
 }

@@ -127,6 +127,41 @@ describe('ClaudeProvider', () => {
     s.close();
   });
 
+  it('maps mcpServers to stdio options and allows them when restricted', async () => {
+    const seen: Record<string, any>[] = [];
+    const { sdk } = fakeSdk(() => undefined);
+    const orig = sdk.query;
+    sdk.query = (a: any) => {
+      seen.push(a.options);
+      return orig(a);
+    };
+    const spec = {
+      name: 'ascua-indexer',
+      command: 'node',
+      args: ['x.mjs'],
+      env: { A: '1' },
+    };
+    (await open(provider(sdk), { mcpServers: [spec] })).close();
+    (await open(provider(sdk))).close();
+    (
+      await open(provider(sdk), {
+        mcpServers: [spec],
+        turn: { allowedTools: ['read'] },
+      })
+    ).close();
+    expect(seen[0]['mcpServers']).toEqual({
+      'ascua-indexer': {
+        type: 'stdio',
+        command: 'node',
+        args: ['x.mjs'],
+        env: { A: '1' },
+      },
+    });
+    expect(seen[0]['allowedTools']).toBeUndefined();
+    expect(seen[1]['mcpServers']).toBeUndefined();
+    expect(seen[2]['allowedTools']).toContain('mcp__ascua-indexer');
+  });
+
   it('emits custom commands after init and maps deniedTools', async () => {
     let seen: Record<string, any> = {};
     const { sdk } = fakeSdk(() => undefined, {
