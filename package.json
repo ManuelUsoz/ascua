@@ -6,13 +6,8 @@
     "start": "nx serve desktop",
     "linux:check": "node tools/linux-check.mjs",
     "i18n:check": "node tools/i18n-check.mjs",
-<<<<<<< HEAD
-    "format:check": "prettier --check \"apps/**/*.{ts,html,css}\" \"apps/renderer/src/i18n/**/*.json\" \"libs/assistant/**/*.ts\" \"libs/ascua-ipc/**/*.ts\" \"libs/source-control/**/*.ts\" \"tools/**/*.{ts,cjs,mjs}\"",
-    "format": "prettier --write \"apps/**/*.{ts,html,css}\" \"apps/renderer/src/i18n/**/*.json\" \"libs/assistant/**/*.ts\" \"libs/ascua-ipc/**/*.ts\" \"libs/source-control/**/*.ts\" \"tools/**/*.{ts,cjs,mjs}\"",
-=======
-    "format:check": "prettier --check \"apps/**/*.{ts,html,css}\" \"apps/renderer/src/i18n/**/*.json\" \"libs/ascua-ipc/**/*.ts\" \"libs/source-control/**/*.ts\" \"libs/chat/**/*.ts\" \"tools/**/*.{ts,cjs,mjs}\"",
-    "format": "prettier --write \"apps/**/*.{ts,html,css}\" \"apps/renderer/src/i18n/**/*.json\" \"libs/ascua-ipc/**/*.ts\" \"libs/source-control/**/*.ts\" \"libs/chat/**/*.ts\" \"tools/**/*.{ts,cjs,mjs}\"",
->>>>>>> origin/master
+    "format:check": "prettier --check \"apps/**/*.{ts,html,css}\" \"apps/renderer/src/i18n/**/*.json\" \"libs/assistant/**/*.ts\" \"libs/ascua-ipc/**/*.ts\" \"libs/source-control/**/*.ts\" \"libs/chat/**/*.ts\" \"tools/**/*.{ts,cjs,mjs}\"",
+    "format": "prettier --write \"apps/**/*.{ts,html,css}\" \"apps/renderer/src/i18n/**/*.json\" \"libs/assistant/**/*.ts\" \"libs/ascua-ipc/**/*.ts\" \"libs/source-control/**/*.ts\" \"libs/chat/**/*.ts\" \"tools/**/*.{ts,cjs,mjs}\"",
     "postinstall": "node tools/postinstall.mjs",
     "nxe:build:frontend": "nx build renderer",
     "nxe:build:backend": "nx build desktop",

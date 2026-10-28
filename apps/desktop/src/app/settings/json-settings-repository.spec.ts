@@ -62,6 +62,7 @@ describe('JsonSettingsRepository', () => {
     await make('en').update({ chatProvider: 'claude' });
     expect(await make('en').get()).toEqual({
       language: 'en',
+      voice,
       chatProvider: 'claude',
     });
     const result = await make('en').update({
@@ -69,7 +70,7 @@ describe('JsonSettingsRepository', () => {
     });
     expect(result.chatProvider).toBe('claude');
     await writeFile(file, JSON.stringify({ version: 1, chatProvider: 'x' }));
-    expect(await make('en').get()).toEqual({ language: 'en' });
+    expect(await make('en').get()).toEqual({ language: 'en', voice });
   });
 
   it('round-trips chatDefaults and drops invalid entries', async () => {

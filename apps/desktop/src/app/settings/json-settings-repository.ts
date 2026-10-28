@@ -22,13 +22,10 @@ import { writeJsonAtomic } from '../storage/atomic-json';
 interface SettingsFile {
   version: 1;
   language?: Language;
-<<<<<<< HEAD
   voice?: Partial<VoiceSettings>;
-=======
   cloneDir?: string;
   chatProvider?: AgentProviderId;
   chatDefaults?: ChatDefaults;
->>>>>>> origin/master
 }
 
 type ChatDefaults = NonNullable<Settings['chatDefaults']>;
@@ -93,24 +90,18 @@ export class JsonSettingsRepository {
 
   async get(): Promise<Settings> {
     const stored = await this.read();
-<<<<<<< HEAD
-    return {
-      language: stored.language ?? this.osLanguage(),
-      voice: { ...DEFAULT_VOICE_SETTINGS, ...stored.voice },
-    };
-=======
     return this.view(stored);
   }
 
   private view(stored: Partial<SettingsFile>): Settings {
     const settings: Settings = {
       language: stored.language ?? this.osLanguage(),
+      voice: { ...DEFAULT_VOICE_SETTINGS, ...stored.voice },
     };
     if (stored.cloneDir) settings.cloneDir = stored.cloneDir;
     if (stored.chatProvider) settings.chatProvider = stored.chatProvider;
     if (stored.chatDefaults) settings.chatDefaults = stored.chatDefaults;
     return settings;
->>>>>>> origin/master
   }
 
   update(patch: SettingsPatch): Promise<Settings> {
@@ -127,21 +118,7 @@ export class JsonSettingsRepository {
     const language = isLanguage(patch.language)
       ? patch.language
       : stored.language;
-<<<<<<< HEAD
     const voice = { ...stored.voice, ...validVoice(patch.voice) };
-    const changed =
-      language !== stored.language ||
-      JSON.stringify(voice) !== JSON.stringify(stored.voice ?? {});
-    if (changed) {
-      const file: SettingsFile = { version: 1, voice };
-      if (language) file.language = language;
-      await writeJsonAtomic(this.file, file);
-    }
-    return {
-      language: language ?? this.osLanguage(),
-      voice: { ...DEFAULT_VOICE_SETTINGS, ...voice },
-    };
-=======
     const cloneDir = isCloneDir(patch.cloneDir)
       ? patch.cloneDir
       : stored.cloneDir;
@@ -156,33 +133,30 @@ export class JsonSettingsRepository {
       patch.chatDefaults === undefined ? stored.chatDefaults : patched;
     if (
       (language && language !== stored.language) ||
+      JSON.stringify(voice) !== JSON.stringify(stored.voice ?? {}) ||
       cloneDir !== stored.cloneDir ||
       chatProvider !== stored.chatProvider ||
       JSON.stringify(chatDefaults) !== JSON.stringify(stored.chatDefaults)
     ) {
       const file: SettingsFile = { version: 1 };
       if (language) file.language = language;
+      if (Object.keys(voice).length > 0) file.voice = voice;
       if (cloneDir) file.cloneDir = cloneDir;
       if (chatProvider) file.chatProvider = chatProvider;
       if (chatDefaults) file.chatDefaults = chatDefaults;
       await writeJsonAtomic(this.file, file);
     }
-    return this.view({ language, cloneDir, chatProvider, chatDefaults });
->>>>>>> origin/master
+    return this.view({ language, voice, cloneDir, chatProvider, chatDefaults });
   }
 
   private async read(): Promise<Partial<SettingsFile>> {
     try {
       const data = JSON.parse(await readFile(this.file, 'utf8')) as unknown;
       const file = data as Partial<SettingsFile> | null;
-<<<<<<< HEAD
-      return {
-        ...(isLanguage(file?.language) ? { language: file.language } : {}),
-        voice: validVoice(file?.voice),
-      };
-=======
       const stored: Partial<SettingsFile> = {};
       if (isLanguage(file?.language)) stored.language = file.language;
+      const voice = validVoice(file?.voice);
+      if (Object.keys(voice).length > 0) stored.voice = voice;
       if (isCloneDir(file?.cloneDir)) stored.cloneDir = file.cloneDir;
       if (isAgentProviderId(file?.chatProvider)) {
         stored.chatProvider = file.chatProvider;
@@ -190,7 +164,6 @@ export class JsonSettingsRepository {
       const chatDefaults = cleanChatDefaults(file?.chatDefaults);
       if (chatDefaults) stored.chatDefaults = chatDefaults;
       return stored;
->>>>>>> origin/master
     } catch {
       return {};
     }

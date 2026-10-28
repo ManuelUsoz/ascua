@@ -7,6 +7,7 @@ import {
   STATIC_MODEL_CATALOGS,
 } from '@ascua/chat';
 import type { Settings } from '@ascua/ipc';
+import { DEFAULT_VOICE_SETTINGS } from '@ascua/ipc';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { describe, expect, it, vi } from 'vitest';
 import { ChatStore } from '../../../core/chats/chat-store';
@@ -35,7 +36,11 @@ async function setup(
     selectedProvider: () => provider ?? undefined,
   };
   const settings = {
-    settings: signal<Settings>({ language: 'es', chatDefaults }),
+    settings: signal<Settings>({
+      language: 'es',
+      voice: { ...DEFAULT_VOICE_SETTINGS },
+      chatDefaults,
+    }),
     setChatDefaults: vi.fn().mockResolvedValue(undefined),
   };
   TestBed.configureTestingModule({
